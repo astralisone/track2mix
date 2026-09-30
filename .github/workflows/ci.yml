@@ -55,7 +55,17 @@ jobs:
         run: node --check site/main.js
 
       - name: Test the contact endpoint
-        run: node functions/api/contact.test.mjs
+        run: node worker/contact.test.mjs
+
+      - name: Test the Worker routing and response headers
+        run: node worker/index.test.mjs
+
+      - name: Check the Worker config builds
+        # Reproduces what Workers Builds runs on a deploy, without deploying.
+        # Catches a broken wrangler.toml or a missing asset directory here
+        # rather than in the Cloudflare build.
+        run: npx --yes wrangler@4 deploy --dry-run
+
       - name: Check a payment method is configured
         # The tip jar renders disabled (and says so) until at least one handle
         # is set in site/main.js. Flag it here so a deploy with no payment
