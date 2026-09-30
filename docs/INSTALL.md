@@ -9,7 +9,7 @@ upload, and it makes no network calls to do its job.
 - Rekordbox 6 or 7, to produce the collection export
 - Your audio files present on disk (streaming-only entries can't be analysed)
 
-Download the latest build from the [Releases page](https://github.com/astralisone/Selecta/releases/latest).
+Download the latest build from the [Releases page](https://github.com/astralisone/track2mix/releases/latest).
 
 ---
 

@@ -38,7 +38,7 @@ compatibility_date = "2026-09-30"
 APP_NAME = "track2mix"
 # Where the download link points. Returned by the API after a successful
 # capture, so it is not present in the page source beforehand.
-DOWNLOAD_URL = "https://github.com/astralisone/Selecta/releases/latest"
+DOWNLOAD_URL = "https://github.com/astralisone/track2mix/releases/latest"
 
 # Secrets are NOT set here — they would end up in git. Set them with:
 #   wrangler pages secret put LIST_ENDPOINT

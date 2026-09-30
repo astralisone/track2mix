@@ -9,7 +9,7 @@ Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to G
 
 | Setting | Value |
 | --- | --- |
-| Repository | `astralisone/Selecta` |
+| Repository | `astralisone/track2mix` |
 | Production branch | `main` |
 | Framework preset | **None** |
 | Build command | *(leave empty)* |
