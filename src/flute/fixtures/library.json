@@ -1,0 +1,130 @@
+{
+  "summary": {
+    "db_path": "~/Music/rekordbox/library.db",
+    "total": 9,
+    "analyzed": 9,
+    "distinct_genres": 5,
+    "avg_bpm": 147.6,
+    "min_energy": 0.061820998787879944,
+    "max_energy": 0.5736267566680908
+  },
+  "tracks": [
+    {
+      "track_id": "7",
+      "name": "Hard Contact",
+      "artist": "Control Group",
+      "genre": "Drum & Bass",
+      "sub_genre": "Neuro",
+      "bpm": 176.0,
+      "tonality": "8A",
+      "camelot": "8A",
+      "energy_raw": 0.5736240744590759,
+      "energy": 10,
+      "file_path": "/home/user/demo-library/lib/Neuro/07_hard_contact.wav"
+    },
+    {
+      "track_id": "8",
+      "name": "Terminal Velocity",
+      "artist": "Control Group",
+      "genre": "Neurofunk",
+      "sub_genre": "Neuro",
+      "bpm": 174.0,
+      "tonality": "7A",
+      "camelot": "7A",
+      "energy_raw": 0.5736267566680908,
+      "energy": 10,
+      "file_path": "/home/user/demo-library/lib/Neuro/08_terminal_velocity.wav"
+    },
+    {
+      "track_id": "5",
+      "name": "Steel Rolling",
+      "artist": "Bench Mark",
+      "genre": "Drum & Bass",
+      "sub_genre": "Rollers",
+      "bpm": 174.0,
+      "tonality": "8A",
+      "camelot": "8A",
+      "energy_raw": 0.4347894787788391,
+      "energy": 7,
+      "file_path": "/home/user/demo-library/lib/Rollers/05_steel_rolling.wav"
+    },
+    {
+      "track_id": "6",
+      "name": "Night Shift",
+      "artist": "Control Group",
+      "genre": "Drum & Bass",
+      "sub_genre": "Rollers",
+      "bpm": 174.0,
+      "tonality": "9A",
+      "camelot": "9A",
+      "energy_raw": 0.4348717927932739,
+      "energy": 7,
+      "file_path": "/home/user/demo-library/lib/Rollers/06_night_shift.wav"
+    },
+    {
+      "track_id": "4",
+      "name": "Cross Current",
+      "artist": "Bench Mark",
+      "genre": "Tech House",
+      "sub_genre": "Rollers",
+      "bpm": 126.0,
+      "tonality": "8B",
+      "camelot": "8B",
+      "energy_raw": 0.4326521158218384,
+      "energy": 7,
+      "file_path": "/home/user/demo-library/lib/Rollers/04_cross_current.wav"
+    },
+    {
+      "track_id": "9",
+      "name": "Wrong Key Roller",
+      "artist": "Control Group",
+      "genre": "Drum & Bass",
+      "sub_genre": "Rollers",
+      "bpm": 174.0,
+      "tonality": "2A",
+      "camelot": "2A",
+      "energy_raw": 0.4323696494102478,
+      "energy": 7,
+      "file_path": "/home/user/demo-library/lib/Rollers/09_wrong_key.wav"
+    },
+    {
+      "track_id": "3",
+      "name": "Long Way Down",
+      "artist": "Bench Mark",
+      "genre": "Deep House",
+      "sub_genre": "Deep",
+      "bpm": 124.0,
+      "tonality": "9A",
+      "camelot": "9A",
+      "energy_raw": 0.2404182255268097,
+      "energy": 3,
+      "file_path": "/home/user/demo-library/lib/Deep/03_long_way_down.wav"
+    },
+    {
+      "track_id": "2",
+      "name": "Undertow",
+      "artist": "Test Signal",
+      "genre": "Deep House",
+      "sub_genre": "Deep",
+      "bpm": 122.0,
+      "tonality": "8A",
+      "camelot": "8A",
+      "energy_raw": 0.239854633808136,
+      "energy": 3,
+      "file_path": "/home/user/demo-library/lib/Deep/02_undertow.wav"
+    },
+    {
+      "track_id": "1",
+      "name": "First Light",
+      "artist": "Test Signal",
+      "genre": "Ambient",
+      "sub_genre": "Ambient",
+      "bpm": 84.0,
+      "tonality": "8A",
+      "camelot": "8A",
+      "energy_raw": 0.061820998787879944,
+      "energy": 0,
+      "file_path": "/home/user/demo-library/lib/Ambient/01_first_light.wav"
+    }
+  ]
+}
