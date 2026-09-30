@@ -45,7 +45,7 @@ impl Camelot {
 }
 
 fn hour_delta(a: u8, b: u8) -> u8 {
-    let d = if a > b { a - b } else { b - a };
+    let d = a.abs_diff(b);
     d.min(12 - d)
 }
 
@@ -118,7 +118,10 @@ fn parse_classical(s: &str) -> Option<Camelot> {
             _ => return None,
         }
     };
-    Some(Camelot { hour, major: !minor })
+    Some(Camelot {
+        hour,
+        major: !minor,
+    })
 }
 
 #[cfg(test)]
@@ -127,31 +130,94 @@ mod tests {
 
     #[test]
     fn parses_camelot_direct() {
-        assert_eq!(Camelot::parse("8A"), Some(Camelot { hour: 8, major: false }));
-        assert_eq!(Camelot::parse("11B"), Some(Camelot { hour: 11, major: true }));
+        assert_eq!(
+            Camelot::parse("8A"),
+            Some(Camelot {
+                hour: 8,
+                major: false
+            })
+        );
+        assert_eq!(
+            Camelot::parse("11B"),
+            Some(Camelot {
+                hour: 11,
+                major: true
+            })
+        );
     }
 
     #[test]
     fn parses_classical() {
-        assert_eq!(Camelot::parse("Am"), Some(Camelot { hour: 8, major: false }));
-        assert_eq!(Camelot::parse("C"), Some(Camelot { hour: 8, major: true }));
-        assert_eq!(Camelot::parse("F#m"), Some(Camelot { hour: 11, major: false }));
-        assert_eq!(Camelot::parse("Bb"), Some(Camelot { hour: 6, major: true }));
+        assert_eq!(
+            Camelot::parse("Am"),
+            Some(Camelot {
+                hour: 8,
+                major: false
+            })
+        );
+        assert_eq!(
+            Camelot::parse("C"),
+            Some(Camelot {
+                hour: 8,
+                major: true
+            })
+        );
+        assert_eq!(
+            Camelot::parse("F#m"),
+            Some(Camelot {
+                hour: 11,
+                major: false
+            })
+        );
+        assert_eq!(
+            Camelot::parse("Bb"),
+            Some(Camelot {
+                hour: 6,
+                major: true
+            })
+        );
     }
 
     #[test]
     fn parses_open_key() {
-        assert_eq!(Camelot::parse("8m"), Some(Camelot { hour: 8, major: false }));
-        assert_eq!(Camelot::parse("5d"), Some(Camelot { hour: 5, major: true }));
+        assert_eq!(
+            Camelot::parse("8m"),
+            Some(Camelot {
+                hour: 8,
+                major: false
+            })
+        );
+        assert_eq!(
+            Camelot::parse("5d"),
+            Some(Camelot {
+                hour: 5,
+                major: true
+            })
+        );
     }
 
     #[test]
     fn compatibility_rules() {
-        let am = Camelot { hour: 8, major: false };
-        let c_major = Camelot { hour: 8, major: true }; // relative
-        let em = Camelot { hour: 9, major: false }; // +1 same letter
-        let dm = Camelot { hour: 7, major: false }; // -1 same letter
-        let far = Camelot { hour: 2, major: false };
+        let am = Camelot {
+            hour: 8,
+            major: false,
+        };
+        let c_major = Camelot {
+            hour: 8,
+            major: true,
+        }; // relative
+        let em = Camelot {
+            hour: 9,
+            major: false,
+        }; // +1 same letter
+        let dm = Camelot {
+            hour: 7,
+            major: false,
+        }; // -1 same letter
+        let far = Camelot {
+            hour: 2,
+            major: false,
+        };
         assert!(am.compatible(&c_major));
         assert!(am.compatible(&em));
         assert!(am.compatible(&dm));

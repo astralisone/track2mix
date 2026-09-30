@@ -8,9 +8,9 @@ This is the setup.
 
 The site is static, so anything in `site/main.js` is readable by anyone who
 views source. A database credential or list API key cannot live there. So the
-form posts to `functions/api/contact.js`, a Cloudflare Pages Function that runs
-on Cloudflare's side, holds the secrets, and returns the download link only
-after the contact is saved.
+form posts to `/api/contact`, which `worker/index.js` routes to
+`worker/contact.js`. That runs on Cloudflare's side, holds the secrets, and
+returns the download link only after the contact is saved.
 
 That also means the download URL isn't in the page source before someone fills
 the form in — the server hands it back with the success response.
@@ -70,17 +70,17 @@ version notes the site promises. [Buttondown](https://buttondown.com) is free to
 100 subscribers and its API shape is what `subscribeToList()` is written for.
 
 ```bash
-wrangler pages secret put LIST_ENDPOINT
+wrangler secret put LIST_ENDPOINT
 # https://api.buttondown.email/v1/subscribers
 
-wrangler pages secret put LIST_AUTH_HEADER
+wrangler secret put LIST_AUTH_HEADER
 # Token <your-buttondown-api-key>
 ```
 
 Secrets are deliberately not in `wrangler.toml`, which is committed to git.
 
 To use a different provider, `subscribeToList()` in
-`functions/api/contact.js` is the only function that changes.
+`worker/contact.js` is the only function that changes.
 
 **A list outage never costs you a contact.** The database write happens first.
 If the list call then fails, the contact is still saved, the download is still
@@ -93,20 +93,28 @@ FROM contact_events e JOIN contacts c ON c.id = e.contact_id
 WHERE json_extract(e.metadata, '$.list_subscribed') = 0;
 ```
 
-### 4. Bind the database to the Pages project
+### 4. Bind the database to the Worker
 
-In the Cloudflare dashboard: **Workers & Pages → your project → Settings →
-Bindings → Add → D1 database**. Variable name `CONTACTS_DB`, database
-`contacts`. Add it for both Production and Preview.
+Uncomment the `[[d1_databases]]` block in `wrangler.toml` and paste in the
+`database_id` from step 2. On a Workers service the binding is declared in
+config rather than in the dashboard, so it is reviewable and travels with the
+repository. Verify with:
+
+```bash
+npx wrangler deploy --dry-run
+```
+
+`env.CONTACTS_DB` should appear in the bindings table it prints.
 
 ### 5. Test it locally before deploying
 
 ```bash
-node functions/api/contact.test.mjs          # 21 assertions, no network
-wrangler pages dev site --d1 CONTACTS_DB=contacts
+node worker/contact.test.mjs                # 21 assertions, no network
+node worker/index.test.mjs                  # 22 assertions, routing and headers
+wrangler dev --d1 CONTACTS_DB=contacts
 ```
 
-Then submit the form at `http://localhost:8788` and confirm the row:
+Then submit the form at `http://localhost:8787` and confirm the row:
 
 ```bash
 wrangler d1 execute contacts --local --command "SELECT * FROM contacts"

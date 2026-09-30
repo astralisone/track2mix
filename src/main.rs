@@ -51,57 +51,65 @@ enum Command {
         path_map: Vec<(String, String)>,
     },
     /// Show top-N tracks sorted by a feature column.
-    Top {
-        /// Sort metric: energy | bpm | rms | centroid | flux | onsets | rating | plays
-        #[arg(long, default_value = "energy")]
-        by: String,
-        /// Number of rows to show.
-        #[arg(long, default_value_t = 20)]
-        limit: usize,
-        /// Case-insensitive substring filter on the Rekordbox Genre tag.
-        #[arg(long)]
-        genre: Option<String>,
-        /// Case-insensitive substring filter on the parent-folder name on disk
-        /// (e.g. "liquid", "neuro") — useful when the Genre tag is too coarse.
-        #[arg(long = "sub-genre")]
-        sub_genre: Option<String>,
-        /// Sort ascending instead of descending.
-        #[arg(long)]
-        asc: bool,
-        /// Also write the matching tracks to an M3U8 playlist at this path
-        /// (Rekordbox: File → Import Playlist).
-        #[arg(long)]
-        export: Option<PathBuf>,
-        /// Playlist name embedded in the M3U8 header. Defaults to the file stem.
-        #[arg(long = "playlist-name")]
-        playlist_name: Option<String>,
-    },
+    Top(TopArgs),
     /// Suggest harmonically + BPM-compatible tracks around a reference track.
-    Compat {
-        /// Substring search against track name or artist; the top-ranked match is used as the anchor.
-        query: String,
-        /// BPM tolerance (± this value around the anchor's BPM).
-        #[arg(long, default_value_t = 3.0)]
-        bpm_tol: f32,
-        /// Maximum number of suggestions to return.
-        #[arg(long, default_value_t = 20)]
-        limit: usize,
-        /// Ignore Camelot compatibility (BPM-only matching).
-        #[arg(long)]
-        any_key: bool,
-        /// Also match tracks at half and double the anchor's BPM
-        /// (e.g. a 175 BPM DnB anchor matches 86–88 BPM half-time tagging of the same tempo).
-        #[arg(long = "half-double-ok")]
-        half_double_ok: bool,
-        /// Also write the compatible tracks to an M3U8 playlist at this path.
-        #[arg(long)]
-        export: Option<PathBuf>,
-        /// Playlist name embedded in the M3U8 header. Defaults to "<anchor name> — compat".
-        #[arg(long = "playlist-name")]
-        playlist_name: Option<String>,
-    },
+    Compat(CompatArgs),
     /// Summary of what's in the database.
     Stats,
+}
+
+/// Grouped so the handler takes one argument rather than eight. Clap derives
+/// the same flags either way; this is only about the shape of the call.
+#[derive(clap::Args, Debug)]
+struct TopArgs {
+    /// Sort metric: energy | bpm | rms | centroid | flux | onsets | rating | plays
+    #[arg(long, default_value = "energy")]
+    by: String,
+    /// Number of rows to show.
+    #[arg(long, default_value_t = 20)]
+    limit: usize,
+    /// Case-insensitive substring filter on the Rekordbox Genre tag.
+    #[arg(long)]
+    genre: Option<String>,
+    /// Case-insensitive substring filter on the parent-folder name on disk
+    /// (e.g. "liquid", "neuro") — useful when the Genre tag is too coarse.
+    #[arg(long = "sub-genre")]
+    sub_genre: Option<String>,
+    /// Sort ascending instead of descending.
+    #[arg(long)]
+    asc: bool,
+    /// Also write the matching tracks to an M3U8 playlist at this path
+    /// (Rekordbox: File → Import Playlist).
+    #[arg(long)]
+    export: Option<PathBuf>,
+    /// Playlist name embedded in the M3U8 header. Defaults to the file stem.
+    #[arg(long = "playlist-name")]
+    playlist_name: Option<String>,
+}
+
+#[derive(clap::Args, Debug)]
+struct CompatArgs {
+    /// Substring search against track name or artist; the top-ranked match is used as the anchor.
+    query: String,
+    /// BPM tolerance (± this value around the anchor's BPM).
+    #[arg(long, default_value_t = 3.0)]
+    bpm_tol: f32,
+    /// Maximum number of suggestions to return.
+    #[arg(long, default_value_t = 20)]
+    limit: usize,
+    /// Ignore Camelot compatibility (BPM-only matching).
+    #[arg(long)]
+    any_key: bool,
+    /// Also match tracks at half and double the anchor's BPM
+    /// (e.g. a 175 BPM DnB anchor matches 86–88 BPM half-time tagging of the same tempo).
+    #[arg(long = "half-double-ok")]
+    half_double_ok: bool,
+    /// Also write the compatible tracks to an M3U8 playlist at this path.
+    #[arg(long)]
+    export: Option<PathBuf>,
+    /// Playlist name embedded in the M3U8 header. Defaults to "<anchor name> — compat".
+    #[arg(long = "playlist-name")]
+    playlist_name: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -114,42 +122,8 @@ fn main() -> Result<()> {
             dry_run,
             path_map,
         } => cmd_analyze(&cli.db, &xml, limit, skip_analyzed, dry_run, &path_map),
-        Command::Top {
-            by,
-            limit,
-            genre,
-            sub_genre,
-            asc,
-            export,
-            playlist_name,
-        } => cmd_top(
-            &cli.db,
-            &by,
-            limit,
-            genre.as_deref(),
-            sub_genre.as_deref(),
-            asc,
-            export.as_deref(),
-            playlist_name.as_deref(),
-        ),
-        Command::Compat {
-            query,
-            bpm_tol,
-            limit,
-            any_key,
-            half_double_ok,
-            export,
-            playlist_name,
-        } => cmd_compat(
-            &cli.db,
-            &query,
-            bpm_tol,
-            limit,
-            any_key,
-            half_double_ok,
-            export.as_deref(),
-            playlist_name.as_deref(),
-        ),
+        Command::Top(args) => cmd_top(&cli.db, &args),
+        Command::Compat(args) => cmd_compat(&cli.db, &args),
         Command::Stats => cmd_stats(&cli.db),
     }
 }
@@ -236,10 +210,7 @@ fn cmd_analyze(
             println!("    {} with no Location attribute", no_location);
         }
         if unparseable_uri > 0 {
-            println!(
-                "    {} with unparseable file:// URIs",
-                unparseable_uri
-            );
+            println!("    {} with unparseable file:// URIs", unparseable_uri);
         }
         if missing_file > 0 {
             println!(
@@ -265,7 +236,10 @@ fn cmd_analyze(
 
     let candidates = resolved;
     if dry_run {
-        println!("  dry-run: skipping audio decode. {} track(s) would be analyzed.", candidates.len());
+        println!(
+            "  dry-run: skipping audio decode. {} track(s) would be analyzed.",
+            candidates.len()
+        );
         return Ok(());
     }
     if candidates.is_empty() {
@@ -326,11 +300,7 @@ fn cmd_analyze(
     Ok(())
 }
 
-fn analyze_one(
-    track: &rekordbox::Track,
-    path: &Path,
-    store: &Mutex<Store>,
-) -> Result<()> {
+fn analyze_one(track: &rekordbox::Track, path: &Path, store: &Mutex<Store>) -> Result<()> {
     let audio = audio::decode_mono(path, ANALYSIS_SR)
         .with_context(|| format!("decoding {}", path.display()))?;
     let feats = features::extract(&audio.samples, audio.sample_rate);
@@ -339,16 +309,12 @@ fn analyze_one(
     Ok(())
 }
 
-fn cmd_top(
-    db: &Path,
-    metric: &str,
-    limit: usize,
-    genre: Option<&str>,
-    sub_genre: Option<&str>,
-    asc: bool,
-    export: Option<&Path>,
-    playlist_name: Option<&str>,
-) -> Result<()> {
+fn cmd_top(db: &Path, args: &TopArgs) -> Result<()> {
+    let (metric, limit, asc) = (args.by.as_str(), args.limit, args.asc);
+    let genre = args.genre.as_deref();
+    let sub_genre = args.sub_genre.as_deref();
+    let export = args.export.as_deref();
+    let playlist_name = args.playlist_name.as_deref();
     let store = Store::open(db)?;
     let rows = store.top_by(metric, limit, genre, sub_genre, asc)?;
     if rows.is_empty() {
@@ -356,7 +322,10 @@ fn cmd_top(
         return Ok(());
     }
     let stats = store.stats()?;
-    let (emin, emax) = (stats.min_energy.unwrap_or(0.0), stats.max_energy.unwrap_or(1.0));
+    let (emin, emax) = (
+        stats.min_energy.unwrap_or(0.0),
+        stats.max_energy.unwrap_or(1.0),
+    );
     print_table(&rows, emin, emax);
     if let Some(out) = export {
         let name = resolve_playlist_name(playlist_name, out, "top");
@@ -371,16 +340,12 @@ fn cmd_top(
     Ok(())
 }
 
-fn cmd_compat(
-    db: &Path,
-    query: &str,
-    bpm_tol: f32,
-    limit: usize,
-    any_key: bool,
-    half_double_ok: bool,
-    export: Option<&Path>,
-    playlist_name: Option<&str>,
-) -> Result<()> {
+fn cmd_compat(db: &Path, args: &CompatArgs) -> Result<()> {
+    let query = args.query.as_str();
+    let (bpm_tol, limit) = (args.bpm_tol, args.limit);
+    let (any_key, half_double_ok) = (args.any_key, args.half_double_ok);
+    let export = args.export.as_deref();
+    let playlist_name = args.playlist_name.as_deref();
     let store = Store::open(db)?;
     let matches = store.search(query, 5)?;
     let Some(anchor) = matches.first().cloned() else {
@@ -466,13 +431,24 @@ fn cmd_compat(
         println!(
             "no compatible tracks in ±{:.1} BPM{}{}.",
             bpm_tol,
-            if half_double_ok { " (with half/double)" } else { "" },
-            if apply_key_filter { " with a compatible key" } else { "" },
+            if half_double_ok {
+                " (with half/double)"
+            } else {
+                ""
+            },
+            if apply_key_filter {
+                " with a compatible key"
+            } else {
+                ""
+            },
         );
         return Ok(());
     }
     let stats = store.stats()?;
-    let (emin, emax) = (stats.min_energy.unwrap_or(0.0), stats.max_energy.unwrap_or(1.0));
+    let (emin, emax) = (
+        stats.min_energy.unwrap_or(0.0),
+        stats.max_energy.unwrap_or(1.0),
+    );
     print_table(&compatible, emin, emax);
     if let Some(out) = export {
         let default = format!("{} — compat", anchor.name);

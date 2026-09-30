@@ -36,12 +36,12 @@ matters is that the publish directory is `site`.
 
 The download is gated: name and email are mandatory, and the link is returned
 by the server only after the contact is saved. Nothing to configure in this
-directory — the form posts to `/api/contact`, a Cloudflare Pages Function in
-`functions/api/`, which writes to the shared D1 contacts database and
-subscribes the person to your mailing list.
+directory — the form posts to `/api/contact`, which the Worker in `worker/`
+handles: it writes to the shared D1 contacts database and subscribes the person
+to your mailing list.
 
-Full setup (create the database, apply the schema, set the list secrets, bind
-it to the Pages project) is in **[docs/CONTACTS.md](../docs/CONTACTS.md)**.
+Full setup (create the database, apply the schema, set the list secrets, bind it
+to the Worker) is in **[docs/CONTACTS.md](../docs/CONTACTS.md)**.
 
 Until the binding exists, submitting the form returns a 500 that names the
 missing variable. It does not fake a success, and it does not hand out the

@@ -25,18 +25,11 @@ jobs:
       - name: Test
         run: cargo test --package track2mix --all-targets
 
-      # Advisory, not blocking: the codebase is not currently rustfmt-clean and
-      # carries a handful of clippy lints. These steps surface them without
-      # failing the build. Once `cargo fmt` has been run across the tree and the
-      # lints are cleared, drop continue-on-error and add `-D warnings` to make
-      # them enforcing.
-      - name: Format (advisory)
-        continue-on-error: true
+      - name: Format
         run: cargo fmt --package track2mix -- --check
 
-      - name: Clippy (advisory)
-        continue-on-error: true
-        run: cargo clippy --package track2mix --all-targets
+      - name: Clippy
+        run: cargo clippy --package track2mix --all-targets -- -D warnings
 
   frontend:
     name: Frontend
@@ -62,7 +55,22 @@ jobs:
         run: node --check site/main.js
 
       - name: Test the contact endpoint
-        run: node functions/api/contact.test.mjs
+        run: node worker/contact.test.mjs
+
+      - name: Test the Worker routing and response headers
+        run: node worker/index.test.mjs
+
+      - name: Check the Worker config builds
+        # Reproduces what Workers Builds runs on a deploy, without deploying.
+        # Catches a broken wrangler.toml, a missing entry point or a missing
+        # asset directory here rather than in the Cloudflare build.
+        #
+        # It does not catch everything a real deploy checks. A dry-run never
+        # contacts the API, so it accepts a compatibility_date the runtime would
+        # reject (a date in 2027 passes) and cannot see account-side state such
+        # as the project's configured deploy command.
+        run: npx --yes wrangler@4 deploy --dry-run
+
       - name: Check a payment method is configured
         # The tip jar renders disabled (and says so) until at least one handle
         # is set in site/main.js. Flag it here so a deploy with no payment
