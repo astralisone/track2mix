@@ -21,6 +21,46 @@ routes without any configuration.
 
 Deploy. You get `track2mix.pages.dev` immediately.
 
+## Troubleshooting: "Missing entry-point to Worker script or to assets directory"
+
+If the build log contains this, near the top:
+
+```
+▲ [WARNING] It seems that you have run `wrangler deploy` on a Pages project,
+            `wrangler pages deploy` should be used instead.
+✘ [ERROR] Missing entry-point to Worker script or to assets directory
+```
+
+then the project is running the **Workers** deploy command against a **Pages**
+project. `wrangler deploy` ignores `pages_build_output_dir`, goes looking for a
+Worker entry point, finds none, and stops. Nothing is wrong with `wrangler.toml`.
+
+It happens when the project was created from the **Workers** tab (Workers
+Builds defaults its deploy command to `npx wrangler deploy`) rather than the
+**Pages** tab.
+
+Two ways out.
+
+**Change the deploy command** — one field, keeps the project you already have.
+Project → **Settings → Build** → *Deploy command*:
+
+```
+npx wrangler pages deploy
+```
+
+No path is needed: `pages_build_output_dir = "site"` in `wrangler.toml` already
+says where the output is. `npm run deploy` is wired to the same thing.
+
+**Or recreate it as a Pages project**, which is what step 1 above describes and
+what this repository is configured for. Workers & Pages → Create → the **Pages**
+tab → Connect to Git. Leave the build command empty and set the output
+directory to `site`. A Pages project needs no deploy command at all.
+
+Prefer the second if nothing depends on the existing project yet: Pages is the
+product `functions/api/contact.js` is written for. A top-level `functions/`
+directory becomes routes automatically under Pages; Workers uses a different
+model and would need that endpoint rewritten as a Worker entry point.
+
 ## 2. Attach the domain
 
 Project → **Custom domains → Set up a custom domain** → `track2mix.com`.
