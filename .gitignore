@@ -30,3 +30,6 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Locally built release artifacts
+release-v0.1.0/*.tar.gz
