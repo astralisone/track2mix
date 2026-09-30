@@ -52,10 +52,7 @@ pub fn extract(samples: &[f32], sample_rate: u32) -> Features {
     let mut planner = FftPlanner::<f32>::new();
     let fft = planner.plan_fft_forward(FFT_SIZE);
     let hann: Vec<f32> = (0..FFT_SIZE)
-        .map(|i| {
-            0.5 - 0.5
-                * (2.0 * std::f32::consts::PI * i as f32 / (FFT_SIZE - 1) as f32).cos()
-        })
+        .map(|i| 0.5 - 0.5 * (2.0 * std::f32::consts::PI * i as f32 / (FFT_SIZE - 1) as f32).cos())
         .collect();
 
     for window in &windows {
@@ -83,11 +80,7 @@ pub fn extract(samples: &[f32], sample_rate: u32) -> Features {
             // Spectral centroid = frequency-weighted magnitude mean
             let total_mag: f32 = mag.iter().sum();
             if total_mag > 1e-6 {
-                let weighted: f32 = mag
-                    .iter()
-                    .enumerate()
-                    .map(|(i, m)| i as f32 * m)
-                    .sum();
+                let weighted: f32 = mag.iter().enumerate().map(|(i, m)| i as f32 * m).sum();
                 let centroid_bin = weighted / total_mag;
                 // Normalize to 0..1 (Nyquist = FFT_SIZE/2 bins)
                 centroid_values.push(centroid_bin / (FFT_SIZE / 2) as f32);

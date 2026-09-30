@@ -96,7 +96,9 @@ where
                 if !remapped.exists() {
                     dropped.missing_file += 1;
                     if dropped.missing_examples.len() < 10 {
-                        dropped.missing_examples.push(remapped.display().to_string());
+                        dropped
+                            .missing_examples
+                            .push(remapped.display().to_string());
                     }
                 } else {
                     resolved.push((t, remapped));

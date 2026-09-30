@@ -69,9 +69,8 @@ impl Track {
 }
 
 pub fn parse(path: &std::path::Path) -> Result<RekordboxXml> {
-    let xml = std::fs::read_to_string(path)
-        .with_context(|| format!("reading {}", path.display()))?;
-    let parsed: RekordboxXml =
-        quick_xml::de::from_str(&xml).context("parsing Rekordbox XML")?;
+    let xml =
+        std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    let parsed: RekordboxXml = quick_xml::de::from_str(&xml).context("parsing Rekordbox XML")?;
     Ok(parsed)
 }

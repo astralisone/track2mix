@@ -28,8 +28,8 @@ pub fn write_m3u8(out: &Path, playlist_name: &str, rows: &[TrackRow]) -> Result<
             ));
         }
     }
-    let mut file = std::fs::File::create(out)
-        .with_context(|| format!("creating {}", out.display()))?;
+    let mut file =
+        std::fs::File::create(out).with_context(|| format!("creating {}", out.display()))?;
     writeln!(file, "#EXTM3U")?;
     writeln!(file, "#PLAYLIST:{}", playlist_name)?;
     let mut written = 0usize;

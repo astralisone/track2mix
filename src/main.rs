@@ -236,10 +236,7 @@ fn cmd_analyze(
             println!("    {} with no Location attribute", no_location);
         }
         if unparseable_uri > 0 {
-            println!(
-                "    {} with unparseable file:// URIs",
-                unparseable_uri
-            );
+            println!("    {} with unparseable file:// URIs", unparseable_uri);
         }
         if missing_file > 0 {
             println!(
@@ -265,7 +262,10 @@ fn cmd_analyze(
 
     let candidates = resolved;
     if dry_run {
-        println!("  dry-run: skipping audio decode. {} track(s) would be analyzed.", candidates.len());
+        println!(
+            "  dry-run: skipping audio decode. {} track(s) would be analyzed.",
+            candidates.len()
+        );
         return Ok(());
     }
     if candidates.is_empty() {
@@ -326,11 +326,7 @@ fn cmd_analyze(
     Ok(())
 }
 
-fn analyze_one(
-    track: &rekordbox::Track,
-    path: &Path,
-    store: &Mutex<Store>,
-) -> Result<()> {
+fn analyze_one(track: &rekordbox::Track, path: &Path, store: &Mutex<Store>) -> Result<()> {
     let audio = audio::decode_mono(path, ANALYSIS_SR)
         .with_context(|| format!("decoding {}", path.display()))?;
     let feats = features::extract(&audio.samples, audio.sample_rate);
@@ -356,7 +352,10 @@ fn cmd_top(
         return Ok(());
     }
     let stats = store.stats()?;
-    let (emin, emax) = (stats.min_energy.unwrap_or(0.0), stats.max_energy.unwrap_or(1.0));
+    let (emin, emax) = (
+        stats.min_energy.unwrap_or(0.0),
+        stats.max_energy.unwrap_or(1.0),
+    );
     print_table(&rows, emin, emax);
     if let Some(out) = export {
         let name = resolve_playlist_name(playlist_name, out, "top");
@@ -466,13 +465,24 @@ fn cmd_compat(
         println!(
             "no compatible tracks in ±{:.1} BPM{}{}.",
             bpm_tol,
-            if half_double_ok { " (with half/double)" } else { "" },
-            if apply_key_filter { " with a compatible key" } else { "" },
+            if half_double_ok {
+                " (with half/double)"
+            } else {
+                ""
+            },
+            if apply_key_filter {
+                " with a compatible key"
+            } else {
+                ""
+            },
         );
         return Ok(());
     }
     let stats = store.stats()?;
-    let (emin, emax) = (stats.min_energy.unwrap_or(0.0), stats.max_energy.unwrap_or(1.0));
+    let (emin, emax) = (
+        stats.min_energy.unwrap_or(0.0),
+        stats.max_energy.unwrap_or(1.0),
+    );
     print_table(&compatible, emin, emax);
     if let Some(out) = export {
         let default = format!("{} — compat", anchor.name);
