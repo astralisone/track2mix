@@ -1388,3 +1388,77 @@ footer {
     opacity: 1 !important;
   }
 }
+
+/* ==========================================================================
+   Scroll-driven construct / deconstruct
+   --------------------------------------------------------------------------
+   Blocks assemble as they enter the viewport and settle back as they leave,
+   driven by each element's own view() timeline. No library, no scroll
+   listener, no main-thread work — the compositor runs it.
+
+   @supports keeps it strictly additive: Firefox, where this is still behind a
+   flag, keeps the finished static page. Each element carries its own timeline,
+   which is what produces the stagger — items further along a row cross the
+   viewport edge later, so no per-child delays are needed.
+
+   ONE animation across `cover`, not a build plus a separate shed. Two
+   animations touching the same properties both fill, and the later one wins
+   even outside its own range, which pins everything and nothing moves.
+
+   Opacity floors at 0.45 rather than 0 on purpose. Mid-scroll states could not
+   be verified in this environment (headless Chromium does not advance a
+   ViewTimeline for a screenshot), so the effect is built so that its worst
+   case is "dim" and never "invisible". Once it has been watched in a real
+   browser, dropping the floor toward 0 is a one-number change.
+   ========================================================================== */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .card,
+    .step,
+    .fig,
+    .ranking-demo,
+    .signal-card,
+    #analysis .speclist li,
+    #get .glass,
+    #faq details,
+    #problem .section-head,
+    #how .section-head,
+    #analysis .section-head,
+    #features .section-head,
+    #honest .two-col > *,
+    #get .section-head {
+      animation: sd-pass linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+
+    @keyframes sd-pass {
+      0% {
+        opacity: 0.45;
+        transform: translateY(26px) scale(0.985);
+      }
+      /* Fully built well before it reaches the middle of the screen. */
+      26% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      /* Held steady for the whole time it is comfortably readable. */
+      74% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0.45;
+        transform: translateY(-16px) scale(0.99);
+      }
+    }
+
+    /* The hero is above the fold at load: it has no entry to travel through,
+       and animating it would leave it mid-build in a thumbnail. */
+    .hero,
+    .hero * {
+      animation: none;
+    }
+  }
+}
