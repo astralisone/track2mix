@@ -58,9 +58,11 @@ pub fn extract(samples: &[f32], sample_rate: u32) -> Features {
     for window in &windows {
         let mut prev_mag: Vec<f32> = vec![0.0; FFT_SIZE / 2];
         let mut onsets = 0usize;
-        let mut frames = 0usize;
 
-        for chunk_start in (0..window.len().saturating_sub(FFT_SIZE)).step_by(HOP_SIZE) {
+        for (frames, chunk_start) in (0..window.len().saturating_sub(FFT_SIZE))
+            .step_by(HOP_SIZE)
+            .enumerate()
+        {
             let chunk = &window[chunk_start..chunk_start + FFT_SIZE];
 
             // RMS on the raw windowed signal
@@ -107,7 +109,6 @@ pub fn extract(samples: &[f32], sample_rate: u32) -> Features {
             }
 
             prev_mag = mag;
-            frames += 1;
         }
 
         total_onsets += onsets;

@@ -173,7 +173,7 @@ where
                 });
             }
         }
-        let emit = n <= 3 || n == total || n % emit_every == 0;
+        let emit = n <= 3 || n == total || n.is_multiple_of(emit_every);
         if emit {
             on_progress(ProgressEvent::Track {
                 done: n,

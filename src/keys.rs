@@ -45,7 +45,7 @@ impl Camelot {
 }
 
 fn hour_delta(a: u8, b: u8) -> u8 {
-    let d = if a > b { a - b } else { b - a };
+    let d = a.abs_diff(b);
     d.min(12 - d)
 }
 

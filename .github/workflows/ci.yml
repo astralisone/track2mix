@@ -25,18 +25,11 @@ jobs:
       - name: Test
         run: cargo test --package track2mix --all-targets
 
-      # Advisory, not blocking: the codebase is not currently rustfmt-clean and
-      # carries a handful of clippy lints. These steps surface them without
-      # failing the build. Once `cargo fmt` has been run across the tree and the
-      # lints are cleared, drop continue-on-error and add `-D warnings` to make
-      # them enforcing.
-      - name: Format (advisory)
-        continue-on-error: true
+      - name: Format
         run: cargo fmt --package track2mix -- --check
 
-      - name: Clippy (advisory)
-        continue-on-error: true
-        run: cargo clippy --package track2mix --all-targets
+      - name: Clippy
+        run: cargo clippy --package track2mix --all-targets -- -D warnings
 
   frontend:
     name: Frontend
