@@ -11,6 +11,7 @@ import {
 } from "@/lib/tauri";
 import { open as openFile } from "@tauri-apps/plugin-dialog";
 import { FilterBar, emptyFilters, type FilterState } from "./components/FilterBar";
+import { Logo } from "./components/Logo";
 import { TrackTable, type SortKey } from "./components/TrackTable";
 import { CompatPanel } from "./components/CompatPanel";
 import { ExportDialog } from "./components/ExportDialog";
@@ -18,7 +19,6 @@ import { Button } from "./components/ui/Button";
 import { Badge } from "./components/ui/Badge";
 import {
   Database,
-  Disc3,
   Download,
   FileUp,
   Sparkles,
@@ -267,7 +267,7 @@ function App() {
       {/* Title bar */}
       <header className="drag-region h-10 flex items-center justify-between px-4 border-b border-white/5">
         <div className="flex items-center gap-2 pl-16">
-          <Disc3 className="h-4 w-4 text-iris-300" />
+          <Logo className="h-[18px] w-[18px]" />
           <span className="text-sm font-medium tracking-tight">
             Track2Mix
           </span>
