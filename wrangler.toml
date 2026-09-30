@@ -10,7 +10,12 @@
 
 name = "track2mix"
 main = "worker/index.js"
-compatibility_date = "2026-09-30"
+# Deliberately behind today's date. Cloudflare rejects a compatibility_date
+# newer than the runtime it deploys to, and `wrangler deploy --dry-run` does not
+# check this — a date in 2027 passes a dry-run unchanged — so a date set to
+# "today" can only fail in the real build. Bump this on purpose, after reading
+# what changes: https://developers.cloudflare.com/workers/configuration/compatibility-dates/
+compatibility_date = "2025-09-30"
 
 [assets]
 # The static site, exactly as it sits in the repository. No build step: the

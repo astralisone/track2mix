@@ -62,8 +62,13 @@ jobs:
 
       - name: Check the Worker config builds
         # Reproduces what Workers Builds runs on a deploy, without deploying.
-        # Catches a broken wrangler.toml or a missing asset directory here
-        # rather than in the Cloudflare build.
+        # Catches a broken wrangler.toml, a missing entry point or a missing
+        # asset directory here rather than in the Cloudflare build.
+        #
+        # It does not catch everything a real deploy checks. A dry-run never
+        # contacts the API, so it accepts a compatibility_date the runtime would
+        # reject (a date in 2027 passes) and cannot see account-side state such
+        # as the project's configured deploy command.
         run: npx --yes wrangler@4 deploy --dry-run
 
       - name: Check a payment method is configured
