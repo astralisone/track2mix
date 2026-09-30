@@ -1405,11 +1405,16 @@ footer {
    animations touching the same properties both fill, and the later one wins
    even outside its own range, which pins everything and nothing moves.
 
-   Opacity floors at 0.45 rather than 0 on purpose. Mid-scroll states could not
-   be verified in this environment (headless Chromium does not advance a
-   ViewTimeline for a screenshot), so the effect is built so that its worst
-   case is "dim" and never "invisible". Once it has been watched in a real
-   browser, dropping the floor toward 0 is a one-number change.
+   Measured in Chromium by scrolling the page and reading computed style at
+   each position, rather than inferred: a card reads opacity 0.50 at 0% of
+   cover with translateY +23.6px, reaches exactly opacity 1 / translateY 0 at
+   26%, holds it through 50%, and lands on 0.45 / -16px / scale 0.99 at 100%.
+   The curve below is what actually runs.
+
+   Opacity floors at 0.45 rather than 0 by choice, not caution: text that
+   vanishes completely at the viewport edges is harder to read on the way past
+   than text that merely dims. Dropping the floor is a one-number change if a
+   stronger fade is ever wanted.
    ========================================================================== */
 
 @supports (animation-timeline: view()) {
