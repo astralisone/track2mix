@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Downloads — Track2Mix</title>
+<meta name="description" content="Download Track2Mix for macOS, Windows or Linux. Free desktop app that finds which tracks in your Rekordbox library actually mix together.">
+<link rel="canonical" href="https://downloads.track2mix.com/">
+<link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" href="/assets/app-icon-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .dl-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .dl-card { padding: clamp(22px, 3vw, 30px); display: flex; flex-direction: column; gap: 14px; }
+  .dl-card h3 { font-size: 1.25rem; margin: 0; }
+  .dl-card p { margin: 0; color: var(--fg-muted); font-size: 0.9375rem; }
+  .dl-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .dl-files { display: grid; gap: 8px; margin-top: auto; }
+  .dl-file { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px;
+    border: 1px solid var(--hairline); border-radius: var(--radius-md); color: var(--fg); text-decoration: none; }
+  .dl-file:hover { border-color: var(--iris-400); }
+  .dl-file span:first-child { font-family: var(--font-mono); font-size: 0.8125rem; overflow-wrap: anywhere; }
+  .dl-file span:last-child { color: var(--fg-faint); font-size: 0.8125rem; white-space: nowrap; }
+  .dl-status { text-align: center; color: var(--fg-muted); margin: 0 0 28px; min-height: 1.5em; }
+  .dl-notes { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .dl-notes .glass { padding: clamp(22px, 3vw, 30px); }
+  .dl-notes h3 { font-size: 1.125rem; margin: 0 0 10px; }
+  .dl-notes p, .dl-notes li { color: var(--fg-muted); font-size: 0.9375rem; }
+  .dl-notes ol, .dl-notes ul { margin: 0; padding-left: 1.25rem; display: grid; gap: 6px; }
+  .dl-notes code { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--fg); overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="https://track2mix.com/">
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <rect x="7" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"></rect>
+        <rect x="7" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"></rect>
+        <rect x="13" y="7.1" width="2.8" height="15.4" rx="1.4" fill="#7C7EE5"></rect>
+        <rect x="13" y="25.5" width="2.8" height="15.4" rx="1.4" fill="#F5B71C"></rect>
+        <rect x="19" y="12.7" width="2.8" height="9.8" rx="1.4" fill="#7C7EE5"></rect>
+        <rect x="19" y="25.5" width="2.8" height="9.8" rx="1.4" fill="#F5B71C"></rect>
+        <rect x="25" y="4.3" width="2.8" height="18.2" rx="1.4" fill="#7C7EE5"></rect>
+        <rect x="25" y="25.5" width="2.8" height="18.2" rx="1.4" fill="#F5B71C"></rect>
+        <rect x="31" y="9.9" width="2.8" height="12.6" rx="1.4" fill="#7C7EE5"></rect>
+        <rect x="31" y="25.5" width="2.8" height="12.6" rx="1.4" fill="#F5B71C"></rect>
+        <rect x="37" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"></rect>
+        <rect x="37" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"></rect>
+        <path d="M26.4 3V45" stroke="#E1E1E3" stroke-opacity="0.55" stroke-width="1.4" stroke-linecap="round"></path>
+      </svg>
+      Track2Mix
+    </a>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="https://track2mix.com/">Back to the site</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section style="padding-bottom:clamp(24px,4vw,40px)">
+    <div class="wrap">
+      <div class="section-head" style="text-align:center;margin-inline:auto">
+        <p class="eyebrow">Downloads</p>
+        <h1 style="font-size:clamp(2rem,5vw,3rem);margin:0 0 14px">Get Track2Mix</h1>
+        <p style="margin-inline:auto">
+          Free desktop app. It runs entirely on your machine: no account, no upload.
+          Needs Rekordbox 6 or 7 to produce the collection export.
+        </p>
+      </div>
+      <p class="dl-status" id="dl-status" role="status" aria-live="polite">Checking for the latest release…</p>
+
+      <div class="dl-grid">
+        <article class="glass dl-card" data-platform="macos">
+          <div class="dl-head"><h3>macOS</h3><span class="pill pill-muted" data-pill>Checking</span></div>
+          <p>macOS 11 or later, Apple Silicon and Intel.</p>
+          <div class="dl-files" data-files></div>
+        </article>
+        <article class="glass dl-card" data-platform="windows">
+          <div class="dl-head"><h3>Windows</h3><span class="pill pill-muted" data-pill>Checking</span></div>
+          <p>Windows 10 or later, 64-bit.</p>
+          <div class="dl-files" data-files></div>
+        </article>
+        <article class="glass dl-card" data-platform="linux">
+          <div class="dl-head"><h3>Linux</h3><span class="pill pill-muted" data-pill>Checking</span></div>
+          <p>x86_64. Desktop app and command-line tool.</p>
+          <div class="dl-files" data-files></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap dl-notes">
+      <div class="glass">
+        <h3>First run</h3>
+        <ol>
+          <li>In Rekordbox: <strong>File → Export Collection in xml format</strong>.</li>
+          <li>Open Track2Mix and point it at that XML file.</li>
+          <li>Run the analysis. Results go to <code>library.db</code>, a single file you own.</li>
+          <li>Click any track for its ranked compatible neighbours, then export an M3U8 for Rekordbox.</li>
+        </ol>
+      </div>
+      <div class="glass">
+        <h3>If your OS warns you</h3>
+        <p><strong>macOS:</strong> builds that aren't notarized yet show "developer cannot be verified". Right-click the app, choose <strong>Open</strong>, then <strong>Open</strong> again. Once is enough.</p>
+        <p style="margin-top:10px"><strong>Windows:</strong> SmartScreen may say "protected your PC". Click <strong>More info → Run anyway</strong>.</p>
+        <p style="margin-top:10px"><a href="https://github.com/astralisone/track2mix/blob/main/docs/INSTALL.md">Full install notes</a></p>
+      </div>
+      <div class="glass">
+        <h3>Verify a download</h3>
+        <p>Each release includes a <code>SHA256SUMS</code> file. Put it next to the files you downloaded and run:</p>
+        <p style="margin-top:10px"><code>sha256sum -c SHA256SUMS</code></p>
+        <p style="margin-top:10px">All builds and releases are on <a href="https://github.com/astralisone/track2mix/releases">GitHub</a>, and the source is there too.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <span>Track2Mix — DJ library intelligence for Rekordbox. Pay what you want.</span>
+    <nav class="footer-links">
+      <a href="https://track2mix.com/">Home</a>
+      <a href="https://track2mix.com/#get">Tip jar</a>
+      <a href="https://github.com/astralisone/track2mix">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+/* Reads the repo's published releases and fills in the real files, so the page
+   stays correct without a redeploy when a new release goes out. With no
+   release, or if GitHub can't be reached, it says so instead of showing dead
+   buttons. */
+(function () {
+  var REPO = "astralisone/track2mix";
+  var RELEASES_PAGE = "https://github.com/" + REPO + "/releases";
+  var statusEl = document.getElementById("dl-status");
+
+  function platformOf(name) {
+    var n = name.toLowerCase();
+    if (/\.(dmg|pkg)$/.test(n) || /(apple-darwin|macos|\.app\.tar\.gz)/.test(n)) return "macos";
+    if (/\.(msi|exe)$/.test(n) || /(windows|win64|msvc)/.test(n)) return "windows";
+    if (/\.(appimage|deb|rpm)$/.test(n) || /linux/.test(n)) return "linux";
+    return null;
+  }
+
+  function size(bytes) {
+    if (!bytes) return "";
+    return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(bytes / 1024)) + " KB";
+  }
+
+  function fileLink(asset) {
+    var a = document.createElement("a");
+    a.className = "dl-file";
+    a.href = asset.browser_download_url;
+    a.rel = "noopener";
+    var n = document.createElement("span");
+    n.textContent = asset.name;
+    var s = document.createElement("span");
+    s.textContent = size(asset.size);
+    a.appendChild(n);
+    a.appendChild(s);
+    return a;
+  }
+
+  function setCard(platform, assets) {
+    var card = document.querySelector('[data-platform="' + platform + '"]');
+    var pill = card.querySelector("[data-pill]");
+    var files = card.querySelector("[data-files]");
+    files.textContent = "";
+    if (assets.length) {
+      pill.textContent = "Available";
+      pill.className = "pill pill-gold";
+      assets.forEach(function (a) { files.appendChild(fileLink(a)); });
+    } else {
+      pill.textContent = "Not published yet";
+      pill.className = "pill pill-muted";
+    }
+  }
+
+  function unavailable(message) {
+    ["macos", "windows", "linux"].forEach(function (p) { setCard(p, []); });
+    statusEl.textContent = "";
+    statusEl.appendChild(document.createTextNode(message + " "));
+    var link = document.createElement("a");
+    link.href = RELEASES_PAGE;
+    link.textContent = "Check GitHub releases";
+    statusEl.appendChild(link);
+  }
+
+  fetch("https://api.github.com/repos/" + REPO + "/releases?per_page=10", {
+    headers: { Accept: "application/vnd.github+json" }
+  })
+    .then(function (r) {
+      if (!r.ok) throw new Error("GitHub answered " + r.status);
+      return r.json();
+    })
+    .then(function (releases) {
+      var release = releases.filter(function (r) { return !r.draft; })[0];
+      if (!release) {
+        unavailable("No release has been published yet, so there is nothing to download.");
+        return;
+      }
+      var groups = { macos: [], windows: [], linux: [] };
+      var sums = null;
+      release.assets.forEach(function (a) {
+        if (/^SHA256SUMS/i.test(a.name)) { sums = a; return; }
+        var p = platformOf(a.name);
+        if (p) groups[p].push(a);
+      });
+      Object.keys(groups).forEach(function (p) {
+        if (p === "linux" && sums && groups.linux.length) groups.linux.push(sums);
+        setCard(p, groups[p]);
+      });
+      var label = release.name || release.tag_name;
+      statusEl.textContent = label + (release.prerelease ? " (pre-release)" : "");
+    })
+    .catch(function () {
+      unavailable("Couldn't load the release list from GitHub.");
+    });
+})();
+</script>
+</body>
+</html>
