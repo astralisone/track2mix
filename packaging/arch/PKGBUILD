@@ -20,6 +20,9 @@ url="https://track2mix.com"
 license=('custom')
 depends=('webkit2gtk-4.1' 'gtk3' 'libayatana-appindicator' 'librsvg' 'openssl')
 makedepends=('rust' 'bun-bin')
+# makepkg's default CFLAGS enable LTO, which makes the bundled SQLite compile
+# to objects the linker then cannot read (undefined sqlite3_* symbols).
+options=('!lto')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/astralisone/track2mix/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 
