@@ -133,6 +133,9 @@ jobs:
   arch:
     name: Arch Linux (pacman)
     needs: build
+    # Run even if one platform's build failed, so one broken OS does not hide
+    # whether the others (and this package) work.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
