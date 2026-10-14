@@ -15,7 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 <style>
-  .dl-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .dl-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .dl-card { padding: clamp(22px, 3vw, 30px); display: flex; flex-direction: column; gap: 14px; }
   .dl-card h3 { font-size: 1.25rem; margin: 0; }
   .dl-card p { margin: 0; color: var(--fg-muted); font-size: 0.9375rem; }
@@ -27,6 +27,12 @@
   .dl-file span:first-child { font-family: var(--font-mono); font-size: 0.8125rem; overflow-wrap: anywhere; }
   .dl-file span:last-child { color: var(--fg-faint); font-size: 0.8125rem; white-space: nowrap; }
   .dl-status { text-align: center; color: var(--fg-muted); margin: 0 0 28px; min-height: 1.5em; }
+  .res-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .res { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; text-decoration: none; color: var(--fg); }
+  .res:hover { border-color: var(--iris-400); }
+  .res b { font-size: 1rem; }
+  .res span { color: var(--fg-muted); font-size: 0.875rem; }
+  .res[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
   .dl-notes { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
   .dl-notes .glass { padding: clamp(22px, 3vw, 30px); }
   .dl-notes h3 { font-size: 1.125rem; margin: 0 0 10px; }
@@ -79,19 +85,42 @@
       <div class="dl-grid">
         <article class="glass dl-card" data-platform="macos">
           <div class="dl-head"><h3>macOS</h3><span class="pill pill-muted" data-pill>Checking</span></div>
-          <p>macOS 11 or later, Apple Silicon and Intel.</p>
+          <p>macOS 11 or later. One universal build for Apple Silicon and Intel.</p>
           <div class="dl-files" data-files></div>
         </article>
         <article class="glass dl-card" data-platform="windows">
           <div class="dl-head"><h3>Windows</h3><span class="pill pill-muted" data-pill>Checking</span></div>
-          <p>Windows 10 or later, 64-bit.</p>
+          <p>Windows 10 or later, 64-bit. The .msi is the standard installer.</p>
           <div class="dl-files" data-files></div>
         </article>
-        <article class="glass dl-card" data-platform="linux">
-          <div class="dl-head"><h3>Linux</h3><span class="pill pill-muted" data-pill>Checking</span></div>
-          <p>x86_64. Desktop app and command-line tool.</p>
+        <article class="glass dl-card" data-platform="deb">
+          <div class="dl-head"><h3>Debian / Ubuntu</h3><span class="pill pill-muted" data-pill>Checking</span></div>
+          <p>64-bit .deb. Install with <code>sudo apt install ./file.deb</code>.</p>
           <div class="dl-files" data-files></div>
         </article>
+        <article class="glass dl-card" data-platform="arch">
+          <div class="dl-head"><h3>Arch Linux</h3><span class="pill pill-muted" data-pill>Checking</span></div>
+          <p>pacman package. Install with <code>sudo pacman -U file.pkg.tar.zst</code>.</p>
+          <div class="dl-files" data-files></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0;padding-bottom:clamp(24px,4vw,40px)">
+    <div class="wrap">
+      <div class="section-head" style="text-align:center;margin-inline:auto">
+        <p class="eyebrow">Resources</p>
+        <h2 style="margin:0">Everything that ships with a release</h2>
+      </div>
+      <div class="res-grid">
+        <a class="glass res" href="https://github.com/astralisone/track2mix/blob/main/docs/INSTALL.md"><b>Install guide</b><span>Per-OS steps, plus what to do when macOS or Windows warns about an unsigned app.</span></a>
+        <a class="glass res" id="res-notes" href="https://github.com/astralisone/track2mix/releases"><b>Release notes</b><span>What changed in each version.</span></a>
+        <a class="glass res" id="res-sums" href="https://github.com/astralisone/track2mix/releases" aria-disabled="true"><b>Checksums</b><span>SHA256SUMS for every file, so you can verify a download.</span></a>
+        <a class="glass res" id="res-pkgbuild" href="https://github.com/astralisone/track2mix/blob/main/packaging/arch/PKGBUILD"><b>PKGBUILD</b><span>Build the Arch package yourself with makepkg, or read exactly what it installs.</span></a>
+        <a class="glass res" href="https://github.com/astralisone/track2mix"><b>Source code</b><span>Everything is on GitHub, including the audio analysis and the desktop app.</span></a>
+        <a class="glass res" href="https://github.com/astralisone/track2mix/issues"><b>Report a problem</b><span>Something wrong with a download or an install? Open an issue.</span></a>
+        <a class="glass res" href="https://track2mix.com/#get"><b>Tip jar</b><span>Free to use. Tips decide which features get built next.</span></a>
       </div>
     </div>
   </section>
@@ -146,9 +175,10 @@
 
   function platformOf(name) {
     var n = name.toLowerCase();
-    if (/\.(dmg|pkg)$/.test(n) || /(apple-darwin|macos|\.app\.tar\.gz)/.test(n)) return "macos";
-    if (/\.(msi|exe)$/.test(n) || /(windows|win64|msvc)/.test(n)) return "windows";
-    if (/\.(appimage|deb|rpm)$/.test(n) || /linux/.test(n)) return "linux";
+    if (/\.(dmg|pkg)$/.test(n)) return "macos";
+    if (/\.(msi|exe)$/.test(n)) return "windows";
+    if (/\.deb$/.test(n)) return "deb";
+    if (/\.pkg\.tar\.(zst|xz)$/.test(n)) return "arch";
     return null;
   }
 
@@ -187,7 +217,7 @@
   }
 
   function unavailable(message) {
-    ["macos", "windows", "linux"].forEach(function (p) { setCard(p, []); });
+    ["macos", "windows", "deb", "arch"].forEach(function (p) { setCard(p, []); });
     statusEl.textContent = "";
     statusEl.appendChild(document.createTextNode(message + " "));
     var link = document.createElement("a");
@@ -209,17 +239,24 @@
         unavailable("No release has been published yet, so there is nothing to download.");
         return;
       }
-      var groups = { macos: [], windows: [], linux: [] };
+      var groups = { macos: [], windows: [], deb: [], arch: [] };
       var sums = null;
+      var pkgbuild = null;
       release.assets.forEach(function (a) {
         if (/^SHA256SUMS/i.test(a.name)) { sums = a; return; }
+        if (a.name === "PKGBUILD") { pkgbuild = a; return; }
         var p = platformOf(a.name);
         if (p) groups[p].push(a);
       });
-      Object.keys(groups).forEach(function (p) {
-        if (p === "linux" && sums && groups.linux.length) groups.linux.push(sums);
-        setCard(p, groups[p]);
-      });
+      Object.keys(groups).forEach(function (p) { setCard(p, groups[p]); });
+      var notes = document.getElementById("res-notes");
+      if (release.html_url) notes.href = release.html_url;
+      if (sums) {
+        var sumsEl = document.getElementById("res-sums");
+        sumsEl.href = sums.browser_download_url;
+        sumsEl.removeAttribute("aria-disabled");
+      }
+      if (pkgbuild) document.getElementById("res-pkgbuild").href = pkgbuild.browser_download_url;
       var label = release.name || release.tag_name;
       statusEl.textContent = label + (release.prerelease ? " (pre-release)" : "");
     })
