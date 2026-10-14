@@ -3,15 +3,20 @@ name: Release
 # Builds Track2Mix for every platform and attaches the installers to one GitHub
 # release:
 #
-#   macOS    Track2Mix_<ver>_universal.dmg        (Apple Silicon + Intel)
 #   Windows  Track2Mix_<ver>_x64_en-US.msi and a setup .exe
 #   Linux    Track2Mix_<ver>_amd64.deb            (Debian, Ubuntu and friends)
 #   Arch     track2mix-<ver>-1-x86_64.pkg.tar.zst (built from packaging/arch)
 #
 # Pushing a v* tag builds everything into a DRAFT release for review. Running
 # the workflow by hand with publish=true builds and then publishes it, adding a
-# SHA256SUMS file over every asset. macOS builds are signed + notarized when the
-# APPLE_* secrets exist and unsigned otherwise; see docs/CODE-SIGNING.md.
+# SHA256SUMS file over every asset.
+#
+# macOS is switched off for now: its job is the commented-out matrix entry
+# below. To bring it back, restore that entry. It builds a universal .dmg, and
+# is signed + notarized when the APPLE_* secrets exist and unsigned otherwise;
+# see docs/CODE-SIGNING.md. Its first attempt failed in `tauri build` and the
+# job logs were not readable from the session that ran it, so expect to debug
+# that build before it goes green.
 
 on:
   push:
@@ -46,10 +51,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
-            label: macOS (Universal)
-            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
-            args: --target universal-apple-darwin --bundles dmg
+          # - platform: macos-latest
+          #   label: macOS (Universal)
+          #   rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+          #   args: --target universal-apple-darwin --bundles dmg
           - platform: windows-latest
             label: Windows (x64)
             rust_targets: ""
@@ -115,7 +120,6 @@ jobs:
           releaseBody: |
             Download the build for your platform below.
 
-            **macOS:** open the `.dmg` and drag Track2Mix to Applications.
             **Windows:** run the `.msi` installer.
             **Debian / Ubuntu:** `sudo apt install ./Track2Mix_*_amd64.deb`
             **Arch:** `sudo pacman -U track2mix-*-x86_64.pkg.tar.zst`
