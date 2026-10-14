@@ -1,0 +1,32 @@
+name: Debug macOS build
+on:
+  push:
+    branches: [debug-mac]
+jobs:
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          key: macOS-debug
+      - run: bun install --frozen-lockfile
+      - name: Build
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          bun run tauri build --verbose --target universal-apple-darwin --bundles dmg 2>&1 | tee build.log
+      - name: Surface the error
+        if: steps.build.outcome == 'failure'
+        run: |
+          tail -n 70 build.log | sed 's/\x1b\[[0-9;]*m//g' | awk '{printf "%s%%0A", $0}' > tail.txt
+          echo "::error title=macOS build log tail::$(cat tail.txt)"
+          grep -n -E "^error|error\[|failed|panicked" build.log | head -15 | while read -r l; do echo "::error::${l}"; done
+          exit 1
