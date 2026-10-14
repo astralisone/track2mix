@@ -166,8 +166,19 @@ jobs:
               packaging/arch/PKGBUILD > /build/PKGBUILD
           useradd -m builder
           chown -R builder /build
-          su builder -c "cd /build && makepkg --nodeps --noconfirm --force"
+          set -o pipefail
+          su builder -c "cd /build && makepkg --nodeps --noconfirm --force" 2>&1 | tee /tmp/makepkg.log
           ls -la /build/*.pkg.tar.zst
+
+      # Job logs are not always readable from outside the Actions UI, but
+      # annotations are. Put the end of the failed build there so the cause is
+      # visible without downloading anything.
+      - name: Surface build failure
+        if: failure()
+        run: |
+          [ -f /tmp/makepkg.log ] || exit 0
+          sed 's/\x1b\[[0-9;]*m//g' /tmp/makepkg.log | tail -n 60 | awk '{printf "%s%%0A", $0}' > /tmp/tail.txt
+          echo "::error title=makepkg log tail::$(cat /tmp/tail.txt)"
 
       - name: Attach to the release
         env:
