@@ -1,10 +1,17 @@
 name: Release
 
-# Tagging v* builds signed desktop bundles and publishes them as a GitHub
-# Release. macOS builds are signed + notarized when the APPLE_* secrets are
-# present; without them the build still succeeds and produces an unsigned
-# bundle, so the pipeline is usable before the Apple Developer enrolment
-# completes. See docs/CODE-SIGNING.md.
+# Builds Track2Mix for every platform and attaches the installers to one GitHub
+# release:
+#
+#   macOS    Track2Mix_<ver>_universal.dmg        (Apple Silicon + Intel)
+#   Windows  Track2Mix_<ver>_x64_en-US.msi and a setup .exe
+#   Linux    Track2Mix_<ver>_amd64.deb            (Debian, Ubuntu and friends)
+#   Arch     track2mix-<ver>-1-x86_64.pkg.tar.zst (built from packaging/arch)
+#
+# Pushing a v* tag builds everything into a DRAFT release for review. Running
+# the workflow by hand with publish=true builds and then publishes it, adding a
+# SHA256SUMS file over every asset. macOS builds are signed + notarized when the
+# APPLE_* secrets exist and unsigned otherwise; see docs/CODE-SIGNING.md.
 
 on:
   push:
@@ -13,11 +20,25 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to build and publish (e.g. v0.1.0)"
+        description: "Release tag to create or update (e.g. v0.1.0)"
         required: true
+      ref:
+        description: "Branch, tag or commit to build (defaults to the tag)"
+        required: false
+      publish:
+        description: "Publish the release once every build has finished"
+        type: boolean
+        default: false
+      prerelease:
+        description: "Mark the release as a pre-release (hides it from /releases/latest)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   build:
@@ -26,14 +47,17 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            target: universal-apple-darwin
             label: macOS (Universal)
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+            args: --target universal-apple-darwin --bundles dmg
           - platform: windows-latest
-            target: x86_64-pc-windows-msvc
             label: Windows (x64)
-          - platform: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            label: Linux (x64)
+            rust_targets: ""
+            args: --bundles msi,nsis
+          - platform: ubuntu-22.04
+            label: Linux (deb)
+            rust_targets: ""
+            args: --bundles deb
 
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.platform }}
@@ -41,7 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ inputs.ref || inputs.tag || github.ref }}
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -49,18 +73,18 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.rust_targets }}
 
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: |
             . -> target
-          key: ${{ matrix.target }}
+          key: ${{ matrix.label }}
 
       # Tauri links against GTK and WebKit on Linux; the macOS and Windows
       # runners already carry their platform's webview.
       - name: Install Linux build dependencies
-        if: matrix.platform == 'ubuntu-latest'
+        if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -70,11 +94,11 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build, sign and publish
+      - name: Build and attach to the release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS signing + notarization. Absent → unsigned bundle, build still
+          # macOS signing + notarization. Absent -> unsigned bundle, build still
           # succeeds. tauri-action skips signing when these are unset.
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -84,16 +108,101 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           projectPath: .
-          tagName: ${{ github.event.inputs.tag || github.ref_name }}
-          releaseName: "Track2Mix ${{ github.event.inputs.tag || github.ref_name }}"
+          tauriScript: bun run tauri
+          tagName: ${{ env.TAG }}
+          releaseName: "Track2Mix ${{ env.TAG }}"
+          releaseCommitish: ${{ github.sha }}
           releaseBody: |
             Download the build for your platform below.
 
             **macOS:** open the `.dmg` and drag Track2Mix to Applications.
             **Windows:** run the `.msi` installer.
+            **Debian / Ubuntu:** `sudo apt install ./Track2Mix_*_amd64.deb`
+            **Arch:** `sudo pacman -U track2mix-*-x86_64.pkg.tar.zst`
 
-            Installation notes and troubleshooting: [docs/INSTALL.md](https://github.com/astralisone/track2mix/blob/main/docs/INSTALL.md)
+            Verify any download against `SHA256SUMS`. Installation notes and
+            troubleshooting: [docs/INSTALL.md](https://github.com/astralisone/track2mix/blob/main/docs/INSTALL.md)
           releaseDraft: true
-          prerelease: false
+          prerelease: ${{ inputs.prerelease || false }}
           includeUpdaterJson: false
-          args: --target ${{ matrix.target }}
+          args: ${{ matrix.args }}
+
+  # Arch has no Tauri bundler target, so build a real pacman package from the
+  # PKGBUILD in an Arch container. It runs after the matrix so the draft
+  # release already exists to attach to.
+  arch:
+    name: Arch Linux (pacman)
+    needs: build
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            git rust nodejs npm webkit2gtk-4.1 gtk3 libayatana-appindicator \
+            librsvg openssl curl jq
+          npm install -g bun
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || inputs.tag || github.ref }}
+
+      - name: Build the package
+        run: |
+          git config --global --add safe.directory "$PWD"
+          ver=$(sed -n 's/^pkgver=//p' packaging/arch/PKGBUILD)
+          mkdir -p /build
+          git archive --format=tar.gz --prefix="track2mix-${ver}/" \
+            -o "/build/track2mix-${ver}.tar.gz" HEAD
+          # Build from the exact commit being released, not a tag download.
+          sed -e 's|^source=.*|source=("track2mix-${pkgver}.tar.gz")|' \
+              packaging/arch/PKGBUILD > /build/PKGBUILD
+          useradd -m builder
+          chown -R builder /build
+          su builder -c "cd /build && makepkg --nodeps --noconfirm --force"
+          ls -la /build/*.pkg.tar.zst
+
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          id=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$REPO/releases?per_page=30" \
+            | jq -r --arg t "$TAG" '[.[] | select(.tag_name==$t)][0].id')
+          [ -n "$id" ] && [ "$id" != "null" ] || { echo "no release for $TAG"; exit 1; }
+          for f in /build/*.pkg.tar.zst packaging/arch/PKGBUILD; do
+            name=$(basename "$f")
+            curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$f" \
+              "https://uploads.github.com/repos/$REPO/releases/$id/assets?name=$name"
+            echo "uploaded $name"
+          done
+
+  publish:
+    name: Checksums and publish
+    if: ${{ inputs.publish }}
+    needs: [build, arch]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checksum every asset and publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          id=$(gh api "repos/$REPO/releases?per_page=30" \
+            --jq "[.[] | select(.tag_name==\"$TAG\")][0].id")
+          mkdir assets && cd assets
+          gh api "repos/$REPO/releases/$id/assets" --jq '.[] | "\(.id) \(.name)"' |
+            while read -r aid name; do
+              gh api -H "Accept: application/octet-stream" \
+                "repos/$REPO/releases/assets/$aid" > "$name"
+            done
+          rm -f SHA256SUMS
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: text/plain" --data-binary @SHA256SUMS \
+            "https://uploads.github.com/repos/$REPO/releases/$id/assets?name=SHA256SUMS"
+          gh api -X PATCH "repos/$REPO/releases/$id" -F draft=false -F make_latest=true

@@ -1,0 +1,53 @@
+# Maintainer: Astralis One <hello@track2mix.com>
+#
+# Arch package for Track2Mix: the desktop app (track2mix-tauri) and the
+# command-line analyzer (track2mix).
+#
+# Build it yourself:   makepkg -si
+# The release workflow builds this same file in an Arch container and attaches
+# the resulting .pkg.tar.zst to the GitHub release.
+#
+# bun is only needed at build time. It is in the AUR as bun-bin; install it
+# first (or build with --nodeps if you already have it on PATH).
+
+pkgname=track2mix
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Finds which tracks in your Rekordbox library actually mix together"
+arch=('x86_64')
+url="https://track2mix.com"
+# The repository does not carry a LICENSE file yet; replace this once it does.
+license=('custom')
+depends=('webkit2gtk-4.1' 'gtk3' 'libayatana-appindicator' 'librsvg' 'openssl')
+makedepends=('rust' 'bun-bin')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/astralisone/track2mix/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "$pkgname-$pkgver"
+  bun install --frozen-lockfile
+  bun run build
+  # The desktop binary embeds ../dist at compile time, so the frontend has to
+  # be built first.
+  cargo build --release --locked --package track2mix --package track2mix-tauri
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 target/release/track2mix       "$pkgdir/usr/bin/track2mix"
+  install -Dm755 target/release/track2mix-tauri "$pkgdir/usr/bin/track2mix-desktop"
+
+  install -Dm644 src-tauri/icons/128x128.png "$pkgdir/usr/share/icons/hicolor/128x128/apps/track2mix.png"
+  install -Dm644 src-tauri/icons/32x32.png   "$pkgdir/usr/share/icons/hicolor/32x32/apps/track2mix.png"
+
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/track2mix.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Track2Mix
+Comment=Find which tracks in your Rekordbox library mix together
+Exec=track2mix-desktop
+Icon=track2mix
+Terminal=false
+Categories=AudioVideo;Audio;
+DESKTOP
+}
