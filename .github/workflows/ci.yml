@@ -63,6 +63,8 @@ jobs:
 
       - name: Test the contact endpoint
         run: node functions/api/contact.test.mjs
+      - name: Test the downloads-host routing
+        run: node functions/_middleware.test.mjs
       - name: Check a payment method is configured
         # The tip jar renders disabled (and says so) until at least one handle
         # is set in site/main.js. Flag it here so a deploy with no payment
