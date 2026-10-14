@@ -147,8 +147,14 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed \
             git rust nodejs npm webkit2gtk-4.1 gtk3 libayatana-appindicator \
-            librsvg openssl curl jq
-          npm install -g bun
+            librsvg openssl curl jq unzip
+          # npm's bun package skips its postinstall as root, so take the
+          # official release binary instead.
+          curl -fsSL -o /tmp/bun.zip \
+            https://github.com/oven-sh/bun/releases/latest/download/bun-linux-x64.zip
+          unzip -j /tmp/bun.zip '*/bun' -d /usr/local/bin
+          chmod 755 /usr/local/bin/bun
+          bun --version
 
       - uses: actions/checkout@v4
         with:
