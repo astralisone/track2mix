@@ -50,14 +50,43 @@ export async function compat(args: CompatArgs): Promise<UiTrack[]> {
   return invoke<UiTrack[]>("compat", { args });
 }
 
+export type ExportFormat = "m3u8" | "traktor" | "serato";
+
 export type ExportArgs = {
   path: string;
   playlist_name: string;
   track_ids: string[];
+  format?: ExportFormat;
+  /** Traktor: volume name for paths not under /Volumes/<disk> or a drive letter. */
+  traktor_volume?: string;
+  /** Serato: drive root the crate's relative paths are anchored at. */
+  serato_root?: string;
+  /** [old, new] path-prefix rewrites applied to the exported file. */
+  path_map?: Array<[string, string]>;
 };
 
-export async function exportPlaylist(args: ExportArgs): Promise<number> {
-  return invoke<number>("export_playlist", { args });
+export type ExportReport = {
+  written: number;
+  /** Tracks left out: no file path, or outside the Serato root. */
+  skipped: number;
+};
+
+export async function exportPlaylist(args: ExportArgs): Promise<ExportReport> {
+  return invoke<ExportReport>("export_playlist", { args });
+}
+
+export type PlaylistInfo = {
+  name: string;
+  source: string;
+  count: number;
+};
+
+export async function listPlaylists(): Promise<PlaylistInfo[]> {
+  return invoke<PlaylistInfo[]>("list_playlists");
+}
+
+export async function playlistTrackIds(name: string): Promise<string[]> {
+  return invoke<string[]>("playlist_track_ids", { name });
 }
 
 export type AnalyzeArgs = {
@@ -81,6 +110,11 @@ export type AnalyzeSummary = {
   elapsed_secs: number;
   total_considered: number;
   db_path: string;
+  /** BPM / key values filled in from the audio because tags had none. */
+  estimated_bpm: number;
+  estimated_key: number;
+  /** Playlists / crates saved from Traktor or Serato. */
+  playlists: number;
 };
 
 export type ProgressEvent =
@@ -105,6 +139,38 @@ export type ProgressEvent =
 
 export async function analyzeXml(args: AnalyzeArgs): Promise<AnalyzeSummary> {
   return invoke<AnalyzeSummary>("analyze_xml", { args });
+}
+
+export type ScanArgs = {
+  dirs: string[];
+  db_path: string;
+  skip_analyzed?: boolean;
+  estimate_missing?: boolean;
+  max_depth?: number | null;
+};
+
+export async function scanFolders(args: ScanArgs): Promise<AnalyzeSummary> {
+  return invoke<AnalyzeSummary>("scan_folders", { args });
+}
+
+export type ImportKind = "traktor" | "serato";
+
+export type ImportArgs = {
+  kind: ImportKind;
+  /** collection.nml, or a Serato `_Serato_` folder / .crate / `database V2`. */
+  path: string;
+  db_path: string;
+  skip_analyzed?: boolean;
+  estimate_missing?: boolean;
+  /** Serato: drive root stored relative paths are anchored at. */
+  root?: string;
+  /** Traktor: macOS boot volume name in the NML. */
+  boot_volume?: string;
+  path_map?: Array<[string, string]>;
+};
+
+export async function importLibrary(args: ImportArgs): Promise<AnalyzeSummary> {
+  return invoke<AnalyzeSummary>("import_library", { args });
 }
 
 export async function onAnalyzeProgress(

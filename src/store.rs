@@ -4,6 +4,7 @@ use std::path::Path;
 
 use crate::features::Features;
 use crate::rekordbox::Track;
+use crate::source::SourceTrack;
 
 pub struct Store {
     conn: Connection,
@@ -20,6 +21,10 @@ pub struct TrackRow {
     pub tonality: String,
     pub energy: Option<f32>,
     pub file_path: Option<String>,
+    pub label: String,
+    /// 0..=5 stars.
+    pub rating: u8,
+    pub play_count: i64,
 }
 
 /// The parent directory name of the given file path. Used as a "sub-genre"
@@ -75,11 +80,14 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<TrackRow> {
         tonality: row.get(6)?,
         energy: row.get(7)?,
         file_path: row.get(8)?,
+        label: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
+        rating: row.get::<_, Option<i64>>(10)?.unwrap_or(0).clamp(0, 5) as u8,
+        play_count: row.get::<_, Option<i64>>(11)?.unwrap_or(0),
     })
 }
 
-const SELECT_COLS: &str =
-    "track_id, name, artist, genre, sub_genre, bpm, tonality, energy, file_path";
+const SELECT_COLS: &str = "track_id, name, artist, genre, sub_genre, bpm, tonality, energy, \
+     file_path, label, rating, play_count";
 
 /// For databases created before the `sub_genre` column existed, add it and
 /// backfill any missing values from `file_path`. Safe to call on a fresh DB
@@ -99,9 +107,7 @@ fn migrate_sub_genre(conn: &Connection) -> Result<()> {
              WHERE sub_genre IS NULL AND file_path IS NOT NULL",
         )?;
         let collected = stmt
-            .query_map([], |r| {
-                Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
-            })?
+            .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
             .collect::<Result<Vec<_>, _>>()?;
         collected
     };
@@ -149,6 +155,19 @@ impl Store {
             CREATE INDEX IF NOT EXISTS idx_energy ON tracks(energy);
             CREATE INDEX IF NOT EXISTS idx_bpm ON tracks(bpm);
             CREATE INDEX IF NOT EXISTS idx_tonality ON tracks(tonality);
+            CREATE INDEX IF NOT EXISTS idx_file_path ON tracks(file_path);
+            CREATE TABLE IF NOT EXISTS playlists (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                source TEXT NOT NULL,
+                UNIQUE(name, source)
+            );
+            CREATE TABLE IF NOT EXISTS playlist_tracks (
+                playlist_id INTEGER NOT NULL,
+                position INTEGER NOT NULL,
+                file_path TEXT NOT NULL,
+                PRIMARY KEY (playlist_id, position)
+            );
             "#,
         )?;
         migrate_sub_genre(&conn)?;
@@ -160,11 +179,17 @@ impl Store {
     }
 
     pub fn upsert(&self, track: &Track, features: &Features, file_path: &str) -> Result<()> {
+        let src = SourceTrack::from_rekordbox(track, std::path::PathBuf::from(file_path));
+        self.upsert_source(&src, features)
+    }
+
+    pub fn upsert_source(&self, track: &SourceTrack, features: &Features) -> Result<()> {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_secs() as i64)
             .unwrap_or(0);
-        let sub_genre = parent_folder_name(file_path);
+        let file_path = track.path.to_string_lossy().to_string();
+        let sub_genre = parent_folder_name(&file_path);
 
         self.conn.execute(
             r#"
@@ -203,10 +228,10 @@ impl Store {
                 track.genre,
                 sub_genre,
                 track.label,
-                track.bpm_f32(),
+                track.bpm,
                 track.tonality,
-                track.rating_u8(),
-                track.play_count.parse::<i64>().unwrap_or(0),
+                track.rating as i64,
+                track.play_count,
                 file_path,
                 features.rms_mean,
                 features.rms_variance,
@@ -218,6 +243,80 @@ impl Store {
             ],
         )?;
         Ok(())
+    }
+
+    /// The id already used for this exact file path, if any. Lets a folder
+    /// scan, a Traktor import and a Serato import of the same file land on
+    /// one row instead of three.
+    pub fn id_for_path(&self, file_path: &str) -> Option<String> {
+        self.conn
+            .query_row(
+                "SELECT track_id FROM tracks WHERE file_path = ?1 LIMIT 1",
+                params![file_path],
+                |r| r.get(0),
+            )
+            .ok()
+    }
+
+    /// Replace (or create) the playlist `name` imported from `source`.
+    pub fn replace_playlist(&self, name: &str, source: &str, paths: &[String]) -> Result<()> {
+        let tx = self.conn.unchecked_transaction()?;
+        tx.execute(
+            "INSERT OR IGNORE INTO playlists (name, source) VALUES (?1, ?2)",
+            params![name, source],
+        )?;
+        let id: i64 = tx.query_row(
+            "SELECT id FROM playlists WHERE name = ?1 AND source = ?2",
+            params![name, source],
+            |r| r.get(0),
+        )?;
+        tx.execute(
+            "DELETE FROM playlist_tracks WHERE playlist_id = ?1",
+            params![id],
+        )?;
+        for (i, p) in paths.iter().enumerate() {
+            tx.execute(
+                "INSERT INTO playlist_tracks (playlist_id, position, file_path) VALUES (?1, ?2, ?3)",
+                params![id, i as i64, p],
+            )?;
+        }
+        tx.commit()?;
+        Ok(())
+    }
+
+    /// (name, source, number of entries) for every stored playlist.
+    pub fn list_playlists(&self) -> Result<Vec<(String, String, i64)>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT p.name, p.source, COUNT(t.position) \
+             FROM playlists p LEFT JOIN playlist_tracks t ON t.playlist_id = p.id \
+             GROUP BY p.id ORDER BY p.source, p.name",
+        )?;
+        let rows = stmt
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(rows)
+    }
+
+    /// Analysed tracks of a playlist, in playlist order. Entries whose file
+    /// isn't in the library (missing on disk, failed analysis) are skipped.
+    pub fn playlist_rows(&self, name: &str) -> Result<Vec<TrackRow>> {
+        let sql = format!(
+            "SELECT {cols} FROM playlist_tracks pt \
+             JOIN playlists p ON p.id = pt.playlist_id \
+             JOIN tracks t ON t.file_path = pt.file_path \
+             WHERE p.name = ?1 AND t.analyzed_at IS NOT NULL \
+             ORDER BY pt.position",
+            cols = SELECT_COLS
+                .split(',')
+                .map(|c| format!("t.{}", c.trim()))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        let mut stmt = self.conn.prepare(&sql)?;
+        let rows = stmt
+            .query_map(params![name], map_row)?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(rows)
     }
 
     pub fn already_analyzed(&self, track_id: &str) -> bool {
@@ -243,7 +342,9 @@ impl Store {
     ) -> Result<Vec<TrackRow>> {
         let col = metric_column(metric)?;
         let order = if asc { "ASC" } else { "DESC" };
-        let genre_pat = genre.map(|g| format!("%{}%", g)).unwrap_or_else(|| "%".into());
+        let genre_pat = genre
+            .map(|g| format!("%{}%", g))
+            .unwrap_or_else(|| "%".into());
         match sub_genre {
             Some(sg) => {
                 let sg_pat = format!("%{}%", sg);

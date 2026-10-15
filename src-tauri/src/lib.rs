@@ -1,7 +1,13 @@
-use track2mix_core::analyze::{self, AnalyzeOptions, AnalyzeSummary};
-use track2mix_core::export::{energy_score as energy_score_fn, write_m3u8};
+use track2mix_core::analyze::{self, lock, AnalyzeOptions, AnalyzeSummary, RunOptions};
+use track2mix_core::export::{
+    energy_score as energy_score_fn, write_playlist, ExportFormat, ExportOptions, ExportReport,
+};
 use track2mix_core::keys::Camelot;
+use track2mix_core::scan::{scan_dirs, ScanOptions};
+use track2mix_core::serato;
+use track2mix_core::source::Imported;
 use track2mix_core::store::{Store, TrackRow};
+use track2mix_core::traktor::{self, TraktorOptions};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -56,6 +62,23 @@ pub struct ExportArgs {
     pub path: String,
     pub playlist_name: String,
     pub track_ids: Vec<String>,
+    /// "m3u8" | "traktor" | "serato". Inferred from the file extension if absent.
+    #[serde(default)]
+    pub format: Option<String>,
+    #[serde(default)]
+    pub traktor_volume: Option<String>,
+    #[serde(default)]
+    pub serato_root: Option<String>,
+    /// `[old, new]` path prefix rewrites applied to the exported file.
+    #[serde(default)]
+    pub path_map: Vec<(String, String)>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PlaylistInfo {
+    pub name: String,
+    pub source: String,
+    pub count: i64,
 }
 
 /// App state: the open DB connection and the cached library min/max energy
@@ -95,7 +118,7 @@ fn map_track(t: &TrackRow, emin: f32, emax: f32) -> UiTrack {
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn open_library(state: tauri::State<'_, AppState>, db_path: String) -> Result<LibraryPayload, String> {
     let path = PathBuf::from(&db_path);
     let store = Store::open(&path).map_err(|e| format!("open {}: {:#}", db_path, e))?;
@@ -117,7 +140,7 @@ fn open_library(state: tauri::State<'_, AppState>, db_path: String) -> Result<Li
         max_energy: stats.max_energy,
     };
 
-    *state.inner.lock().unwrap() = Some(StateInner {
+    *lock(&state.inner) = Some(StateInner {
         db_path: path,
         store,
         min_energy: emin,
@@ -131,9 +154,9 @@ fn open_library(state: tauri::State<'_, AppState>, db_path: String) -> Result<Li
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn compat(state: tauri::State<'_, AppState>, args: CompatArgs) -> Result<Vec<UiTrack>, String> {
-    let guard = state.inner.lock().unwrap();
+    let guard = lock(&state.inner);
     let s = guard.as_ref().ok_or_else(|| "no library open".to_string())?;
     let anchor = s
         .cache
@@ -194,24 +217,66 @@ fn compat(state: tauri::State<'_, AppState>, args: CompatArgs) -> Result<Vec<UiT
         .collect())
 }
 
-#[tauri::command]
-fn export_playlist(state: tauri::State<'_, AppState>, args: ExportArgs) -> Result<usize, String> {
-    let guard = state.inner.lock().unwrap();
+#[tauri::command(async)]
+fn export_playlist(
+    state: tauri::State<'_, AppState>,
+    args: ExportArgs,
+) -> Result<ExportReport, String> {
+    let guard = lock(&state.inner);
     let s = guard.as_ref().ok_or_else(|| "no library open".to_string())?;
+    let by_id: std::collections::HashMap<&str, &TrackRow> =
+        s.cache.iter().map(|t| (t.track_id.as_str(), t)).collect();
     let selected: Vec<TrackRow> = args
         .track_ids
         .iter()
-        .filter_map(|id| s.cache.iter().find(|t| &t.track_id == id).cloned())
+        .filter_map(|id| by_id.get(id.as_str()).map(|t| (*t).clone()))
         .collect();
     if selected.is_empty() {
         return Err("no tracks selected".to_string());
     }
-    write_m3u8(
-        std::path::Path::new(&args.path),
-        &args.playlist_name,
-        &selected,
-    )
-    .map_err(|e| format!("export: {:#}", e))
+    let out = std::path::Path::new(&args.path);
+    let format = match args.format.as_deref() {
+        Some(f) => ExportFormat::parse(f).ok_or_else(|| format!("unknown export format `{}`", f))?,
+        None => ExportFormat::from_extension(out).unwrap_or(ExportFormat::M3u8),
+    };
+    let opts = ExportOptions {
+        traktor_volume: args.traktor_volume.filter(|v| !v.trim().is_empty()),
+        serato_root: args
+            .serato_root
+            .filter(|v| !v.trim().is_empty())
+            .map(PathBuf::from),
+        path_map: args.path_map,
+    };
+    write_playlist(format, out, &args.playlist_name, &selected, &opts)
+        .map_err(|e| format!("export: {:#}", e))
+}
+
+#[tauri::command(async)]
+fn list_playlists(state: tauri::State<'_, AppState>) -> Result<Vec<PlaylistInfo>, String> {
+    let guard = lock(&state.inner);
+    let s = guard.as_ref().ok_or_else(|| "no library open".to_string())?;
+    let lists = s
+        .store
+        .list_playlists()
+        .map_err(|e| format!("playlists: {:#}", e))?;
+    Ok(lists
+        .into_iter()
+        .map(|(name, source, count)| PlaylistInfo { name, source, count })
+        .collect())
+}
+
+#[tauri::command(async)]
+fn playlist_track_ids(
+    state: tauri::State<'_, AppState>,
+    name: String,
+) -> Result<Vec<String>, String> {
+    let guard = lock(&state.inner);
+    let s = guard.as_ref().ok_or_else(|| "no library open".to_string())?;
+    let rows = s
+        .store
+        .playlist_rows(&name)
+        .map_err(|e| format!("playlist: {:#}", e))?;
+    Ok(rows.into_iter().map(|r| r.track_id).collect())
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -249,6 +314,122 @@ async fn analyze_xml(
     .map_err(|e| format!("analyze task join failed: {}", e))?
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct ScanArgs {
+    pub dirs: Vec<String>,
+    pub db_path: String,
+    #[serde(default)]
+    pub skip_analyzed: bool,
+    /// Fill in missing BPM / key from the audio. On by default.
+    #[serde(default = "yes")]
+    pub estimate_missing: bool,
+    #[serde(default)]
+    pub max_depth: Option<usize>,
+}
+
+fn yes() -> bool {
+    true
+}
+
+#[tauri::command]
+async fn scan_folders(app: tauri::AppHandle, args: ScanArgs) -> Result<AnalyzeSummary, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let dirs: Vec<PathBuf> = args.dirs.iter().map(PathBuf::from).collect();
+        let scanned = scan_dirs(
+            &dirs,
+            &ScanOptions {
+                max_depth: args.max_depth,
+            },
+        );
+        if scanned.tracks.is_empty() {
+            return Err(if scanned.bad_roots.is_empty() {
+                "No audio files found in the chosen folder(s).".to_string()
+            } else {
+                format!("Not a folder: {}", scanned.bad_roots.join(", "))
+            });
+        }
+        let total = scanned.tracks.len();
+        let imported = Imported {
+            tracks: scanned.tracks,
+            ..Default::default()
+        };
+        let opts = RunOptions {
+            db_path: PathBuf::from(&args.db_path),
+            limit: None,
+            skip_analyzed: args.skip_analyzed,
+            dry_run: false,
+            path_map: Vec::new(),
+            estimate_missing: args.estimate_missing,
+            threads: None,
+        };
+        analyze::run_imported(imported, total, &opts, move |ev| {
+            let _ = app.emit("analyze:progress", ev);
+        })
+        .map_err(|e| format!("{:#}", e))
+    })
+    .await
+    .map_err(|e| format!("scan task join failed: {}", e))?
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImportArgs {
+    /// "traktor" | "serato"
+    pub kind: String,
+    /// collection.nml, or a `_Serato_` folder / `.crate` / `database V2`.
+    pub path: String,
+    pub db_path: String,
+    #[serde(default)]
+    pub skip_analyzed: bool,
+    #[serde(default = "yes")]
+    pub estimate_missing: bool,
+    /// Serato: drive root the stored relative paths are anchored at.
+    #[serde(default)]
+    pub root: Option<String>,
+    /// Traktor: macOS boot volume name in the NML.
+    #[serde(default)]
+    pub boot_volume: Option<String>,
+    #[serde(default)]
+    pub path_map: Vec<(String, String)>,
+}
+
+#[tauri::command]
+async fn import_library(app: tauri::AppHandle, args: ImportArgs) -> Result<AnalyzeSummary, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let path = PathBuf::from(&args.path);
+        let imported = match args.kind.as_str() {
+            "traktor" => {
+                let mut o = TraktorOptions::default();
+                if let Some(v) = args.boot_volume.as_deref().filter(|v| !v.trim().is_empty()) {
+                    o.boot_volume = v.to_string();
+                }
+                traktor::read_nml(&path, &o)
+            }
+            "serato" => {
+                let root = args.root.as_deref().filter(|v| !v.trim().is_empty()).map(PathBuf::from);
+                serato::read_serato(&path, root.as_deref())
+            }
+            other => Err(anyhow::anyhow!("unknown library type `{}`", other)),
+        }
+        .map_err(|e| format!("{:#}", e))?;
+        let total = imported.tracks.len() + imported.no_location + imported.unparseable_uri;
+        let opts = RunOptions {
+            db_path: PathBuf::from(&args.db_path),
+            limit: None,
+            skip_analyzed: args.skip_analyzed,
+            dry_run: false,
+            path_map: args.path_map,
+            estimate_missing: args.estimate_missing,
+            threads: None,
+        };
+        analyze::run_imported(imported, total, &opts, move |ev| {
+            let _ = app.emit("analyze:progress", ev);
+        })
+        .map_err(|e| format!("{:#}", e))
+    })
+    .await
+    .map_err(|e| format!("import task join failed: {}", e))?
+}
+
 #[tauri::command]
 fn default_db_path() -> String {
     // Heuristic: cwd/library.db. Falls back to ~/library.db.
@@ -258,14 +439,28 @@ fn default_db_path() -> String {
             return p.display().to_string();
         }
     }
-    if let Some(home) = std::env::var_os("HOME") {
+    if let Some(home) = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")) {
         return PathBuf::from(home).join("library.db").display().to_string();
     }
     "library.db".to_string()
 }
 
+/// WebKitGTK's DMA-BUF renderer is the usual cause of blank, frozen or
+/// crashing windows on Wayland compositors (Hyprland, Sway) and NVIDIA GPUs.
+/// Opt out of it unless the user has chosen otherwise.
+#[cfg(target_os = "linux")]
+fn linux_webkit_defaults() {
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn linux_webkit_defaults() {}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    linux_webkit_defaults();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState::default())
@@ -274,7 +469,11 @@ pub fn run() {
             compat,
             export_playlist,
             default_db_path,
-            analyze_xml
+            analyze_xml,
+            scan_folders,
+            import_library,
+            list_playlists,
+            playlist_track_ids
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

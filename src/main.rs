@@ -1,24 +1,21 @@
-use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
-use indicatif::{ProgressBar, ProgressStyle};
-use rayon::prelude::*;
+use anyhow::{anyhow, Result};
+use clap::{Args, Parser, Subcommand, ValueEnum};
+use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
-use std::time::Instant;
 
-use track2mix_core::export::{energy_score, write_m3u8};
+use track2mix_core::analyze::{self, AnalyzeOptions, AnalyzeSummary, ProgressEvent, RunOptions};
+use track2mix_core::export::{energy_score, write_playlist, ExportFormat, ExportOptions};
 use track2mix_core::keys::Camelot;
+use track2mix_core::scan::{scan_dirs, ScanOptions};
+use track2mix_core::serato;
+use track2mix_core::source::Imported;
 use track2mix_core::store::{Store, TrackRow};
-use track2mix_core::{audio, features, rekordbox};
-
-/// 22050 Hz retains everything up to ~11 kHz — ample for MIR features and
-/// roughly half the work of 44.1 kHz.
-const ANALYSIS_SR: u32 = 22050;
+use track2mix_core::traktor::{self, TraktorOptions};
 
 #[derive(Parser)]
 #[command(
     name = "track2mix",
-    about = "Parse a Rekordbox library, extract audio features, and query the result."
+    about = "Scan folders or import Rekordbox, Traktor and Serato libraries, extract audio features, query the result, and export to any of them."
 )]
 struct Cli {
     /// Path to the SQLite database used by every subcommand.
@@ -27,6 +24,91 @@ struct Cli {
 
     #[command(subcommand)]
     command: Command,
+}
+
+/// Options for the import-style commands (`scan`, `import`).
+#[derive(Args, Clone)]
+struct PipeFlags {
+    /// Limit number of tracks processed (useful for a quick sanity pass).
+    #[arg(long)]
+    limit: Option<usize>,
+    /// Skip tracks already present and analyzed in the DB.
+    #[arg(long)]
+    skip_analyzed: bool,
+    /// Report coverage (how many paths resolve) without decoding any audio.
+    #[arg(long)]
+    dry_run: bool,
+    /// Rewrite a path prefix before resolving. Repeatable.
+    /// Format: `OLD=NEW`. Example: `--path-map '/Volumes/Old/music=/Volumes/New/music'`.
+    #[arg(long = "path-map", value_parser = parse_path_map)]
+    path_map: Vec<(String, String)>,
+    /// Don't estimate BPM / key from the audio for tracks whose tags lack them.
+    #[arg(long)]
+    no_estimate: bool,
+    /// Worker threads (default: cores − 1, at most 8; env TRACK2MIX_THREADS).
+    #[arg(long)]
+    threads: Option<usize>,
+}
+
+impl PipeFlags {
+    fn run_options(&self, db: &Path) -> RunOptions {
+        RunOptions {
+            db_path: db.to_path_buf(),
+            limit: self.limit,
+            skip_analyzed: self.skip_analyzed,
+            dry_run: self.dry_run,
+            path_map: self.path_map.clone(),
+            estimate_missing: !self.no_estimate,
+            threads: self.threads,
+        }
+    }
+}
+
+/// Options for anything that writes a playlist file.
+#[derive(Args, Clone, Default)]
+struct ExportFlags {
+    /// Export format: m3u8 | traktor | serato. Default: inferred from the
+    /// output extension (.m3u8, .nml, .crate).
+    #[arg(long)]
+    format: Option<String>,
+    /// Traktor: volume name for paths not under /Volumes/<disk> or a drive
+    /// letter (default "Macintosh HD"; use "C:" for a Windows machine).
+    #[arg(long = "traktor-volume")]
+    traktor_volume: Option<String>,
+    /// Serato: drive root the crate's relative paths are anchored at
+    /// (e.g. /Volumes/SSD). Default: the filesystem root (home-drive library).
+    #[arg(long = "serato-root")]
+    serato_root: Option<PathBuf>,
+    /// Rewrite path prefixes in the exported file. Repeatable, `OLD=NEW`.
+    /// Use when the DJ machine sees the files somewhere else.
+    #[arg(long = "export-path-map", value_parser = parse_path_map)]
+    export_path_map: Vec<(String, String)>,
+}
+
+impl ExportFlags {
+    fn format_for(&self, out: &Path) -> Result<ExportFormat> {
+        if let Some(f) = &self.format {
+            return ExportFormat::parse(f)
+                .ok_or_else(|| anyhow!("unknown format `{}` (use m3u8, traktor or serato)", f));
+        }
+        Ok(ExportFormat::from_extension(out).unwrap_or(ExportFormat::M3u8))
+    }
+
+    fn options(&self) -> ExportOptions {
+        ExportOptions {
+            traktor_volume: self.traktor_volume.clone(),
+            serato_root: self.serato_root.clone(),
+            path_map: self.export_path_map.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum ImportKind {
+    /// A Traktor collection (`collection.nml`) — tracks and playlists.
+    Traktor,
+    /// A Serato library: a `_Serato_` folder, a `.crate`, or `database V2`.
+    Serato,
 }
 
 #[derive(Subcommand)]
@@ -49,6 +131,38 @@ enum Command {
         /// Format: `OLD=NEW`. Example: `--path-map '/Volumes/Old/music=/Volumes/New/music'`.
         #[arg(long = "path-map", value_parser = parse_path_map)]
         path_map: Vec<(String, String)>,
+        /// Estimate BPM / key from the audio for tracks whose tags lack them.
+        #[arg(long)]
+        estimate: bool,
+        /// Worker threads (default: cores − 1, at most 8; env TRACK2MIX_THREADS).
+        #[arg(long)]
+        threads: Option<usize>,
+    },
+    /// Walk one or more folders for audio files, read their tags, and analyze them.
+    Scan {
+        /// Folders to scan (recursively).
+        #[arg(required = true)]
+        dirs: Vec<PathBuf>,
+        /// Maximum folder depth below each root.
+        #[arg(long)]
+        depth: Option<usize>,
+        #[command(flatten)]
+        pipe: PipeFlags,
+    },
+    /// Import a Traktor collection or Serato library (tracks + playlists/crates).
+    Import {
+        kind: ImportKind,
+        /// collection.nml, or a Serato `_Serato_` folder / `.crate` / `database V2`.
+        path: PathBuf,
+        /// Serato: drive root the stored relative paths are anchored at.
+        /// Default: guessed from where `_Serato_` lives.
+        #[arg(long)]
+        root: Option<PathBuf>,
+        /// Traktor: name of the macOS boot volume in the NML (default "Macintosh HD").
+        #[arg(long = "boot-volume")]
+        boot_volume: Option<String>,
+        #[command(flatten)]
+        pipe: PipeFlags,
     },
     /// Show top-N tracks sorted by a feature column.
     Top {
@@ -68,13 +182,15 @@ enum Command {
         /// Sort ascending instead of descending.
         #[arg(long)]
         asc: bool,
-        /// Also write the matching tracks to an M3U8 playlist at this path
-        /// (Rekordbox: File → Import Playlist).
+        /// Also write the matching tracks to a playlist file: .m3u8 (Rekordbox),
+        /// .nml (Traktor) or .crate (Serato).
         #[arg(long)]
         export: Option<PathBuf>,
-        /// Playlist name embedded in the M3U8 header. Defaults to the file stem.
+        /// Playlist name embedded in the file. Defaults to the file stem.
         #[arg(long = "playlist-name")]
         playlist_name: Option<String>,
+        #[command(flatten)]
+        fmt: ExportFlags,
     },
     /// Suggest harmonically + BPM-compatible tracks around a reference track.
     Compat {
@@ -93,12 +209,39 @@ enum Command {
         /// (e.g. a 175 BPM DnB anchor matches 86–88 BPM half-time tagging of the same tempo).
         #[arg(long = "half-double-ok")]
         half_double_ok: bool,
-        /// Also write the compatible tracks to an M3U8 playlist at this path.
+        /// Also write the compatible tracks to a playlist file (.m3u8, .nml or .crate).
         #[arg(long)]
         export: Option<PathBuf>,
-        /// Playlist name embedded in the M3U8 header. Defaults to "<anchor name> — compat".
+        /// Playlist name embedded in the file. Defaults to "<anchor name> — compat".
         #[arg(long = "playlist-name")]
         playlist_name: Option<String>,
+        #[command(flatten)]
+        fmt: ExportFlags,
+    },
+    /// Export the whole library, a filtered slice, or an imported playlist.
+    Export {
+        /// Output file (.m3u8, .nml or .crate).
+        out: PathBuf,
+        /// Export an imported Traktor/Serato playlist by name (see `playlists`).
+        #[arg(long)]
+        playlist: Option<String>,
+        /// Case-insensitive substring filter on the Genre tag.
+        #[arg(long)]
+        genre: Option<String>,
+        /// Case-insensitive substring filter on the parent-folder name.
+        #[arg(long = "sub-genre")]
+        sub_genre: Option<String>,
+        /// Playlist name embedded in the file. Defaults to the file stem.
+        #[arg(long = "playlist-name")]
+        playlist_name: Option<String>,
+        #[command(flatten)]
+        fmt: ExportFlags,
+    },
+    /// List playlists / crates imported from Traktor or Serato.
+    Playlists {
+        /// Show the tracks of one playlist.
+        #[arg(long)]
+        show: Option<String>,
     },
     /// Summary of what's in the database.
     Stats,
@@ -113,7 +256,26 @@ fn main() -> Result<()> {
             skip_analyzed,
             dry_run,
             path_map,
-        } => cmd_analyze(&cli.db, &xml, limit, skip_analyzed, dry_run, &path_map),
+            estimate,
+            threads,
+        } => cmd_analyze(
+            &cli.db,
+            &xml,
+            limit,
+            skip_analyzed,
+            dry_run,
+            &path_map,
+            estimate,
+            threads,
+        ),
+        Command::Scan { dirs, depth, pipe } => cmd_scan(&cli.db, &dirs, depth, &pipe),
+        Command::Import {
+            kind,
+            path,
+            root,
+            boot_volume,
+            pipe,
+        } => cmd_import(&cli.db, kind, &path, root.as_deref(), boot_volume, &pipe),
         Command::Top {
             by,
             limit,
@@ -122,6 +284,7 @@ fn main() -> Result<()> {
             asc,
             export,
             playlist_name,
+            fmt,
         } => cmd_top(
             &cli.db,
             &by,
@@ -131,6 +294,7 @@ fn main() -> Result<()> {
             asc,
             export.as_deref(),
             playlist_name.as_deref(),
+            &fmt,
         ),
         Command::Compat {
             query,
@@ -140,6 +304,7 @@ fn main() -> Result<()> {
             half_double_ok,
             export,
             playlist_name,
+            fmt,
         } => cmd_compat(
             &cli.db,
             &query,
@@ -149,7 +314,25 @@ fn main() -> Result<()> {
             half_double_ok,
             export.as_deref(),
             playlist_name.as_deref(),
+            &fmt,
         ),
+        Command::Export {
+            out,
+            playlist,
+            genre,
+            sub_genre,
+            playlist_name,
+            fmt,
+        } => cmd_export(
+            &cli.db,
+            &out,
+            playlist.as_deref(),
+            genre.as_deref(),
+            sub_genre.as_deref(),
+            playlist_name.as_deref(),
+            &fmt,
+        ),
+        Command::Playlists { show } => cmd_playlists(&cli.db, show.as_deref()),
         Command::Stats => cmd_stats(&cli.db),
     }
 }
@@ -164,17 +347,100 @@ fn parse_path_map(s: &str) -> Result<(String, String), String> {
     Ok((old.to_string(), new.to_string()))
 }
 
-fn apply_path_map(path: PathBuf, path_map: &[(String, String)]) -> PathBuf {
-    if path_map.is_empty() {
-        return path;
-    }
-    let s = path.to_string_lossy();
-    for (old, new) in path_map {
-        if let Some(rest) = s.strip_prefix(old.as_str()) {
-            return PathBuf::from(format!("{}{}", new, rest));
+/// Progress handler that drives a progress bar and prints the resolve report.
+fn progress_handler() -> (impl Fn(ProgressEvent) + Send + Sync, ProgressBar) {
+    let pb = ProgressBar::with_draw_target(Some(0), ProgressDrawTarget::hidden());
+    pb.set_style(
+        ProgressStyle::with_template(
+            "{spinner} [{elapsed_precise}] [{bar:40}] {pos}/{len} ({eta}) {msg}",
+        )
+        .unwrap()
+        .progress_chars("=>-"),
+    );
+    let bar = pb.clone();
+    let handler = move |ev: ProgressEvent| match ev {
+        ProgressEvent::Parsed { total_in_xml } => println!("  found {} tracks", total_in_xml),
+        ProgressEvent::Resolved {
+            ready,
+            no_location,
+            unparseable_uri,
+            missing_file,
+            missing_examples,
+            already_analyzed,
+        } => {
+            println!(
+                "  {} resolved to an existing local file",
+                ready + already_analyzed
+            );
+            if no_location + unparseable_uri + missing_file > 0 {
+                println!("  Dropped:");
+                if no_location > 0 {
+                    println!("    {} with no location", no_location);
+                }
+                if unparseable_uri > 0 {
+                    println!("    {} with unparseable file URIs", unparseable_uri);
+                }
+                if missing_file > 0 {
+                    println!(
+                        "    {} pointing at files not on disk (external drive unmounted? moved library? try --path-map)",
+                        missing_file
+                    );
+                    for ex in missing_examples.iter().take(3) {
+                        println!("      e.g. {}", ex);
+                    }
+                }
+            }
+            if already_analyzed > 0 {
+                println!("  {} skipped (already analyzed)", already_analyzed);
+            }
+            pb.set_length(ready as u64);
+            if ready > 0 {
+                pb.set_draw_target(ProgressDrawTarget::stderr());
+            }
+        }
+        ProgressEvent::Track {
+            done, name, artist, ..
+        } => {
+            pb.set_position(done as u64);
+            pb.set_message(format!("{} - {}", artist, name));
+        }
+        ProgressEvent::Failed { name, error } => {
+            pb.println(format!("  failed: {}: {}", name, error))
+        }
+    };
+    (handler, bar)
+}
+
+fn print_summary(s: &AnalyzeSummary, dry_run: bool) {
+    println!();
+    if dry_run {
+        println!(
+            "  dry-run: skipping audio decode. {} track(s) would be analyzed.",
+            s.total_considered
+        );
+    } else if s.total_considered == 0 {
+        println!("  nothing to do.");
+    } else {
+        println!("Done in {:.1}s", s.elapsed_secs);
+        println!(
+            "  {} succeeded, {} failed, {:.2}s/track avg",
+            s.ok,
+            s.failed,
+            s.elapsed_secs / s.total_considered.max(1) as f32
+        );
+        if s.estimated_bpm + s.estimated_key > 0 {
+            println!(
+                "  estimated from audio: {} BPM, {} key (tags had none; treat as a starting point)",
+                s.estimated_bpm, s.estimated_key
+            );
         }
     }
-    path
+    if s.playlists > 0 {
+        println!(
+            "  {} playlist(s) saved — see `track2mix playlists`",
+            s.playlists
+        );
+    }
 }
 
 fn cmd_analyze(
@@ -184,158 +450,195 @@ fn cmd_analyze(
     skip_analyzed: bool,
     dry_run: bool,
     path_map: &[(String, String)],
+    estimate: bool,
+    threads: Option<usize>,
 ) -> Result<()> {
     println!("Parsing Rekordbox XML…");
-    let xml = rekordbox::parse(xml_path)?;
-    let mut tracks = xml.collection.tracks;
-    println!("  found {} tracks", tracks.len());
-
-    if let Some(n) = limit {
-        tracks.truncate(n);
-        println!("  limited to {}", n);
-    }
     if !path_map.is_empty() {
         println!("  path remaps:");
         for (old, new) in path_map {
             println!("    {} → {}", old, new);
         }
     }
-
-    let store = Mutex::new(Store::open(db)?);
-
-    let mut resolved: Vec<(rekordbox::Track, PathBuf)> = Vec::new();
-    let mut no_location = 0usize;
-    let mut unparseable_uri = 0usize;
-    let mut missing_file = 0usize;
-    let mut missing_examples: Vec<String> = Vec::new();
-    for t in tracks {
-        if t.location.trim().is_empty() {
-            no_location += 1;
-            continue;
-        }
-        match t.resolve_path() {
-            None => unparseable_uri += 1,
-            Some(path) => {
-                let remapped = apply_path_map(path, path_map);
-                if !remapped.exists() {
-                    missing_file += 1;
-                    if missing_examples.len() < 3 {
-                        missing_examples.push(remapped.display().to_string());
-                    }
-                } else {
-                    resolved.push((t, remapped));
-                }
-            }
-        }
-    }
-
-    println!("  {} resolved to an existing local file", resolved.len());
-    if no_location + unparseable_uri + missing_file > 0 {
-        println!("  Dropped:");
-        if no_location > 0 {
-            println!("    {} with no Location attribute", no_location);
-        }
-        if unparseable_uri > 0 {
-            println!(
-                "    {} with unparseable file:// URIs",
-                unparseable_uri
-            );
-        }
-        if missing_file > 0 {
-            println!(
-                "    {} pointing at files not on disk (external drive unmounted? moved library?)",
-                missing_file
-            );
-            for ex in &missing_examples {
-                println!("      e.g. {}", ex);
-            }
-        }
-    }
-
-    let skipped_analyzed = if skip_analyzed {
-        let before = resolved.len();
-        resolved.retain(|(t, _)| !store.lock().unwrap().already_analyzed(&t.track_id));
-        before - resolved.len()
-    } else {
-        0
+    let opts = AnalyzeOptions {
+        xml_path: xml_path.to_path_buf(),
+        db_path: db.to_path_buf(),
+        limit,
+        skip_analyzed,
+        dry_run,
+        path_map: path_map.to_vec(),
     };
-    if skipped_analyzed > 0 {
-        println!("  {} skipped (already analyzed)", skipped_analyzed);
-    }
-
-    let candidates = resolved;
-    if dry_run {
-        println!("  dry-run: skipping audio decode. {} track(s) would be analyzed.", candidates.len());
-        return Ok(());
-    }
-    if candidates.is_empty() {
-        println!("  nothing to do.");
-        return Ok(());
-    }
-    println!("  analyzing {}…", candidates.len());
-
-    let pb = ProgressBar::new(candidates.len() as u64);
-    pb.set_style(
-        ProgressStyle::with_template(
-            "{spinner} [{elapsed_precise}] [{bar:40}] {pos}/{len} ({eta}) {msg}",
-        )
-        .unwrap()
-        .progress_chars("=>-"),
-    );
-
-    let start = Instant::now();
-    let ok = Mutex::new(0usize);
-    let failed = Mutex::new(Vec::<(String, String)>::new());
-
-    candidates.par_iter().for_each(|(track, path)| {
-        pb.set_message(format!("{} - {}", track.artist, track.name));
-        match analyze_one(track, path, &store) {
-            Ok(()) => {
-                *ok.lock().unwrap() += 1;
-            }
-            Err(e) => {
-                failed
-                    .lock()
-                    .unwrap()
-                    .push((track.name.clone(), format!("{:#}", e)));
-            }
-        }
-        pb.inc(1);
-    });
-
-    pb.finish();
-    let elapsed = start.elapsed();
-    let ok_count = *ok.lock().unwrap();
-    let failed_list = failed.into_inner().unwrap();
-
-    println!();
-    println!("Done in {:.1}s", elapsed.as_secs_f32());
-    println!(
-        "  {} succeeded, {} failed, {:.2}s/track avg",
-        ok_count,
-        failed_list.len(),
-        elapsed.as_secs_f32() / candidates.len().max(1) as f32
-    );
-    if !failed_list.is_empty() {
-        println!("  first 5 failures:");
-        for (name, err) in failed_list.iter().take(5) {
-            println!("    {}: {}", name, err);
-        }
-    }
-
+    let (handler, bar) = progress_handler();
+    let mut run_opts = RunOptions::from(&opts);
+    run_opts.estimate_missing = estimate;
+    run_opts.threads = threads;
+    // Rekordbox XML goes through the same pipeline as everything else.
+    let summary = analyze::run_with(opts, run_opts, handler)?;
+    bar.finish();
+    print_summary(&summary, dry_run);
     Ok(())
 }
 
-fn analyze_one(
-    track: &rekordbox::Track,
+fn cmd_scan(db: &Path, dirs: &[PathBuf], depth: Option<usize>, pipe: &PipeFlags) -> Result<()> {
+    println!("Scanning {} folder(s)…", dirs.len());
+    let scanned = scan_dirs(dirs, &ScanOptions { max_depth: depth });
+    for bad in &scanned.bad_roots {
+        eprintln!("  not a folder: {}", bad);
+    }
+    if scanned.unreadable > 0 {
+        eprintln!(
+            "  {} entries could not be read (permissions?)",
+            scanned.unreadable
+        );
+    }
+    if scanned.tracks.is_empty() {
+        return Err(anyhow!("no audio files found"));
+    }
+    let total = scanned.tracks.len();
+    let imported = Imported {
+        tracks: scanned.tracks,
+        ..Default::default()
+    };
+    run_import(db, imported, total, pipe)
+}
+
+fn cmd_import(
+    db: &Path,
+    kind: ImportKind,
     path: &Path,
-    store: &Mutex<Store>,
+    root: Option<&Path>,
+    boot_volume: Option<String>,
+    pipe: &PipeFlags,
 ) -> Result<()> {
-    let audio = audio::decode_mono(path, ANALYSIS_SR)
-        .with_context(|| format!("decoding {}", path.display()))?;
-    let feats = features::extract(&audio.samples, audio.sample_rate);
-    let path_str = path.to_string_lossy().to_string();
-    store.lock().unwrap().upsert(track, &feats, &path_str)?;
+    let imported = match kind {
+        ImportKind::Traktor => {
+            println!("Reading Traktor collection…");
+            let mut o = TraktorOptions::default();
+            if let Some(v) = boot_volume {
+                o.boot_volume = v;
+            }
+            traktor::read_nml(path, &o)?
+        }
+        ImportKind::Serato => {
+            println!("Reading Serato library…");
+            serato::read_serato(path, root)?
+        }
+    };
+    println!("  {} playlist(s)/crate(s) found", imported.playlists.len());
+    let total = imported.tracks.len() + imported.no_location + imported.unparseable_uri;
+    run_import(db, imported, total, pipe)
+}
+
+fn run_import(db: &Path, imported: Imported, total: usize, pipe: &PipeFlags) -> Result<()> {
+    let (handler, bar) = progress_handler();
+    let summary = analyze::run_imported(imported, total, &pipe.run_options(db), handler)?;
+    bar.finish();
+    print_summary(&summary, pipe.dry_run);
+    Ok(())
+}
+
+fn export_rows(
+    out: &Path,
+    default_name: &str,
+    playlist_name: Option<&str>,
+    rows: &[TrackRow],
+    fmt: &ExportFlags,
+) -> Result<()> {
+    let format = fmt.format_for(out)?;
+    let name = resolve_playlist_name(playlist_name, out, default_name);
+    let report = write_playlist(format, out, &name, rows, &fmt.options())?;
+    println!(
+        "\nWrote {} track(s) to {} (playlist: \"{}\", format: {})",
+        report.written,
+        out.display(),
+        name,
+        format.extension()
+    );
+    if report.skipped > 0 {
+        println!(
+            "  {} track(s) left out (no file path, or outside --serato-root)",
+            report.skipped
+        );
+    }
+    Ok(())
+}
+
+fn cmd_export(
+    db: &Path,
+    out: &Path,
+    playlist: Option<&str>,
+    genre: Option<&str>,
+    sub_genre: Option<&str>,
+    playlist_name: Option<&str>,
+    fmt: &ExportFlags,
+) -> Result<()> {
+    let store = Store::open(db)?;
+    let mut rows = match playlist {
+        Some(name) => {
+            let rows = store.playlist_rows(name)?;
+            if rows.is_empty() {
+                let names: Vec<String> = store
+                    .list_playlists()?
+                    .into_iter()
+                    .map(|(n, _, _)| n)
+                    .collect();
+                return Err(anyhow!(
+                    "playlist `{}` has no analyzed tracks. known playlists: {}",
+                    name,
+                    if names.is_empty() {
+                        "(none — run `import` first)".to_string()
+                    } else {
+                        names.join(", ")
+                    }
+                ));
+            }
+            rows
+        }
+        None => store.list_all()?,
+    };
+    let contains = |hay: &str, needle: &str| hay.to_lowercase().contains(&needle.to_lowercase());
+    if let Some(g) = genre {
+        rows.retain(|r| contains(&r.genre, g));
+    }
+    if let Some(sg) = sub_genre {
+        rows.retain(|r| {
+            r.sub_genre
+                .as_deref()
+                .map(|s| contains(s, sg))
+                .unwrap_or(false)
+        });
+    }
+    if rows.is_empty() {
+        println!("nothing to export — no tracks match.");
+        return Ok(());
+    }
+    export_rows(out, "export", playlist_name.or(playlist), &rows, fmt)
+}
+
+fn cmd_playlists(db: &Path, show: Option<&str>) -> Result<()> {
+    let store = Store::open(db)?;
+    if let Some(name) = show {
+        let rows = store.playlist_rows(name)?;
+        if rows.is_empty() {
+            println!("no analyzed tracks in `{}`.", name);
+            return Ok(());
+        }
+        let stats = store.stats()?;
+        print_table(
+            &rows,
+            stats.min_energy.unwrap_or(0.0),
+            stats.max_energy.unwrap_or(1.0),
+        );
+        return Ok(());
+    }
+    let lists = store.list_playlists()?;
+    if lists.is_empty() {
+        println!("no playlists yet — `track2mix import traktor|serato …` brings them in.");
+        return Ok(());
+    }
+    for (name, source, n) in lists {
+        println!("{:<8} {:>5}  {}", source, n, name);
+    }
     Ok(())
 }
 
@@ -348,6 +651,7 @@ fn cmd_top(
     asc: bool,
     export: Option<&Path>,
     playlist_name: Option<&str>,
+    fmt: &ExportFlags,
 ) -> Result<()> {
     let store = Store::open(db)?;
     let rows = store.top_by(metric, limit, genre, sub_genre, asc)?;
@@ -356,17 +660,13 @@ fn cmd_top(
         return Ok(());
     }
     let stats = store.stats()?;
-    let (emin, emax) = (stats.min_energy.unwrap_or(0.0), stats.max_energy.unwrap_or(1.0));
+    let (emin, emax) = (
+        stats.min_energy.unwrap_or(0.0),
+        stats.max_energy.unwrap_or(1.0),
+    );
     print_table(&rows, emin, emax);
     if let Some(out) = export {
-        let name = resolve_playlist_name(playlist_name, out, "top");
-        let written = write_m3u8(out, &name, &rows)?;
-        println!(
-            "\nWrote {} track(s) to {} (playlist: \"{}\")",
-            written,
-            out.display(),
-            name
-        );
+        export_rows(out, "top", playlist_name, &rows, fmt)?;
     }
     Ok(())
 }
@@ -380,6 +680,7 @@ fn cmd_compat(
     half_double_ok: bool,
     export: Option<&Path>,
     playlist_name: Option<&str>,
+    fmt: &ExportFlags,
 ) -> Result<()> {
     let store = Store::open(db)?;
     let matches = store.search(query, 5)?;
@@ -466,29 +767,28 @@ fn cmd_compat(
         println!(
             "no compatible tracks in ±{:.1} BPM{}{}.",
             bpm_tol,
-            if half_double_ok { " (with half/double)" } else { "" },
-            if apply_key_filter { " with a compatible key" } else { "" },
+            if half_double_ok {
+                " (with half/double)"
+            } else {
+                ""
+            },
+            if apply_key_filter {
+                " with a compatible key"
+            } else {
+                ""
+            },
         );
         return Ok(());
     }
     let stats = store.stats()?;
-    let (emin, emax) = (stats.min_energy.unwrap_or(0.0), stats.max_energy.unwrap_or(1.0));
+    let (emin, emax) = (
+        stats.min_energy.unwrap_or(0.0),
+        stats.max_energy.unwrap_or(1.0),
+    );
     print_table(&compatible, emin, emax);
     if let Some(out) = export {
         let default = format!("{} — compat", anchor.name);
-        let name = playlist_name.map(|s| s.to_string()).unwrap_or_else(|| {
-            out.file_stem()
-                .and_then(|s| s.to_str())
-                .map(|s| s.to_string())
-                .unwrap_or(default)
-        });
-        let written = write_m3u8(out, &name, &compatible)?;
-        println!(
-            "\nWrote {} track(s) to {} (playlist: \"{}\")",
-            written,
-            out.display(),
-            name
-        );
+        export_rows(out, &default, playlist_name, &compatible, fmt)?;
     }
     Ok(())
 }

@@ -2,14 +2,21 @@ import * as React from "react";
 import {
   analyzeXml,
   defaultDbPath,
+  importLibrary,
+  listPlaylists,
   onAnalyzeProgress,
   openLibrary,
+  playlistTrackIds,
+  scanFolders,
   type AnalyzeSummary,
+  type ImportKind,
   type LibrarySummary,
+  type PlaylistInfo,
   type ProgressEvent,
   type UiTrack,
 } from "@/lib/tauri";
 import { open as openFile } from "@tauri-apps/plugin-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { FilterBar, emptyFilters, type FilterState } from "./components/FilterBar";
 import { Logo } from "./components/Logo";
 import { TrackTable, type SortKey } from "./components/TrackTable";
@@ -18,9 +25,12 @@ import { ExportDialog } from "./components/ExportDialog";
 import { Button } from "./components/ui/Button";
 import { Badge } from "./components/ui/Badge";
 import {
+  ChevronDown,
   Database,
   Download,
   FileUp,
+  FolderSearch,
+  ListMusic,
   Sparkles,
   X,
 } from "lucide-react";
@@ -39,6 +49,10 @@ function App() {
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [anchorId, setAnchorId] = React.useState<string | null>(null);
   const [showExport, setShowExport] = React.useState(false);
+
+  const [playlists, setPlaylists] = React.useState<PlaylistInfo[]>([]);
+  const [activePlaylist, setActivePlaylist] = React.useState<string>("");
+  const [playlistIds, setPlaylistIds] = React.useState<Set<string> | null>(null);
 
   const [analyzing, setAnalyzing] = React.useState(false);
   const [progress, setProgress] = React.useState<ProgressEvent | null>(null);
@@ -101,10 +115,28 @@ function App() {
       setSelected(new Set());
       setAnchorId(null);
       setFilters(emptyFilters);
+      setActivePlaylist("");
+      setPlaylistIds(null);
+      setPlaylists(await listPlaylists().catch(() => []));
     } catch (e) {
       setLoadErr(String(e));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function choosePlaylist(name: string) {
+    setActivePlaylist(name);
+    if (!name) {
+      setPlaylistIds(null);
+      return;
+    }
+    try {
+      setPlaylistIds(new Set(await playlistTrackIds(name)));
+    } catch (e) {
+      setLoadErr(String(e));
+      setActivePlaylist("");
+      setPlaylistIds(null);
     }
   }
 
@@ -122,6 +154,29 @@ function App() {
     }
   }
 
+  async function runJob(start: () => Promise<AnalyzeSummary>) {
+    setAnalyzing(true);
+    setProgress(null);
+    setAnalyzeErr(null);
+    setAnalyzeFailures([]);
+    setAnalyzeSummary(null);
+    try {
+      const summary = await start();
+      setAnalyzeSummary(summary);
+      setDbPath(summary.db_path);
+      await loadDb(summary.db_path);
+    } catch (e) {
+      setAnalyzeErr(String(e));
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  /** Scans and imports from other apps add to the library that's open now. */
+  async function targetDb(): Promise<string> {
+    return dbPath || (await defaultDbPath());
+  }
+
   async function pickXml() {
     setAnalyzeErr(null);
     const picked = await openFile({
@@ -134,28 +189,69 @@ function App() {
 
     // Target DB next to the XML (same dir, swap .xml → .db).
     // Falls back to the current dbPath if we can't derive one.
-    const targetDb = picked.replace(/\.xml$/i, ".db");
-    const finalDb = targetDb === picked ? dbPath || `${picked}.db` : targetDb;
+    const derived = picked.replace(/\.xml$/i, ".db");
+    const finalDb = derived === picked ? dbPath || `${picked}.db` : derived;
 
-    setAnalyzing(true);
-    setProgress(null);
-    setAnalyzeFailures([]);
-    setAnalyzeSummary(null);
-
-    try {
-      const summary = await analyzeXml({
+    await runJob(() =>
+      analyzeXml({
         xml_path: picked,
         db_path: finalDb,
         skip_analyzed: skipAnalyzed,
-      });
-      setAnalyzeSummary(summary);
-      setDbPath(summary.db_path);
-      await loadDb(summary.db_path);
-    } catch (e) {
+      }),
+    );
+  }
+
+  async function pickFolders() {
+    setAnalyzeErr(null);
+    const picked = await openFile({
+      directory: true,
+      multiple: true,
+      title: "Choose folders to scan for tracks",
+    }).catch((e) => {
       setAnalyzeErr(String(e));
-    } finally {
-      setAnalyzing(false);
-    }
+      return null;
+    });
+    const dirs = Array.isArray(picked) ? picked : picked ? [picked] : [];
+    if (dirs.length === 0) return;
+    const db = await targetDb();
+    await runJob(() =>
+      scanFolders({ dirs, db_path: db, skip_analyzed: skipAnalyzed }),
+    );
+  }
+
+  async function pickLibrary(
+    kind: ImportKind,
+    what: "nml" | "serato-folder" | "serato-crate",
+  ) {
+    setAnalyzeErr(null);
+    const picked = await (what === "nml"
+      ? openFile({
+          title: "Choose your Traktor collection.nml",
+          filters: [{ name: "Traktor collection", extensions: ["nml"] }],
+        })
+      : what === "serato-crate"
+        ? openFile({
+            title: "Choose a Serato .crate file",
+            filters: [{ name: "Serato crate", extensions: ["crate"] }],
+          })
+        : openFile({
+            directory: true,
+            title: "Choose your _Serato_ folder",
+          })
+    ).catch((e) => {
+      setAnalyzeErr(String(e));
+      return null;
+    });
+    if (typeof picked !== "string") return;
+    const db = await targetDb();
+    await runJob(() =>
+      importLibrary({
+        kind,
+        path: picked,
+        db_path: db,
+        skip_analyzed: skipAnalyzed,
+      }),
+    );
   }
 
   const anchor = React.useMemo(
@@ -171,6 +267,7 @@ function App() {
     const bmin = filters.bpmMin === "" ? -Infinity : Number(filters.bpmMin);
     const bmax = filters.bpmMax === "" ? Infinity : Number(filters.bpmMax);
     return tracks.filter((t) => {
+      if (playlistIds && !playlistIds.has(t.track_id)) return false;
       if (q) {
         const hay = `${t.name} ${t.artist}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -185,7 +282,7 @@ function App() {
       if (bpm < bmin || bpm > bmax) return false;
       return true;
     });
-  }, [tracks, filters]);
+  }, [tracks, filters, playlistIds]);
 
   const sorted = React.useMemo(() => {
     const rows = filtered.slice();
@@ -287,7 +384,7 @@ function App() {
         <div className="no-drag flex items-center gap-2">
           <label
             className="flex items-center gap-1.5 text-[11px] text-muted-foreground select-none cursor-pointer pr-1"
-            title="When importing XML, skip tracks that are already in the database"
+            title="When scanning or importing, skip tracks that are already in the database"
           >
             <input
               type="checkbox"
@@ -301,12 +398,19 @@ function App() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={pickXml}
+            onClick={pickFolders}
             disabled={analyzing}
           >
-            <FileUp className="h-3.5 w-3.5" />
-            Import Rekordbox XML
+            <FolderSearch className="h-3.5 w-3.5" />
+            Scan folder
           </Button>
+          <ImportMenu
+            disabled={analyzing}
+            onRekordbox={pickXml}
+            onTraktor={() => pickLibrary("traktor", "nml")}
+            onSeratoFolder={() => pickLibrary("serato", "serato-folder")}
+            onSeratoCrate={() => pickLibrary("serato", "serato-crate")}
+          />
           <Button
             variant="ghost"
             size="sm"
@@ -321,6 +425,24 @@ function App() {
 
       {/* Body */}
       <main className="flex-1 flex flex-col min-h-0 p-3 gap-3">
+        {playlists.length > 0 && (
+          <div className="glass rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
+            <ListMusic className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-muted-foreground">Playlist</span>
+            <select
+              value={activePlaylist}
+              onChange={(e) => choosePlaylist(e.target.value)}
+              className="h-7 rounded-md bg-bg-deep border border-white/10 px-2 text-xs text-foreground max-w-[360px] [color-scheme:dark]"
+            >
+              <option value="">All tracks</option>
+              {playlists.map((p) => (
+                <option key={`${p.source}:${p.name}`} value={p.name}>
+                  {p.name} · {p.source} · {p.count}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <FilterBar
           filters={filters}
           onChange={setFilters}
@@ -357,12 +479,17 @@ function App() {
                     No library loaded
                   </div>
                   <div className="text-xs text-muted-foreground mb-4">
-                    In Rekordbox: <span className="text-foreground">File →
-                    Export Collection in xml format</span>, then point Track2Mix
-                    at the file.
+                    Scan a folder of music, or bring in a library from
+                    Rekordbox (<span className="text-foreground">File →
+                    Export Collection in xml format</span>), Traktor or Serato
+                    from the Import menu above.
                   </div>
                   <div className="flex items-center justify-center gap-2">
-                    <Button variant="primary" onClick={pickXml}>
+                    <Button variant="primary" onClick={pickFolders}>
+                      <FolderSearch className="h-3.5 w-3.5" />
+                      Scan a folder
+                    </Button>
+                    <Button variant="secondary" onClick={pickXml}>
                       <FileUp className="h-3.5 w-3.5" />
                       Import Rekordbox XML
                     </Button>
@@ -430,7 +557,7 @@ function App() {
                   onClick={() => setShowExport(true)}
                 >
                   <Download className="h-3.5 w-3.5" />
-                  Export to Rekordbox
+                  Export…
                 </Button>
               </div>
             </div>
@@ -473,6 +600,18 @@ function App() {
                 {analyzeSummary.ok} ok · {analyzeSummary.failed} failed ·{" "}
                 {analyzeSummary.elapsed_secs.toFixed(1)}s
               </div>
+              {analyzeSummary.estimated_bpm + analyzeSummary.estimated_key > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  Estimated from audio: {analyzeSummary.estimated_bpm} BPM,{" "}
+                  {analyzeSummary.estimated_key} key (tags had none)
+                </div>
+              )}
+              {analyzeSummary.playlists > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  {analyzeSummary.playlists} playlist
+                  {analyzeSummary.playlists === 1 ? "" : "s"} imported
+                </div>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -492,7 +631,7 @@ function App() {
         <div className="fixed bottom-4 right-4 z-40 glass rounded-lg p-4 border border-red-500/30 text-sm max-w-md">
           <div className="flex items-start justify-between gap-3 mb-1">
             <div className="font-medium text-red-200">
-              Couldn't analyze the XML
+              Import failed
             </div>
             <Button
               variant="ghost"
@@ -511,6 +650,54 @@ function App() {
   );
 }
 
+function ImportMenu({
+  disabled,
+  onRekordbox,
+  onTraktor,
+  onSeratoFolder,
+  onSeratoCrate,
+}: {
+  disabled: boolean;
+  onRekordbox: () => void;
+  onTraktor: () => void;
+  onSeratoFolder: () => void;
+  onSeratoCrate: () => void;
+}) {
+  const item =
+    "px-3 py-2 text-xs rounded cursor-pointer outline-none text-foreground data-[highlighted]:bg-white/[0.08]";
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <Button variant="ghost" size="sm" disabled={disabled}>
+          <FileUp className="h-3.5 w-3.5" />
+          Import
+          <ChevronDown className="h-3 w-3 opacity-70" />
+        </Button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={6}
+          className="glass rounded-lg border border-white/10 p-1 min-w-[230px] z-50 animate-fade-in"
+        >
+          <DropdownMenu.Item className={item} onSelect={onRekordbox}>
+            Rekordbox XML…
+          </DropdownMenu.Item>
+          <DropdownMenu.Item className={item} onSelect={onTraktor}>
+            Traktor collection (.nml)…
+          </DropdownMenu.Item>
+          <DropdownMenu.Item className={item} onSelect={onSeratoFolder}>
+            Serato library (_Serato_ folder)…
+          </DropdownMenu.Item>
+          <DropdownMenu.Item className={item} onSelect={onSeratoCrate}>
+            Serato crate (.crate)…
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
 function AnalyzeOverlay({
   progress,
   failures,
@@ -524,7 +711,7 @@ function AnalyzeOverlay({
     progress === null
       ? "Starting…"
       : progress.kind === "parsed"
-        ? `Parsed ${progress.total_in_xml.toLocaleString()} tracks from XML…`
+        ? `Found ${progress.total_in_xml.toLocaleString()} tracks…`
         : progress.kind === "resolved"
           ? `Resolved ${progress.ready.toLocaleString()} playable tracks${
               progress.already_analyzed > 0
@@ -557,7 +744,7 @@ function AnalyzeOverlay({
             <FileUp className="h-4 w-4 text-iris-300" />
           </div>
           <div>
-            <div className="text-sm font-medium">Importing library…</div>
+            <div className="text-sm font-medium">Analyzing tracks…</div>
             <div className="text-xs text-muted-foreground">{phase}</div>
           </div>
         </div>

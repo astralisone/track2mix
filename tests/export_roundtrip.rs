@@ -21,6 +21,9 @@ fn row(name: &str, artist: &str, path: Option<&str>) -> TrackRow {
         tonality: "8A".to_string(),
         energy: Some(0.5),
         file_path: path.map(str::to_string),
+        label: String::new(),
+        rating: 0,
+        play_count: 0,
     }
 }
 
@@ -74,11 +77,7 @@ fn skips_rows_with_no_resolvable_path() {
 #[test]
 fn newlines_in_metadata_cannot_break_the_file_format() {
     let out = tmp("inject.m3u8");
-    let rows = vec![row(
-        "Bad\nName",
-        "Bad\r\nArtist",
-        Some("/music/ok.wav"),
-    )];
+    let rows = vec![row("Bad\nName", "Bad\r\nArtist", Some("/music/ok.wav"))];
 
     let written = write_m3u8(&out, "Set", &rows).unwrap();
     assert_eq!(written, 1);

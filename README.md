@@ -18,7 +18,7 @@ Runs entirely offline. No account, no upload, no server.
 ## Two ways in
 
 - **CLI** (`track2mix`) — run the audio analysis pipeline, query the resulting DB, export M3U8 playlists from the shell.
-- **GUI** (`track2mix-tauri`) — search and filter the analysed library, click a track to get harmonically / BPM-compatible suggestions, tick the ones you want, and export an M3U8 that Rekordbox can import directly.
+- **GUI** (`track2mix-tauri`) — scan folders or import Rekordbox / Traktor / Serato libraries, search and filter the analysed library, click a track to get harmonically / BPM-compatible suggestions, tick the ones you want, and export for Rekordbox (M3U8), Traktor (NML) or Serato (crate).
 
 Run the GUI in development:
 ```
@@ -57,6 +57,37 @@ cargo run --release -- analyze --xml ~/rekordbox.xml \
 Notes:
 - `--skip-analyzed` makes re-runs cheap — only newly-resolved tracks get decoded.
 - Tracks with paths like `/v4/catalog/tracks/...` are Beatport streaming entries, not local files; they are dropped and reported in the coverage summary.
+
+### Scan folders, and move between Rekordbox, Traktor and Serato
+
+No DJ software needed to get started — point Track2Mix at folders:
+
+```bash
+# Recursively scan folders. Tags (title, artist, genre, BPM, key) are read from the
+# files; when BPM or key is missing it's estimated from the audio (disable with --no-estimate).
+cargo run --release -- scan ~/Music/DnB ~/Music/House
+
+# Bring in a Traktor collection or a Serato library, playlists / crates included.
+cargo run --release -- import traktor ~/Documents/Native\ Instruments/Traktor\ 3.11.1/collection.nml
+cargo run --release -- import serato  ~/Music/_Serato_          # or a single .crate, or `database V2`
+cargo run --release -- playlists                                  # what came in
+cargo run --release -- playlists --show "Friday warmup"
+
+# Export anything — the library, a slice, or an imported playlist. The format
+# follows the extension: .m3u8 (Rekordbox), .nml (Traktor), .crate (Serato).
+cargo run --release -- export out/set.nml --genre liquid --playlist-name "Liquid"
+cargo run --release -- export out/Warmup.crate --playlist "Friday warmup"
+cargo run --release -- top --by energy --limit 30 --export out/peak.nml
+```
+
+Things worth knowing:
+
+- **One file, one row.** Scanning a folder and then importing a Traktor/Serato library that lists the same files updates the same rows instead of duplicating them.
+- **Estimated BPM/key are a starting point.** They're heuristics tuned for four-on-the-floor music; tags from Rekordbox/Traktor/Serato/Mixed In Key always win and the estimates only fill gaps.
+- **Paths differ between machines.** Use `--path-map OLD=NEW` when importing and `--export-path-map OLD=NEW` when exporting. Traktor needs a volume name for plain paths (`--traktor-volume "Macintosh HD"`, or `C:` for Windows). Serato stores paths relative to a drive root; the default is the home drive, use `--serato-root /Volumes/SSD` for an external one.
+- **Serato:** save the `.crate` into `_Serato_/Subcrates` (usually `~/Music/_Serato_/Subcrates`) and restart Serato. **Traktor:** import the `.nml` with *Import Another Collection*.
+- The Traktor and Serato readers/writers follow the file layouts those apps use and round-trip through Track2Mix's own tests, but haven't been verified against a running copy of either app. Try a small playlist first.
+- Analysis uses at most 8 worker threads (cores − 1; override with `--threads` or `TRACK2MIX_THREADS`) and decodes at most 15 minutes of any file, so long DJ mixes can't exhaust memory.
 
 Then explore the library without touching SQL:
 

@@ -1,7 +1,12 @@
 pub mod analyze;
 pub mod audio;
+pub mod estimate;
 pub mod export;
 pub mod features;
 pub mod keys;
 pub mod rekordbox;
+pub mod scan;
+pub mod serato;
+pub mod source;
 pub mod store;
+pub mod traktor;
