@@ -18,6 +18,8 @@ serde_json = "1"
 anyhow = "1"
 
 track2mix = { path = ".." }
+rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-all"] }
+symphonia = "0.5"
 
 [features]
 default = ["custom-protocol"]

@@ -10,20 +10,33 @@ import {
   type UiTrack,
 } from "@/lib/tauri";
 import { open as openFile } from "@tauri-apps/plugin-dialog";
-import { FilterBar, emptyFilters, type FilterState } from "./components/FilterBar";
+import {
+  applyFilters,
+  emptyFilters,
+  facetCounts,
+  libraryBpmBounds,
+  type FilterState,
+} from "@/lib/filters";
+import { proposeOrder, reconcileOrder } from "@/lib/mix";
+import { PlayerProvider, usePlayer, type PlayerApi } from "@/lib/player";
+import { FilterPane } from "./components/FilterPane";
 import { Logo } from "./components/Logo";
 import { TrackTable, type SortKey } from "./components/TrackTable";
 import { CompatPanel } from "./components/CompatPanel";
-import { ExportDialog } from "./components/ExportDialog";
+import { PlaylistBuilder } from "./components/PlaylistBuilder";
+import { PlayerBar } from "./components/PlayerBar";
 import { Button } from "./components/ui/Button";
 import { Badge } from "./components/ui/Badge";
 import {
   Database,
-  Download,
   FileUp,
+  ListMusic,
+  Play,
   Sparkles,
   X,
 } from "lucide-react";
+
+const MAX_QUEUE = 500;
 
 function App() {
   const [dbPath, setDbPath] = React.useState<string>("");
@@ -33,12 +46,20 @@ function App() {
   const [loading, setLoading] = React.useState(false);
 
   const [filters, setFilters] = React.useState<FilterState>(emptyFilters);
+  const [filtersCollapsed, setFiltersCollapsed] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<SortKey>("energy");
   const [sortDir, setSortDir] = React.useState<"asc" | "desc">("desc");
 
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [anchorId, setAnchorId] = React.useState<string | null>(null);
-  const [showExport, setShowExport] = React.useState(false);
+
+  // Playlist order for the builder. `order` is the user's arrangement; it is
+  // reconciled with the selection so new picks append and deselected drop.
+  // `arranged` stays false until the set has been ordered (proposed or by
+  // hand), so the first visit to the builder gets a harmonic proposal.
+  const [view, setView] = React.useState<"library" | "builder">("library");
+  const [order, setOrder] = React.useState<string[]>([]);
+  const [arranged, setArranged] = React.useState(false);
 
   const [analyzing, setAnalyzing] = React.useState(false);
   const [progress, setProgress] = React.useState<ProgressEvent | null>(null);
@@ -101,6 +122,9 @@ function App() {
       setSelected(new Set());
       setAnchorId(null);
       setFilters(emptyFilters);
+      setOrder([]);
+      setArranged(false);
+      setView("library");
     } catch (e) {
       setLoadErr(String(e));
     } finally {
@@ -163,29 +187,15 @@ function App() {
     [tracks, anchorId],
   );
 
-  const filtered = React.useMemo(() => {
-    const q = filters.search.trim().toLowerCase();
-    const g = filters.genre.trim().toLowerCase();
-    const sg = filters.subGenre.trim().toLowerCase();
-    const k = filters.key.trim().toLowerCase();
-    const bmin = filters.bpmMin === "" ? -Infinity : Number(filters.bpmMin);
-    const bmax = filters.bpmMax === "" ? Infinity : Number(filters.bpmMax);
-    return tracks.filter((t) => {
-      if (q) {
-        const hay = `${t.name} ${t.artist}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      if (g && !(t.genre || "").toLowerCase().includes(g)) return false;
-      if (sg && !(t.sub_genre || "").toLowerCase().includes(sg)) return false;
-      if (k) {
-        const keyHay = `${t.camelot ?? ""} ${t.tonality ?? ""}`.toLowerCase();
-        if (!keyHay.includes(k)) return false;
-      }
-      const bpm = t.bpm ?? -1;
-      if (bpm < bmin || bpm > bmax) return false;
-      return true;
-    });
-  }, [tracks, filters]);
+  const bpmBounds = React.useMemo(() => libraryBpmBounds(tracks), [tracks]);
+  const filtered = React.useMemo(
+    () => applyFilters(tracks, filters),
+    [tracks, filters],
+  );
+  const facets = React.useMemo(
+    () => facetCounts(tracks, filters, bpmBounds),
+    [tracks, filters, bpmBounds],
+  );
 
   const sorted = React.useMemo(() => {
     const rows = filtered.slice();
@@ -252,17 +262,77 @@ function App() {
     });
   }
 
-  const hasAnyFilter =
-    !!(
-      filters.search ||
-      filters.genre ||
-      filters.subGenre ||
-      filters.key ||
-      filters.bpmMin !== "" ||
-      filters.bpmMax !== ""
-    );
+  function removeFromSelection(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    // Drop it from the arrangement too, so re-selecting it appends.
+    setOrder((o) => o.filter((x) => x !== id));
+  }
+
+  // An emptied selection (by any route) starts the next set fresh, with a
+  // new harmonic proposal on the builder's first visit.
+  React.useEffect(() => {
+    if (selected.size === 0) {
+      setOrder([]);
+      setArranged(false);
+    }
+  }, [selected]);
+
+  function clearSelection() {
+    setSelected(new Set());
+    setOrder([]);
+    setArranged(false);
+  }
+
+  // Selection in insertion order (Set iteration order), and the playlist
+  // order reconciled against it.
+  const selectionOrder = React.useMemo(() => Array.from(selected), [selected]);
+  const playlistOrder = React.useMemo(
+    () => reconcileOrder(order, selectionOrder),
+    [order, selectionOrder],
+  );
+
+  function openBuilder() {
+    if (!arranged) {
+      const set = selectionOrder
+        .map((id) => tracks.find((t) => t.track_id === id))
+        .filter((t): t is UiTrack => !!t);
+      setOrder(proposeOrder(set, anchorId ?? undefined));
+      setArranged(true);
+    }
+    setView("builder");
+  }
+
+  function onOrderChange(next: string[]) {
+    setOrder(next);
+    setArranged(true);
+  }
+
+  // Row play: inside the selection, queue the set in playlist order from this
+  // track; otherwise play just this track.
+  function playQueueFor(id: string): { ids: string[]; start: number } {
+    const i = playlistOrder.indexOf(id);
+    return i >= 0 ? { ids: playlistOrder, start: i } : { ids: [id], start: 0 };
+  }
+
+  const inBuilder = view === "builder" && tracks.length > 0;
+
+  // The player API lives below this component (the provider needs `tracks`).
+  // A ref keeps App from re-rendering on every position tick.
+  const playerRef = React.useRef<PlayerApi | null>(null);
+  // The full queue rides on every player:state tick, so cap it: a select-all
+  // on a big library would otherwise ship megabytes of ids per second.
+  const play = (ids: string[], start = 0) => {
+    const window = ids.slice(start, start + MAX_QUEUE);
+    playerRef.current?.playTracks(window, 0);
+  };
 
   return (
+    <PlayerProvider tracks={tracks}>
+    <PlayerBridge target={playerRef} />
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Title bar */}
       <header className="drag-region h-10 flex items-center justify-between px-4 border-b border-white/5">
@@ -320,16 +390,22 @@ function App() {
       </header>
 
       {/* Body */}
-      <main className="flex-1 flex flex-col min-h-0 p-3 gap-3">
-        <FilterBar
-          filters={filters}
-          onChange={setFilters}
-          onReset={() => setFilters(emptyFilters)}
-          hasAny={hasAnyFilter}
-          counts={{ shown: sorted.length, total: tracks.length }}
-        />
+      <main className="flex-1 flex min-h-0 p-3 gap-3">
+        {!inBuilder && tracks.length > 0 && (
+          <FilterPane
+            filters={filters}
+            onChange={setFilters}
+            onReset={() => setFilters(emptyFilters)}
+            facets={facets}
+            bpmBounds={bpmBounds}
+            counts={{ shown: sorted.length, total: tracks.length }}
+            anchorKey={anchor?.camelot ?? null}
+            collapsed={filtersCollapsed}
+            onToggleCollapsed={() => setFiltersCollapsed((c) => !c)}
+          />
+        )}
 
-        <div className="flex-1 flex gap-3 min-h-0">
+        <div className="flex-1 flex gap-3 min-h-0 min-w-0">
           <div className="flex-1 flex flex-col min-w-0 gap-3">
             {loadErr && (
               <div className="glass rounded-lg p-4 border border-red-500/30 text-sm text-red-200">
@@ -382,8 +458,24 @@ function App() {
                   </label>
                 </div>
               </div>
+            ) : inBuilder ? (
+              <PlaylistBuilder
+                tracks={tracks}
+                order={playlistOrder}
+                onOrderChange={onOrderChange}
+                onRemove={removeFromSelection}
+                onAdd={addToSelection}
+                selectionOrder={selectionOrder}
+                anchorId={anchorId}
+                defaultName={anchor ? `${anchor.name} — Track2Mix` : "Track2Mix set"}
+                onBack={() => setView("library")}
+              />
             ) : (
               <TrackTable
+                onPlay={(id) => {
+                  const q = playQueueFor(id);
+                  play(q.ids, q.start);
+                }}
                 rows={sorted}
                 selected={selected}
                 onToggleSelect={toggleSelect}
@@ -396,7 +488,10 @@ function App() {
               />
             )}
 
+            {!inBuilder && <PlayerBar />}
+
             {/* Bottom action bar */}
+            {!inBuilder && (
             <div className="glass rounded-lg px-4 py-2.5 flex items-center gap-3">
               <Badge variant={selected.size > 0 ? "iris" : "muted"}>
                 {selected.size} selected
@@ -405,9 +500,19 @@ function App() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setSelected(new Set())}
+                  onClick={clearSelection}
                 >
                   Clear
+                </Button>
+              )}
+              {selected.size > 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => play(playlistOrder, 0)}
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  Play selected
                 </Button>
               )}
               <div className="ml-auto flex items-center gap-2">
@@ -427,32 +532,27 @@ function App() {
                   variant="gold"
                   size="sm"
                   disabled={selected.size === 0}
-                  onClick={() => setShowExport(true)}
+                  onClick={openBuilder}
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  Export to Rekordbox
+                  <ListMusic className="h-3.5 w-3.5" />
+                  Build playlist
                 </Button>
               </div>
             </div>
+            )}
           </div>
 
-          {anchor && (
+          {anchor && !inBuilder && (
             <CompatPanel
               anchor={anchor}
               onClose={() => setAnchorId(null)}
               onAddToSelection={addToSelection}
               onSetAnchor={setAnchorId}
+              onPlay={(id) => play([id], 0)}
             />
           )}
         </div>
       </main>
-
-      <ExportDialog
-        open={showExport}
-        onOpenChange={setShowExport}
-        selectedIds={Array.from(selected)}
-        defaultName={anchor ? `${anchor.name} — Track2Mix` : "Track2Mix set"}
-      />
 
       {analyzing && (
         <AnalyzeOverlay
@@ -508,7 +608,21 @@ function App() {
         </div>
       )}
     </div>
+    </PlayerProvider>
   );
+}
+
+/** Publishes the player API into a ref owned by App. Renders nothing. */
+function PlayerBridge({
+  target,
+}: {
+  target: React.MutableRefObject<PlayerApi | null>;
+}) {
+  const api = usePlayer();
+  React.useLayoutEffect(() => {
+    target.current = api;
+  }, [target, api]);
+  return null;
 }
 
 function AnalyzeOverlay({

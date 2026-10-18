@@ -5,16 +5,17 @@ import { Badge } from "./ui/Badge";
 import { EnergyMeter } from "./EnergyMeter";
 import { KeyChip } from "./KeyChip";
 import { formatBpm } from "@/lib/utils";
-import { Plus, Sparkles, X } from "lucide-react";
+import { Play, Plus, Sparkles, X } from "lucide-react";
 
 type Props = {
   anchor: UiTrack | null;
   onClose: () => void;
   onAddToSelection: (ids: string[]) => void;
   onSetAnchor: (id: string) => void;
+  onPlay?: (id: string) => void;
 };
 
-export function CompatPanel({ anchor, onClose, onAddToSelection, onSetAnchor }: Props) {
+export function CompatPanel({ anchor, onClose, onAddToSelection, onSetAnchor, onPlay }: Props) {
   const [bpmTol, setBpmTol] = React.useState(3);
   const [anyKey, setAnyKey] = React.useState(false);
   const [halfDouble, setHalfDouble] = React.useState(true);
@@ -175,6 +176,19 @@ export function CompatPanel({ anchor, onClose, onAddToSelection, onSetAnchor }: 
                       <EnergyMeter value={t.energy} />
                     </div>
                   </div>
+                  {onPlay && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPlay(t.track_id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-muted-foreground hover:text-iris-200 transition-opacity"
+                      title="Preview this track"
+                      aria-label={`Play ${t.name}`}
+                    >
+                      <Play className="h-4 w-4" />
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
