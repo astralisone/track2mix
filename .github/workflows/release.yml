@@ -82,6 +82,22 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # AppImage bundling shells out to linuxdeploy, which is itself an
+          # AppImage and mounts its payload with FUSE. The Ubuntu runners no
+          # longer ship libfuse2, so that mount fails and tauri reports the
+          # unhelpful "failed to bundle project `failed to run linuxdeploy`"
+          # with linuxdeploy's real complaint — "No suitable fusermount binary
+          # found on the $PATH" — buried above it. Extracting instead of
+          # mounting sidesteps FUSE entirely.
+          #
+          # bundleMediaFramework in tauri.conf.json makes this worse: it pulls
+          # in the GStreamer plugin, which is another AppImage run the same way.
+          #
+          # Ignored on macOS and Windows, which never invoke linuxdeploy.
+          APPIMAGE_EXTRACT_AND_RUN: 1
+          # linuxdeploy strips binaries by default and fails the whole bundle
+          # when strip errors on a library it does not own.
+          NO_STRIP: true
         with:
           projectPath: .
           tagName: ${{ github.event.inputs.tag || github.ref_name }}

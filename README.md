@@ -30,6 +30,27 @@ The GUI auto-opens `./library.db` from the project root if it exists; otherwise 
 
 A release build installs the CLI as `track2mix`; the examples below use `cargo run` so they work from a checkout.
 
+Build the installable bundles:
+```
+bun run tauri build
+```
+
+**On Linux, set two variables first:**
+```
+APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true bun run tauri build
+```
+The `.deb` and `.rpm` bundle without them; the AppImage does not. Tauri shells
+out to `linuxdeploy`, which is an AppImage that mounts its own payload with
+FUSE, and most current distributions and CI images no longer ship `libfuse2`.
+When that mount fails you get ``failed to bundle project `failed to run
+linuxdeploy` `` — linuxdeploy's actual complaint, `No suitable fusermount
+binary found on the $PATH`, is printed above it and easy to miss. Extracting instead
+of mounting avoids FUSE altogether. `NO_STRIP` covers the other common failure,
+where linuxdeploy fails the bundle because `strip` errored on a library it does
+not own.
+
+Installing `libfuse2` works too, if you would rather have it on the system.
+
 ## What this proves (or disproves)
 
 1. **Rekordbox XML is parseable and round-trippable.** If this chokes on your real library, the whole product is in trouble.
