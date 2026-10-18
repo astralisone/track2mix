@@ -7,6 +7,11 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::Emitter;
 
+/// Playback / composition support. The webview decodes audio itself via
+/// `decodeAudioData`; these commands only hand it bytes, and only for
+/// tracks that exist in the open library (never arbitrary paths).
+mod playback;
+
 /// The data we ship to the frontend. `TrackRow` is already serde-friendly but
 /// we add the 0–10 energy score and a parsed Camelot string so the UI doesn't
 /// have to parse tonality itself.
@@ -70,6 +75,26 @@ struct StateInner {
     min_energy: f32,
     max_energy: f32,
     cache: Vec<TrackRow>,
+}
+
+impl AppState {
+    /// Resolve a library track id to its on-disk audio path. Used by the
+    /// playback commands so the frontend can only ever request files the
+    /// user already imported.
+    pub(crate) fn file_path_for(&self, track_id: &str) -> Result<PathBuf, String> {
+        let guard = self.inner.lock().unwrap();
+        let s = guard.as_ref().ok_or_else(|| "no library open".to_string())?;
+        let t = s
+            .cache
+            .iter()
+            .find(|t| t.track_id == track_id)
+            .ok_or_else(|| format!("track not found: {}", track_id))?;
+        let p = t
+            .file_path
+            .as_deref()
+            .ok_or_else(|| format!("track has no file path: {}", track_id))?;
+        Ok(PathBuf::from(p))
+    }
 }
 
 impl Default for AppState {
@@ -274,7 +299,10 @@ pub fn run() {
             compat,
             export_playlist,
             default_db_path,
-            analyze_xml
+            analyze_xml,
+            playback::read_track_audio,
+            playback::decode_track_pcm,
+            playback::write_recording
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

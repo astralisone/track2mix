@@ -15,12 +15,23 @@ import { Logo } from "./components/Logo";
 import { TrackTable, type SortKey } from "./components/TrackTable";
 import { CompatPanel } from "./components/CompatPanel";
 import { ExportDialog } from "./components/ExportDialog";
+import { PreviewPlayer } from "./components/PreviewPlayer";
+import { ComposeView } from "./components/compose/ComposeView";
+import { CompositionEngine } from "@/audio/engine";
+import {
+  DEFAULT_LANE,
+  emptyComposition,
+  newId,
+  type Composition,
+} from "@/audio/model";
 import { Button } from "./components/ui/Button";
 import { Badge } from "./components/ui/Badge";
 import {
   Database,
   Download,
   FileUp,
+  Library,
+  SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
@@ -39,6 +50,25 @@ function App() {
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [anchorId, setAnchorId] = React.useState<string | null>(null);
   const [showExport, setShowExport] = React.useState(false);
+
+  const [view, setView] = React.useState<"library" | "compose">("library");
+  const [previewId, setPreviewId] = React.useState<string | null>(null);
+
+  // One AudioContext for the whole app: the library preview and the
+  // composer share its decode cache.
+  const engineRef = React.useRef<CompositionEngine | null>(null);
+  if (!engineRef.current) {
+    engineRef.current = new CompositionEngine(emptyComposition());
+  }
+  const engine = engineRef.current;
+  React.useEffect(() => {
+    return () => {
+      engineRef.current?.dispose();
+      engineRef.current = null;
+    };
+  }, []);
+  // Held here rather than in ComposeView so switching tabs keeps the arrangement.
+  const [comp, setComp] = React.useState<Composition>(emptyComposition);
 
   const [analyzing, setAnalyzing] = React.useState(false);
   const [progress, setProgress] = React.useState<ProgressEvent | null>(null);
@@ -101,6 +131,9 @@ function App() {
       setSelected(new Set());
       setAnchorId(null);
       setFilters(emptyFilters);
+      setPreviewId(null);
+      engine.stop();
+      setComp(emptyComposition());
     } catch (e) {
       setLoadErr(String(e));
     } finally {
@@ -162,6 +195,37 @@ function App() {
     () => tracks.find((t) => t.track_id === anchorId) ?? null,
     [tracks, anchorId],
   );
+
+  const previewTrack = React.useMemo(
+    () => tracks.find((t) => t.track_id === previewId) ?? null,
+    [tracks, previewId],
+  );
+
+  function togglePreview(id: string) {
+    setPreviewId((cur) => (cur === id ? null : id));
+  }
+
+  /** Add tracks as lanes (no clips yet) and jump to the composer. */
+  function addToCompose(toAdd: UiTrack[]) {
+    setComp((prev) => {
+      const existing = new Set(prev.lanes.map((l) => l.track.track_id));
+      const fresh = toAdd.filter((t) => t.file_path && !existing.has(t.track_id));
+      if (fresh.length === 0) return prev;
+      const lanes = [
+        ...prev.lanes,
+        ...fresh.map((track) => ({ id: newId("lane"), track, ...DEFAULT_LANE })),
+      ];
+      const firstBpm = fresh[0].bpm;
+      const masterBpm =
+        prev.lanes.length === 0 && firstBpm && firstBpm > 0 ? firstBpm : prev.masterBpm;
+      return { ...prev, lanes, masterBpm };
+    });
+    setView("compose");
+  }
+
+  function addSelectedToCompose() {
+    addToCompose(tracks.filter((t) => selected.has(t.track_id)));
+  }
 
   const filtered = React.useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -284,6 +348,21 @@ function App() {
             </>
           )}
         </div>
+        <div className="no-drag flex items-center gap-0.5 rounded-md bg-white/[0.03] border border-white/10 p-0.5">
+          <ViewTab
+            active={view === "library"}
+            onClick={() => setView("library")}
+            icon={<Library className="h-3.5 w-3.5" />}
+            label="Library"
+          />
+          <ViewTab
+            active={view === "compose"}
+            onClick={() => setView("compose")}
+            icon={<SlidersHorizontal className="h-3.5 w-3.5" />}
+            label="Compose"
+            badge={comp.lanes.length > 0 ? comp.lanes.length : undefined}
+          />
+        </div>
         <div className="no-drag flex items-center gap-2">
           <label
             className="flex items-center gap-1.5 text-[11px] text-muted-foreground select-none cursor-pointer pr-1"
@@ -321,6 +400,15 @@ function App() {
 
       {/* Body */}
       <main className="flex-1 flex flex-col min-h-0 p-3 gap-3">
+        {view === "compose" ? (
+          <ComposeView
+            engine={engine}
+            comp={comp}
+            onCompChange={setComp}
+            tracks={tracks}
+          />
+        ) : (
+          <>
         <FilterBar
           filters={filters}
           onChange={setFilters}
@@ -393,6 +481,17 @@ function App() {
                 sortBy={sortBy}
                 sortDir={sortDir}
                 onSort={onSort}
+                previewId={previewId}
+                onPreview={togglePreview}
+              />
+            )}
+
+            {previewTrack && (
+              <PreviewPlayer
+                engine={engine}
+                track={previewTrack}
+                onClose={() => setPreviewId(null)}
+                onAddToCompose={(t) => addToCompose([t])}
               />
             )}
 
@@ -410,6 +509,16 @@ function App() {
                   Clear
                 </Button>
               )}
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={selected.size === 0}
+                onClick={addSelectedToCompose}
+                title="Add the selected tracks as lanes in the composer"
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Add to Compose
+              </Button>
               <div className="ml-auto flex items-center gap-2">
                 {anchor ? (
                   <span className="text-xs text-muted-foreground truncate max-w-[260px]">
@@ -445,6 +554,8 @@ function App() {
             />
           )}
         </div>
+          </>
+        )}
       </main>
 
       <ExportDialog
@@ -508,6 +619,41 @@ function App() {
         </div>
       )}
     </div>
+  );
+}
+
+function ViewTab({
+  active,
+  onClick,
+  icon,
+  label,
+  badge,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "inline-flex items-center gap-1.5 h-6 px-2.5 rounded text-[11px] font-medium transition-colors " +
+        (active
+          ? "bg-iris-500/25 text-iris-100"
+          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05]")
+      }
+    >
+      {icon}
+      {label}
+      {badge !== undefined && (
+        <Badge variant="iris" className="h-4 px-1.5 text-[10px] leading-none">
+          {badge}
+        </Badge>
+      )}
+    </button>
   );
 }
 

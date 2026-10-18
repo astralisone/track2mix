@@ -112,3 +112,42 @@ export async function onAnalyzeProgress(
 ): Promise<UnlistenFn> {
   return listen<ProgressEvent>("analyze:progress", (e) => handler(e.payload));
 }
+
+// ---- Playback / composition -------------------------------------------
+
+/** Raw bytes of a library track's audio file, for `decodeAudioData`. */
+export async function readTrackAudio(trackId: string): Promise<ArrayBuffer> {
+  return invoke<ArrayBuffer>("read_track_audio", { trackId });
+}
+
+/**
+ * Fallback decode on the Rust side (Symphonia) when the webview's decoder
+ * rejects a file. Payload: `u32 LE sample_rate` then f32 LE mono samples.
+ */
+export async function decodeTrackPcm(
+  trackId: string,
+  sampleRate = 44_100,
+): Promise<{ sampleRate: number; samples: Float32Array }> {
+  const buf = await invoke<ArrayBuffer>("decode_track_pcm", {
+    trackId,
+    sampleRate,
+  });
+  const view = new DataView(buf);
+  const sr = view.getUint32(0, true);
+  // Copy so the Float32Array is aligned regardless of how the buffer arrived.
+  const samples = new Float32Array((buf.byteLength - 4) / 4);
+  for (let i = 0; i < samples.length; i++) {
+    samples[i] = view.getFloat32(4 + i * 4, true);
+  }
+  return { sampleRate: sr, samples };
+}
+
+/** Write an already-encoded WAV to `path` (chosen through the save dialog). */
+export async function writeRecording(
+  path: string,
+  wav: ArrayBuffer,
+): Promise<number> {
+  return invoke<number>("write_recording", new Uint8Array(wav), {
+    headers: { "x-path": encodeURIComponent(path) },
+  });
+}
