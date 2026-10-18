@@ -16,12 +16,20 @@ from a clean, up-to-date checkout of `main`. `npm run deploy` is the same
 command.
 
 This is deliberate. Workers Builds — Cloudflare's own CI, triggered by pushes
-to the connected repository — has been failing on this project with builds that
-report zero duration: `started_at` and `completed_at` land on the same second,
-so nothing is cloned, installed or deployed. No change to this repository can
-fix a build that never starts, and the Builds API is not reachable from the
-tooling here to read why. Deploying from a checkout removes the dependency
-entirely.
+to the connected repository — fails on this project and has not been diagnosed.
+The builds run for 13 to 19 seconds and then fail: long enough to clone and
+start installing dependencies, not long enough to finish an install and deploy.
+The leading suspect is the dependency install, since only `bun.lock` is
+committed and a build command of `npm ci` fails without a `package-lock.json`,
+but that is a guess until someone reads a build log.
+
+Note when reading the GitHub check: its `started_at` and `completed_at` are
+always the same second, because the Cloudflare app posts one already-completed
+check run rather than opening it at build start. That is a reporting artifact,
+not a build that never ran — the real timings are in the bot's pull request
+comment, which goes from "In progress" to "Failed".
+
+Deploying from a checkout removes the dependency on any of this.
 
 **Disconnect the integration** so the red check stops appearing on every pull
 request: Cloudflare dashboard → **Workers & Pages** → `track2mix` → **Settings**
