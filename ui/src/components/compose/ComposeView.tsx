@@ -18,7 +18,7 @@ import { LaneStrip, LANE_HEIGHT } from "./LaneStrip";
 import { Timeline, RULER_HEIGHT } from "./Timeline";
 import { TrackPicker } from "./TrackPicker";
 import { Transport } from "./Transport";
-import { Check, Plus, Shuffle, X } from "lucide-react";
+import { Check, Plus, Save, Shuffle, X } from "lucide-react";
 
 type Props = {
   engine: CompositionEngine;
@@ -46,6 +46,10 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
   const [bouncing, setBouncing] = React.useState<number | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
   const [toast, setToast] = React.useState<string | null>(null);
+  // The most recent WAV (live take or bounce) that hasn't been written to
+  // disk yet. A live take can't be re-performed, so a cancelled dialog or a
+  // failed write must never be the last anyone sees of it.
+  const [unsaved, setUnsaved] = React.useState<{ wav: ArrayBuffer; name: string; what: string } | null>(null);
 
   // Always-fresh handle on the composition for async callbacks (decode
   // completions, save flows) that outlive the render they started in.
@@ -94,6 +98,13 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [playPause]);
 
+  // Tell the engine a drag is in progress so it defers rescheduling until
+  // the gesture ends instead of restarting on every mousemove.
+  function gesture(phase: "begin" | "end") {
+    if (phase === "begin") engine.beginGesture();
+    else engine.endGesture();
+  }
+
   function setZoom(v: number) {
     setPxPerSec(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v)));
   }
@@ -117,8 +128,13 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
     };
   }
 
-  function finish(next: Composition): Composition {
-    return autoXfade ? autoCrossfade(next) : next;
+  // `changed` names the clips this edit touched so auto-crossfade only
+  // writes fades next to them and leaves the user's other fades alone.
+  function finish(next: Composition, changed?: string[]): Composition {
+    if (!autoXfade) return next;
+    // The second argument lands with the model update; until then the
+    // one-argument form is used.
+    return (autoCrossfade as (c: Composition, changed?: string[]) => Composition)(next, changed);
   }
 
   function addLane(track: UiTrack) {
@@ -147,12 +163,8 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
           // Lane may have been removed while decoding.
           if (!c.lanes.some((l) => l.id === lane.id)) return;
           if (c.clips.some((cl) => cl.laneId === lane.id)) return;
-          commit(
-            finish({
-              ...c,
-              clips: [...c.clips, fullClip(lane.id, playheadSnapped(c), buf.duration)],
-            }),
-          );
+          const clip = fullClip(lane.id, playheadSnapped(c), buf.duration);
+          commit(finish({ ...c, clips: [...c.clips, clip] }, [clip.id]));
         })
         .catch((e) => {
           requested.current.delete(lane.id);
@@ -166,12 +178,8 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
     const buf = engine.loader.get(lane.track.track_id);
     if (!buf) return;
     const c = compRef.current;
-    commit(
-      finish({
-        ...c,
-        clips: [...c.clips, fullClip(lane.id, playheadSnapped(c), buf.duration)],
-      }),
-    );
+    const clip = fullClip(lane.id, playheadSnapped(c), buf.duration);
+    commit(finish({ ...c, clips: [...c.clips, clip] }, [clip.id]));
   }
 
   function patchLane(laneId: string, patch: Partial<Lane>) {
@@ -196,7 +204,9 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
 
   function changeClip(clip: Clip) {
     const c = compRef.current;
-    commit(finish({ ...c, clips: c.clips.map((cl) => (cl.id === clip.id ? clip : cl)) }));
+    commit(
+      finish({ ...c, clips: c.clips.map((cl) => (cl.id === clip.id ? clip : cl)) }, [clip.id]),
+    );
   }
 
   function deleteClip(id: string) {
@@ -206,14 +216,38 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
   }
 
   // ---- recording / bounce ---------------------------------------------
-  async function saveWav(wav: ArrayBuffer, defaultName: string, what: string) {
-    const path = await save({
-      defaultPath: defaultName,
-      filters: [{ name: "WAV", extensions: ["wav"] }],
-    });
-    if (!path) return; // user cancelled
-    const bytes = await writeRecording(path, wav);
-    setToast(`${what} saved — ${(bytes / 1_048_576).toFixed(1)} MB → ${path}`);
+  function stampedName(kind: string): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `track2mix-${kind}-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.wav`;
+  }
+
+  /**
+   * Offer a save dialog for `wav`. Returns true once the file is on disk.
+   * The GTK dialog does not append the filter's extension when the user
+   * types a bare name, and the Rust side only writes `.wav`, so add it here.
+   * On cancel or failure the take is parked in `unsaved` for another try.
+   */
+  async function saveWav(wav: ArrayBuffer, defaultName: string, what: string): Promise<boolean> {
+    setUnsaved({ wav, name: defaultName, what });
+    try {
+      const picked = await save({
+        defaultPath: defaultName,
+        filters: [{ name: "WAV", extensions: ["wav"] }],
+      });
+      if (!picked) {
+        setToast(`${what} kept in memory — use "Save last recording" to write it.`);
+        return false;
+      }
+      const path = /\.wav$/i.test(picked) ? picked : `${picked}.wav`;
+      const bytes = await writeRecording(path, wav);
+      setUnsaved(null);
+      setToast(`${what} saved — ${(bytes / 1_048_576).toFixed(1)} MB → ${path}`);
+      return true;
+    } catch (e) {
+      setErr(`${what} is still in memory (use "Save last recording"). Save failed: ${String(e)}`);
+      return false;
+    }
   }
 
   async function toggleRecord() {
@@ -225,7 +259,7 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
           setErr("Nothing was recorded.");
           return;
         }
-        await saveWav(wav, "track2mix-live.wav", "Live take");
+        await saveWav(wav, stampedName("live"), "Live take");
       } else {
         await engine.startRecording();
         if (!engine.state().playing) await engine.play();
@@ -240,7 +274,7 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
     setBouncing(0);
     try {
       const wav = await engine.bounce((f) => setBouncing(f));
-      await saveWav(wav, "track2mix-bounce.wav", "Bounce");
+      await saveWav(wav, stampedName("bounce"), "Bounce");
     } catch (e) {
       setErr(String(e));
     } finally {
@@ -293,6 +327,18 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
               <Plus className="h-3.5 w-3.5" />
               Add track
             </Button>
+            {unsaved && (
+              <Button
+                variant="gold"
+                size="sm"
+                className="h-7 px-2.5 text-[11px]"
+                onClick={() => void saveWav(unsaved.wav, unsaved.name, unsaved.what)}
+                title={`${unsaved.what} is in memory and not yet on disk`}
+              >
+                <Save className="h-3.5 w-3.5" />
+                Save last recording
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -346,6 +392,8 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
                 onSelectClip={setSelectedClipId}
                 onDeleteClip={deleteClip}
                 onZoom={setZoom}
+                onDragStart={() => gesture("begin")}
+                onDragEnd={() => gesture("end")}
               />
             </div>
           </div>

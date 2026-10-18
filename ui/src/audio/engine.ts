@@ -19,11 +19,22 @@ export type EngineState = {
 
 type Listener = (s: EngineState) => void;
 
+/** Sources are started this far ahead of the clock so the graph has time to build. */
+const LOOKAHEAD = 0.05;
+
 /**
  * Realtime preview of a composition plus two ways of capturing it:
  * `startRecording`/`stopRecording` taps the live master bus (so fader and
  * EQ moves you make while it plays are kept), `bounce` renders the timeline
  * offline through an identical graph.
+ *
+ * Clock: `position()` is `startPos + (ctx.currentTime − startCtx)` where
+ * `startCtx` is the context time when playback (re)started — not the
+ * lookahead-shifted time the sources were scheduled at. The sources are
+ * scheduled so that timeline `startPos + LOOKAHEAD` plays at ctx
+ * `startCtx + LOOKAHEAD`, i.e. the first 50 ms after a (re)start are
+ * skipped rather than the clock running behind. That keeps the position
+ * monotone across seeks and structural reschedules.
  */
 export class CompositionEngine {
   readonly ctx: AudioContext;
@@ -32,6 +43,8 @@ export class CompositionEngine {
   readonly analyser: AnalyserNode;
 
   private comp: Composition;
+  /** The composition the current chains were scheduled from. */
+  private scheduled: Composition | null = null;
   private chains = new Map<string, ClipChain>(); // clipId → chain
   private playing = false;
   /** Timeline position when playback last started, and ctx time then. */
@@ -42,6 +55,10 @@ export class CompositionEngine {
   private raf = 0;
   private capture: PcmCapture | null = null;
   private recordStartCtx = 0;
+  private playInFlight: Promise<void> | null = null;
+  /** While > 0 structural changes are applied at `endGesture()`. */
+  private gestureDepth = 0;
+  private restructurePending = false;
 
   constructor(comp: Composition) {
     this.ctx = new AudioContext({ latencyHint: "interactive" });
@@ -76,7 +93,7 @@ export class CompositionEngine {
 
   position(): number {
     if (!this.playing) return this.pausedPos;
-    return this.startPos + (this.ctx.currentTime - this.startCtx);
+    return Math.max(this.startPos, this.startPos + (this.ctx.currentTime - this.startCtx));
   }
 
   get composition(): Composition {
@@ -86,28 +103,69 @@ export class CompositionEngine {
   /**
    * Accept a new composition. Knob-only changes (gain/EQ/filter/mute/solo)
    * are applied live; anything structural (clip positions, lanes, bpm)
-   * restarts playback from the current position so the schedule is rebuilt.
+   * reschedules from the current position. Inside a gesture (see
+   * `beginGesture`) the reschedule is held until the gesture ends so a
+   * 60 Hz drag doesn't rebuild the graph on every mouse move.
    */
   setComposition(next: Composition) {
-    const prev = this.comp;
     this.comp = next;
     if (!this.playing) return;
-    if (structurallyEqual(prev, next)) {
+    const base = this.scheduled ?? next;
+    if (structurallyEqual(base, next)) {
       this.applyLanes();
-    } else {
-      const pos = this.position();
-      this.stopChains();
-      this.startFrom(pos);
+      return;
+    }
+    if (this.gestureDepth > 0) {
+      this.restructurePending = true;
+      this.applyLanes();
+      return;
+    }
+    this.restart();
+  }
+
+  /**
+   * Bracket a continuous edit (clip drag, trim, fade handle). Structural
+   * changes made inside are applied once at `endGesture()`; knob changes
+   * still apply immediately. Nestable.
+   */
+  beginGesture() {
+    this.gestureDepth += 1;
+  }
+
+  endGesture() {
+    this.gestureDepth = Math.max(0, this.gestureDepth - 1);
+    if (this.gestureDepth === 0 && this.restructurePending) {
+      this.restructurePending = false;
+      if (this.playing) this.restart();
     }
   }
 
-  async play(from?: number) {
-    if (this.ctx.state === "suspended") await this.ctx.resume();
-    const pos = from ?? this.pausedPos;
-    await this.preload();
+  private restart() {
+    const pos = this.position();
     this.stopChains();
     this.startFrom(pos);
-    this.tick();
+  }
+
+  play(from?: number): Promise<void> {
+    if (this.playInFlight) return this.playInFlight;
+    this.playInFlight = (async () => {
+      if (this.ctx.state === "suspended") await this.ctx.resume();
+      const pos = from ?? this.pausedPos;
+      if (compositionLength(this.comp) <= 0) {
+        // Nothing to play: park at the requested position without
+        // entering the playing state (which would otherwise run forever).
+        this.pausedPos = Math.max(0, pos);
+        this.emit();
+        return;
+      }
+      await this.preload();
+      this.stopChains();
+      this.startFrom(pos);
+      this.tick();
+    })().finally(() => {
+      this.playInFlight = null;
+    });
+    return this.playInFlight;
   }
 
   pause() {
@@ -115,6 +173,7 @@ export class CompositionEngine {
     this.pausedPos = this.position();
     this.stopChains();
     this.playing = false;
+    this.restructurePending = false;
     cancelAnimationFrame(this.raf);
     this.emit();
   }
@@ -141,20 +200,23 @@ export class CompositionEngine {
   }
 
   private startFrom(pos: number) {
-    const at = this.ctx.currentTime + 0.05;
+    const now = this.ctx.currentTime;
+    const at = now + LOOKAHEAD;
+    const from = pos + LOOKAHEAD;
     this.startPos = pos;
-    this.startCtx = at;
+    this.startCtx = now;
     this.playing = true;
+    this.scheduled = this.comp;
     for (const clip of this.comp.clips) {
       const lane = this.comp.lanes.find((l) => l.id === clip.laneId);
       if (!lane) continue;
       const buf = this.loader.get(lane.track.track_id);
       if (!buf) continue;
       const rate = laneRate(lane, this.comp.masterBpm);
-      if (clipEnd(clip, rate) <= pos) continue;
+      if (clipEnd(clip, rate) <= from) continue;
       const chain = buildClipChain(this.ctx, buf, this.master);
       applyLane(chain, lane, rate, laneAudible(lane, this.comp.lanes), at, 0);
-      if (scheduleClip(chain, clip, rate, pos, at)) {
+      if (scheduleClip(chain, clip, rate, from, at)) {
         this.chains.set(clip.id, chain);
       } else {
         chain.disconnect();
@@ -182,12 +244,22 @@ export class CompositionEngine {
   private stopChains() {
     for (const c of this.chains.values()) c.disconnect();
     this.chains.clear();
+    this.scheduled = null;
   }
 
   private tick = () => {
     if (!this.playing) return;
     const len = compositionLength(this.comp);
-    if (len > 0 && this.position() >= len + 0.05) {
+    if (len <= 0) {
+      // Everything was deleted while playing: there is nothing left to
+      // run the clock against.
+      const pos = this.position();
+      this.pause();
+      this.pausedPos = pos;
+      this.emit();
+      return;
+    }
+    if (this.position() >= len + 0.05) {
       this.pause();
       this.pausedPos = len;
       this.emit();
@@ -263,18 +335,33 @@ export class CompositionEngine {
       scheduleClip(chain, clip, rate, 0, 0);
     }
     if (onProgress) {
+      // Progress via suspend/resume checkpoints. A throwing callback or a
+      // rejected suspend must never leave the context suspended, or
+      // startRendering() would hang forever.
       const step = Math.max(1, Math.floor(frames / 20));
       for (let f = step; f < frames; f += step) {
         const frac = f / frames;
-        off.suspend(f / sr).then(() => {
-          onProgress(frac);
-          off.resume();
-        });
+        off
+          .suspend(f / sr)
+          .then(() => {
+            try {
+              onProgress(frac);
+            } catch {
+              /* progress is cosmetic */
+            } finally {
+              void off.resume().catch(() => {});
+            }
+          })
+          .catch(() => {});
       }
     }
     const rendered = await off.startRendering();
     const trimmed = trimSilenceTail(rendered, Math.ceil(length * sr));
-    onProgress?.(1);
+    try {
+      onProgress?.(1);
+    } catch {
+      /* cosmetic */
+    }
     return encodeWav(trimmed, sr);
   }
 

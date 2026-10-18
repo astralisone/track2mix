@@ -132,6 +132,9 @@ export async function decodeTrackPcm(
     trackId,
     sampleRate,
   });
+  if (buf.byteLength < 4) {
+    throw new Error(`decode_track_pcm returned ${buf.byteLength} bytes (expected a sample-rate header)`);
+  }
   const view = new DataView(buf);
   const sr = view.getUint32(0, true);
   // Copy so the Float32Array is aligned regardless of how the buffer arrived.

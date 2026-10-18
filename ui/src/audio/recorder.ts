@@ -14,6 +14,11 @@ class CaptureProcessor extends AudioWorkletProcessor {
     if (input && input.length > 0) {
       const copy = input.map((ch) => ch.slice());
       this.port.postMessage(copy, copy.map((c) => c.buffer));
+    } else {
+      // No upstream node is actively producing (a gap between clips, or
+      // record armed before play): keep time with a block of silence.
+      const silent = [new Float32Array(128), new Float32Array(128)];
+      this.port.postMessage(silent, silent.map((c) => c.buffer));
     }
     return true;
   }
@@ -21,13 +26,40 @@ class CaptureProcessor extends AudioWorkletProcessor {
 registerProcessor("t2m-capture", CaptureProcessor);
 `;
 
+/**
+ * The worklet module is registered once per context: a second `addModule`
+ * of the same source would call `registerProcessor` with a name that is
+ * already taken and reject, which used to push every recording after the
+ * first onto the ScriptProcessor fallback.
+ */
+const workletRegistry = new WeakMap<BaseAudioContext, Promise<boolean>>();
+
+function ensureWorkletRegistered(ctx: BaseAudioContext): Promise<boolean> {
+  const existing = workletRegistry.get(ctx);
+  if (existing) return existing;
+  const p = (async () => {
+    if (!("audioWorklet" in ctx)) return false;
+    try {
+      const url = URL.createObjectURL(
+        new Blob([WORKLET_SRC], { type: "application/javascript" }),
+      );
+      await ctx.audioWorklet.addModule(url);
+      URL.revokeObjectURL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  workletRegistry.set(ctx, p);
+  return p;
+}
+
 export class PcmCapture {
   private ctx: AudioContext;
   private node: AudioNode | null = null;
   private chunks: Float32Array[][] = [];
   private channels: number;
   private sink: GainNode;
-  private workletReady: Promise<boolean> | null = null;
 
   constructor(ctx: AudioContext, channels = 2) {
     this.ctx = ctx;
@@ -46,28 +78,10 @@ export class PcmCapture {
     return this.chunks.reduce((n, c) => n + (c[0]?.length ?? 0), 0);
   }
 
-  private async ensureWorklet(): Promise<boolean> {
-    if (this.workletReady) return this.workletReady;
-    this.workletReady = (async () => {
-      if (!("audioWorklet" in this.ctx)) return false;
-      try {
-        const url = URL.createObjectURL(
-          new Blob([WORKLET_SRC], { type: "application/javascript" }),
-        );
-        await this.ctx.audioWorklet.addModule(url);
-        URL.revokeObjectURL(url);
-        return true;
-      } catch {
-        return false;
-      }
-    })();
-    return this.workletReady;
-  }
-
   /** Start capturing; returns the node to connect the master bus into. */
   async start(): Promise<AudioNode> {
     this.chunks = [];
-    const ok = await this.ensureWorklet();
+    const ok = await ensureWorkletRegistered(this.ctx);
     if (ok) {
       const n = new AudioWorkletNode(this.ctx, "t2m-capture", {
         numberOfInputs: 1,

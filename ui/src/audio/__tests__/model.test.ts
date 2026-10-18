@@ -155,10 +155,12 @@ describe("fades", () => {
   });
 
   it("normalizeFades clamps to the clip duration", () => {
-    expect(normalizeFades(clip("a", 0, 8, { fadeIn: 10, fadeOut: 5 }), 1)).toMatchObject({ fadeIn: 8, fadeOut: 0 });
-    expect(normalizeFades(clip("a", 0, 8, { fadeIn: 3, fadeOut: 10 }), 1)).toMatchObject({ fadeIn: 3, fadeOut: 5 });
+    // Each fade is clamped to the duration independently; overlapping fades
+    // are a valid shape (the envelope is the lower of the two lines).
+    expect(normalizeFades(clip("a", 0, 8, { fadeIn: 10, fadeOut: 5 }), 1)).toMatchObject({ fadeIn: 8, fadeOut: 5 });
+    expect(normalizeFades(clip("a", 0, 8, { fadeIn: 3, fadeOut: 10 }), 1)).toMatchObject({ fadeIn: 3, fadeOut: 8 });
     expect(normalizeFades(clip("a", 0, 8, { fadeIn: -1, fadeOut: -1 }), 1)).toMatchObject({ fadeIn: 0, fadeOut: 0 });
-    expect(normalizeFades(clip("a", 0, 8, { fadeIn: 6, fadeOut: 1 }), 2)).toMatchObject({ fadeIn: 4, fadeOut: 0 });
+    expect(normalizeFades(clip("a", 0, 8, { fadeIn: 6, fadeOut: 1 }), 2)).toMatchObject({ fadeIn: 4, fadeOut: 1 });
   });
 });
 
@@ -176,10 +178,25 @@ describe("autoCrossfade", () => {
     expect(out.clips[1]).toMatchObject({ fadeIn: 4, fadeOut: 0 });
   });
 
-  it("keeps longer existing fades", () => {
+  it("leaves fades the user set alone, longer or shorter", () => {
+    // A non-zero fade without an auto flag is a manual fade.
     const out = autoCrossfade(base([clip("a", 0, 10, { fadeOut: 6 }), clip("b", 6, 10, { fadeIn: 1 })]));
     expect(out.clips[0].fadeOut).toBe(6);
-    expect(out.clips[1].fadeIn).toBe(4);
+    expect(out.clips[1].fadeIn).toBe(1);
+    // Explicitly non-auto zero fades stay zero as well.
+    const zero = autoCrossfade(base([clip("a", 0, 10, { fadeOutAuto: false }), clip("b", 6, 10)]));
+    expect(zero.clips[0].fadeOut).toBe(0);
+    expect(zero.clips[1]).toMatchObject({ fadeIn: 4, fadeInAuto: true });
+  });
+
+  it("only touches the changed clips and their overlap partners when scoped", () => {
+    const first = autoCrossfade(base([clip("a", 0, 10), clip("b", 6, 10)]));
+    // Move b away but scope the call to an unrelated new clip: a's auto fade keeps its last value…
+    const moved = { ...first, clips: [...first.clips.map((c) => (c.id === first.clips[1].id ? { ...c, start: 50 } : c)), clip("b", 100, 5)] };
+    const scoped = autoCrossfade(moved, [moved.clips[2].id]);
+    expect(scoped.clips[0].fadeOut).toBe(4);
+    // …and an unscoped call recomputes it.
+    expect(autoCrossfade(moved).clips[0].fadeOut).toBe(0);
   });
 
   it("ignores same-lane and non-overlapping clips", () => {

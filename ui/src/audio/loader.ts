@@ -54,12 +54,27 @@ export class AudioLoader {
           );
         },
       );
+      if (pcm.samples.length === 0) {
+        throw new Error(`rust decode produced 0 samples for track ${trackId}`);
+      }
       const buf = this.ctx.createBuffer(1, pcm.samples.length, pcm.sampleRate);
       // Copy into the buffer's own channel storage; `copyToChannel` wants a
       // Float32Array backed by a plain ArrayBuffer and the IPC view may not be.
       buf.getChannelData(0).set(pcm.samples);
       return buf;
     }
+  }
+
+  /**
+   * Forget every decoded buffer. Called when a different library is opened:
+   * Rekordbox numbers track ids from 1 in every export, so the same id can
+   * name a different file in the next database. In-flight decodes settle
+   * into the map afterwards but are keyed by the old id; `evict` them by
+   * clearing again if that matters, which it doesn't for a library switch.
+   */
+  clear() {
+    this.buffers.clear();
+    this.peaksCache.clear();
   }
 
   evict(trackId: string) {

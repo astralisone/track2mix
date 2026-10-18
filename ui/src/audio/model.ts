@@ -13,6 +13,9 @@ export type Clip = {
   /** Fades, in timeline seconds. */
   fadeIn: number;
   fadeOut: number;
+  /** True while the fade was set by auto-crossfade rather than the user. */
+  fadeInAuto?: boolean;
+  fadeOutAuto?: boolean;
 };
 
 export type Lane = {
@@ -144,45 +147,120 @@ export function fadeGainAt(clip: Clip, rate: number, t: number): number {
   return Math.max(0, Math.min(1, g));
 }
 
-/** Clamp a clip's fades so they never exceed its timeline duration. */
+/**
+ * Clamp a clip's fades to its timeline duration. The two fades may still
+ * overlap: the envelope is the lower of the two lines (see
+ * `fadeBreakpoints`), so an overlap is a valid shape, not an error.
+ */
 export function normalizeFades(clip: Clip, rate: number): Clip {
   const dur = clipDuration(clip, rate);
   const fadeIn = Math.max(0, Math.min(clip.fadeIn, dur));
-  const fadeOut = Math.max(0, Math.min(clip.fadeOut, dur - fadeIn));
+  const fadeOut = Math.max(0, Math.min(clip.fadeOut, dur));
   return { ...clip, fadeIn, fadeOut };
 }
 
 /**
- * When two clips on *different* lanes overlap, give the earlier one a fade
- * out and the later one a fade in spanning the overlap — the "auto
- * crossfade" a DJ expects when dragging the next track in under the current
- * one. Clips that already have fades keep the longer of the two.
+ * Fade envelope breakpoints for a clip in absolute timeline seconds: the
+ * piecewise-linear curve `fadeGainAt` evaluates. When the two fades overlap
+ * (fadeIn + fadeOut > duration) the curve is the lower of the two lines, so
+ * it rises to the crossing point and falls from there — never a jump. The
+ * realtime and offline schedulers emit exactly these points, which keeps
+ * what is heard identical to what the timeline draws.
  */
-export function autoCrossfade(comp: Composition): Composition {
+export function fadeBreakpoints(clip: Clip, rate: number): Array<{ t: number; g: number }> {
+  const dur = clipDuration(clip, rate);
+  const fi = Math.max(0, Math.min(clip.fadeIn, dur));
+  const fo = Math.max(0, Math.min(clip.fadeOut, dur));
+  const rel: number[] = [0, dur];
+  if (fi + fo <= dur) {
+    if (fi > 0) rel.push(fi);
+    if (fo > 0) rel.push(dur - fo);
+  } else {
+    // Lines rel/fi and (dur-rel)/fo cross at rel = dur*fi/(fi+fo).
+    rel.push((dur * fi) / (fi + fo));
+  }
+  const uniq = Array.from(new Set(rel)).sort((a, b) => a - b);
+  return uniq.map((r) => ({ t: clip.start + r, g: fadeGainAt(clip, rate, r + clip.start) }));
+}
+
+/** May `autoCrossfade` write this side of the clip? */
+function fadeSideIsAuto(flag: boolean | undefined, fade: number): boolean {
+  return flag === true || (flag === undefined && fade === 0);
+}
+
+/**
+ * Auto-crossfade: when a clip on another lane starts inside this one and
+ * runs past its end — the DJ "bring the next track in under the current
+ * one" move — the outgoing clip fades out and the incoming fades in across
+ * the overlap. A clip dropped entirely *inside* another (a sample, a tool)
+ * instead gets a short symmetric fade of its own, one bar at the master
+ * tempo capped at half its length; the host clip is left alone, since its
+ * fade-out would land at its end where nothing else is playing.
+ *
+ * Only sides the function owns are written (see `fadeInAuto`/`fadeOutAuto`
+ * on `Clip`): a fade the user has set keeps its value. Auto sides are
+ * recomputed from the current overlaps each call, so they shrink, grow and
+ * clear as clips move. With `changedClipIds`, only those clips and the clips
+ * they overlap are touched; an auto fade on an unrelated clip keeps its last
+ * value until that clip is next edited.
+ */
+export function autoCrossfade(comp: Composition, changedClipIds?: string[]): Composition {
   const rates = new Map(comp.lanes.map((l) => [l.id, laneRate(l, comp.masterBpm)]));
+  const rateOf = (c: Clip) => rates.get(c.laneId) ?? 1;
   const clips = comp.clips.map((c) => ({ ...c }));
-  for (let i = 0; i < clips.length; i++) {
-    for (let j = 0; j < clips.length; j++) {
-      if (i === j) continue;
-      const a = clips[i];
-      const b = clips[j];
-      if (a.laneId === b.laneId) continue;
-      const ra = rates.get(a.laneId) ?? 1;
-      const rb = rates.get(b.laneId) ?? 1;
-      const aEnd = clipEnd(a, ra);
-      // a starts first and b starts inside a
-      if (b.start > a.start && b.start < aEnd) {
-        const overlap = Math.min(aEnd, clipEnd(b, rb)) - b.start;
-        if (overlap <= 0) continue;
-        a.fadeOut = Math.max(a.fadeOut, overlap);
-        b.fadeIn = Math.max(b.fadeIn, overlap);
+  const bar = barSeconds(comp.masterBpm);
+
+  const overlaps = (a: Clip, b: Clip) =>
+    a.laneId !== b.laneId &&
+    a.start < clipEnd(b, rateOf(b)) &&
+    b.start < clipEnd(a, rateOf(a));
+
+  let scope: Set<string> | null = null;
+  if (changedClipIds) {
+    scope = new Set(changedClipIds);
+    for (const c of clips) {
+      if (!scope.has(c.id)) continue;
+      for (const o of clips) if (overlaps(c, o)) scope.add(o.id);
+    }
+  }
+
+  // Desired auto fade per side, taking the longest demand from any partner.
+  const wantIn = new Map<string, number>();
+  const wantOut = new Map<string, number>();
+  const bump = (m: Map<string, number>, id: string, v: number) =>
+    m.set(id, Math.max(m.get(id) ?? 0, v));
+
+  for (const a of clips) {
+    const aEnd = clipEnd(a, rateOf(a));
+    for (const b of clips) {
+      if (a === b || a.laneId === b.laneId) continue;
+      // b starts inside a (strictly after a's start).
+      if (!(b.start > a.start && b.start < aEnd)) continue;
+      const bEnd = clipEnd(b, rateOf(b));
+      if (bEnd >= aEnd) {
+        const overlap = aEnd - b.start;
+        bump(wantOut, a.id, overlap);
+        bump(wantIn, b.id, overlap);
+      } else {
+        const inner = Math.min(bar, clipDuration(b, rateOf(b)) / 2);
+        bump(wantIn, b.id, inner);
+        bump(wantOut, b.id, inner);
       }
     }
   }
-  return {
-    ...comp,
-    clips: clips.map((c) => normalizeFades(c, rates.get(c.laneId) ?? 1)),
-  };
+
+  for (const c of clips) {
+    if (scope && !scope.has(c.id)) continue;
+    if (fadeSideIsAuto(c.fadeInAuto, c.fadeIn)) {
+      c.fadeIn = wantIn.get(c.id) ?? 0;
+      c.fadeInAuto = true;
+    }
+    if (fadeSideIsAuto(c.fadeOutAuto, c.fadeOut)) {
+      c.fadeOut = wantOut.get(c.id) ?? 0;
+      c.fadeOutAuto = true;
+    }
+  }
+  return { ...comp, clips: clips.map((c) => normalizeFades(c, rateOf(c))) };
 }
 
 export function formatTime(sec: number): string {

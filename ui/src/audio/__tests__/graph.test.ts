@@ -101,7 +101,7 @@ describe("scheduleClip", () => {
     expect(fadeCalls(calls)).toEqual([
       ["fade.cancel", 0],
       ["fade.set", 1, 110],
-      ["fade.set", 1, 116],
+      ["fade.ramp", 1, 116],
       ["fade.ramp", 0, 118],
     ]);
   });
@@ -125,7 +125,7 @@ describe("scheduleClip", () => {
       ["fade.cancel", 0],
       ["fade.set", 0, 110],
       ["fade.ramp", 1, 111],
-      ["fade.set", 1, 113],
+      ["fade.ramp", 1, 113],
       ["fade.ramp", 0, 114],
     ]);
   });

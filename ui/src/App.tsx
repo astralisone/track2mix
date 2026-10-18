@@ -61,10 +61,17 @@ function App() {
     engineRef.current = new CompositionEngine(emptyComposition());
   }
   const engine = engineRef.current;
+  // The engine outlives React's effect lifecycle on purpose: StrictMode
+  // runs every effect's cleanup once on mount, and a disposed AudioContext
+  // can't be revived, so disposing there would leave the rendered tree
+  // holding a closed context. App only truly goes away with the window, so
+  // the context is closed on pagehide; the effect cleanup just silences it.
   React.useEffect(() => {
+    const onHide = () => engineRef.current?.dispose();
+    window.addEventListener("pagehide", onHide);
     return () => {
-      engineRef.current?.dispose();
-      engineRef.current = null;
+      window.removeEventListener("pagehide", onHide);
+      engineRef.current?.pause();
     };
   }, []);
   // Held here rather than in ComposeView so switching tabs keeps the arrangement.
@@ -133,6 +140,9 @@ function App() {
       setFilters(emptyFilters);
       setPreviewId(null);
       engine.stop();
+      // Track ids are per-export, so buffers decoded for the old library
+      // must not be served under the new library's ids.
+      engine.loader.clear();
       setComp(emptyComposition());
     } catch (e) {
       setLoadErr(String(e));

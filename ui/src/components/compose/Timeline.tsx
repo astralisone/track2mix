@@ -41,6 +41,9 @@ type Props = {
   onSelectClip: (id: string | null) => void;
   onDeleteClip: (id: string) => void;
   onZoom: (pxPerSec: number) => void;
+  /** A clip drag began / ended — the engine defers reschedules in between. */
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 };
 
 /**
@@ -61,6 +64,8 @@ export function Timeline({
   onSelectClip,
   onDeleteClip,
   onZoom,
+  onDragStart,
+  onDragEnd,
 }: Props) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -91,15 +96,63 @@ export function Timeline({
     return () => ro.disconnect();
   }, []);
 
-  // Keep the playhead in view while playing.
+  // Zoom anchoring. The wheel handler records the timeline second under the
+  // cursor and the cursor's viewport x; once React has laid the canvas out
+  // at the new width (layout effect keyed on pxPerSec) scrollLeft is set so
+  // that second stays under the cursor. Setting it inside the wheel handler
+  // would be clamped to the *old* scrollWidth when zooming in.
+  const zoomAnchor = React.useRef<{ t: number; viewX: number } | null>(null);
+  const suppressFollow = React.useRef(false);
+  React.useLayoutEffect(() => {
+    const el = scrollRef.current;
+    const a = zoomAnchor.current;
+    if (!el || !a) return;
+    zoomAnchor.current = null;
+    el.scrollLeft = Math.max(0, a.t * pxPerSec - a.viewX);
+    suppressFollow.current = true;
+  }, [pxPerSec]);
+
+  // Keep the playhead in view while it moves — but not on the render that
+  // applied a user zoom, which would fight the anchoring above.
   React.useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    if (suppressFollow.current) {
+      suppressFollow.current = false;
+      return;
+    }
     const x = position * pxPerSec;
     if (x < el.scrollLeft || x > el.scrollLeft + el.clientWidth - 40) {
       el.scrollLeft = Math.max(0, x - el.clientWidth * 0.2);
     }
   }, [position, pxPerSec]);
+
+  // Ctrl/⌘ + wheel zooms. React 18 registers wheel listeners as passive, so
+  // preventDefault there is a no-op and WebView2 would also zoom the page;
+  // a native non-passive listener is the only way to claim the gesture.
+  const pxPerSecRef = React.useRef(pxPerSec);
+  pxPerSecRef.current = pxPerSec;
+  const onZoomRef = React.useRef(onZoom);
+  onZoomRef.current = onZoom;
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const viewX = e.clientX - rect.left;
+      const cur = pxPerSecRef.current;
+      const t = (el.scrollLeft + viewX) / cur;
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      const next = Math.min(400, Math.max(2, cur * factor));
+      if (next === cur) return;
+      zoomAnchor.current = { t, viewX };
+      onZoomRef.current(next);
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, []);
 
   // ---- drawing ---------------------------------------------------------
   React.useEffect(() => {
@@ -196,6 +249,7 @@ export function Timeline({
     }
     onSelectClip(hit.clip.id);
     setDrag({ mode: hit.mode, clipId: hit.clip.id, startX: x, original: hit.clip, rate: hit.rate });
+    onDragStart?.();
   }
 
   function maybeSnap(t: number, bypass: boolean): number {
@@ -235,11 +289,12 @@ export function Timeline({
         next = { ...o, length: Math.min(maxLen, (newEnd - o.start) * rate) };
         break;
       }
+      // A hand-set fade is the user's; auto-crossfade must not overwrite it.
       case "fade-in":
-        next = { ...o, fadeIn: Math.max(0, o.fadeIn + dt) };
+        next = { ...o, fadeIn: Math.max(0, o.fadeIn + dt), fadeInAuto: false };
         break;
       case "fade-out":
-        next = { ...o, fadeOut: Math.max(0, o.fadeOut - dt) };
+        next = { ...o, fadeOut: Math.max(0, o.fadeOut - dt), fadeOutAuto: false };
         break;
     }
     onClipChange(normalizeFades(next, rate));
@@ -251,24 +306,8 @@ export function Timeline({
   }
 
   function endDrag() {
+    if (drag) onDragEnd?.();
     setDrag(null);
-  }
-
-  function onWheel(e: React.WheelEvent) {
-    if (!(e.ctrlKey || e.metaKey)) return;
-    e.preventDefault();
-    const el = scrollRef.current;
-    const { x } = localPoint(e);
-    const t = x / pxPerSec;
-    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-    const next = Math.min(400, Math.max(2, pxPerSec * factor));
-    onZoom(next);
-    if (el) {
-      // Keep the time under the cursor stationary.
-      const rect = canvasRef.current!.getBoundingClientRect();
-      const cursorInView = e.clientX - rect.left - el.scrollLeft + el.scrollLeft;
-      el.scrollLeft = Math.max(0, t * next - (cursorInView - el.scrollLeft));
-    }
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -295,7 +334,6 @@ export function Timeline({
       className="relative flex-1 min-w-0 overflow-x-auto overflow-y-hidden outline-none"
       tabIndex={0}
       onKeyDown={onKeyDown}
-      onWheel={onWheel}
     >
       <canvas
         ref={canvasRef}

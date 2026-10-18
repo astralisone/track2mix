@@ -1,4 +1,4 @@
-import { EQ_KILL, HP_MIN, LP_MAX, type Clip, type Lane } from "./model";
+import { EQ_KILL, HP_MIN, LP_MAX, fadeBreakpoints, fadeGainAt, type Clip, type Lane } from "./model";
 
 /**
  * Per-clip processing chain, identical for the realtime and offline graphs:
@@ -111,29 +111,24 @@ export function scheduleClip(
   chain.source.playbackRate.value = rate;
   chain.source.start(startAt, sourceOffset, sourceRemaining);
 
-  // Fade envelope in context time.
+  // Fade envelope in context time: the same breakpoints the timeline draws
+  // (`fadeBreakpoints`), so overlapping fades, fades longer than the clip
+  // after a tempo change, and starts inside a fade all come out monotone
+  // and click-free. Events are emitted in time order, as Web Audio requires.
   const g = chain.fade.gain;
   const clipAt = (tl: number) => at + (tl - from); // timeline → ctx time
   g.cancelScheduledValues(0);
-  const fadeInEnd = clip.start + clip.fadeIn;
-  const fadeOutStart = end - clip.fadeOut;
-
-  // Initial value at `startAt`.
-  let g0 = 1;
   const tl0 = Math.max(clip.start, from);
-  if (clip.fadeIn > 0 && tl0 < fadeInEnd) g0 = (tl0 - clip.start) / clip.fadeIn;
-  if (clip.fadeOut > 0 && tl0 > fadeOutStart) {
-    g0 = Math.min(g0, (end - tl0) / clip.fadeOut);
-  }
-  g.setValueAtTime(Math.max(0, Math.min(1, g0)), startAt);
-  if (clip.fadeIn > 0 && fadeInEnd > tl0) {
-    g.linearRampToValueAtTime(1, clipAt(fadeInEnd));
-  }
-  if (clip.fadeOut > 0 && fadeOutStart >= tl0) {
-    g.setValueAtTime(1, clipAt(fadeOutStart));
-    g.linearRampToValueAtTime(0, clipAt(end));
-  } else if (clip.fadeOut > 0) {
-    g.linearRampToValueAtTime(0, clipAt(end));
-  }
+  let last = fadeGainAt(clip, rate, tl0);
+  g.setValueAtTime(last, startAt);
+  const points = fadeBreakpoints(clip, rate).filter((bp) => bp.t > tl0);
+  // A final point at the value already held is a no-op; leave it out.
+  if (points.length && points[points.length - 1].g === last && points.length === 1) points.pop();
+  points.forEach((bp, i) => {
+    const isLast = i === points.length - 1;
+    if (isLast && bp.g === last) return;
+    g.linearRampToValueAtTime(bp.g, clipAt(bp.t));
+    last = bp.g;
+  });
   return true;
 }
