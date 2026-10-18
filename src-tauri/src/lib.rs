@@ -291,6 +291,14 @@ fn default_db_path() -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // WebKitGTK 2.52 crashes its web process at exit while tearing down the
+    // GBM/DMA-BUF display (WebKit bug 305909, fixed upstream after 2.52.6).
+    // Disabling the DMA-BUF renderer avoids that teardown path on Linux.
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState::default())
