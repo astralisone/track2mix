@@ -79,26 +79,19 @@ it; Cloudflare will redirect it to the apex.
 
 ## 3. Turn the download form on
 
-Until this is done, `/api/contact` returns a 500 that names `CONTACTS_DB` as the
-missing binding. That is deliberate: the form reports the failure rather than
-pretending someone was signed up. The rest of the site works normally.
+The database half is done: `contacts` exists, both tables and all four indexes
+are applied, and the `[[d1_databases]]` block in `wrangler.toml` binds it. On a
+Workers service the binding lives in config, not in the dashboard, so
+`npx wrangler deploy --dry-run` lists `env.CONTACTS_DB` among the bindings.
 
-```bash
-npm install -g wrangler
-wrangler login
+This has to reach the edge to take effect. A binding added to `wrangler.toml`
+does nothing until the next deploy, so the live `/api/contact` keeps answering
+500 and naming `CONTACTS_DB` until one runs. That 500 is deliberate — the form
+reports the failure rather than pretending someone was signed up — but it means
+every submission is lost while it lasts, so deploy promptly after merging a
+binding change.
 
-wrangler d1 create contacts
-# paste the printed database_id into wrangler.toml and uncomment that block
-
-wrangler d1 execute contacts --remote --file=./migrations/0001_contacts.sql
-```
-
-Uncommenting the `[[d1_databases]]` block in `wrangler.toml` is what binds it —
-on a Workers service the binding lives in config, not in the dashboard. Confirm
-it took with `npx wrangler deploy --dry-run`, which lists `env.CONTACTS_DB`
-among the bindings.
-
-Finally the mailing list, so the download link can actually be sent:
+What remains is the mailing list, so the download link can actually be sent:
 
 ```bash
 wrangler secret put LIST_ENDPOINT
@@ -123,8 +116,11 @@ Until at least one handle is set, the tip jar renders disabled and says so.
 - [ ] Turn on **Cloudflare Web Analytics** (free, no cookie banner) so you can
       see which channel actually sends traffic.
 
-## Why the D1 block is commented out
+## Why the D1 block was commented out
 
-Cloudflare validates `database_id` as a UUID. A placeholder there fails config
-validation and blocks the entire deploy — including the static site, which does
-not need the database. So the site ships first and the binding is added second.
+It is filled in now, but the reason it shipped commented out is worth keeping:
+Cloudflare validates `database_id` as a UUID, so a placeholder there fails
+config validation and blocks the entire deploy — including the static site,
+which does not need the database at all. That is why the site shipped first and
+the binding followed. If you ever need to stage this again on a new account,
+comment the block out rather than leaving a placeholder id in it.

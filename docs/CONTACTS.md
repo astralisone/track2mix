@@ -40,7 +40,11 @@ ORDER BY last_seen DESC;
 
 ## Setup
 
-### 1. Create the database (once, for all apps)
+### 1. Create the database (once, for all apps) — done
+
+The `contacts` database exists on the account and its id is already in
+`wrangler.toml`. Nothing to do here unless you are standing this up on a
+different Cloudflare account, in which case:
 
 ```bash
 npm install -g wrangler
@@ -48,10 +52,15 @@ wrangler login
 wrangler d1 create contacts
 ```
 
-Copy the `database_id` it prints into `wrangler.toml`, replacing
-`PASTE_DATABASE_ID_FROM_WRANGLER_D1_CREATE`.
+Then replace `database_id` in the `[[d1_databases]]` block in `wrangler.toml`
+with the one it prints. The id is not a secret — it names the database, and
+only a Worker this account binds to it can reach the data.
 
-### 2. Apply the schema
+### 2. Apply the schema — done
+
+Both tables and all four indexes are live. The command is kept for a fresh
+database; it is idempotent (`CREATE TABLE IF NOT EXISTS`), so re-running it
+against the existing one changes nothing:
 
 ```bash
 wrangler d1 execute contacts --remote --file=./migrations/0001_contacts.sql
@@ -93,12 +102,11 @@ FROM contact_events e JOIN contacts c ON c.id = e.contact_id
 WHERE json_extract(e.metadata, '$.list_subscribed') = 0;
 ```
 
-### 4. Bind the database to the Worker
+### 4. Bind the database to the Worker — done
 
-Uncomment the `[[d1_databases]]` block in `wrangler.toml` and paste in the
-`database_id` from step 2. On a Workers service the binding is declared in
-config rather than in the dashboard, so it is reviewable and travels with the
-repository. Verify with:
+The `[[d1_databases]]` block in `wrangler.toml` carries the real id. On a
+Workers service the binding is declared in config rather than in the dashboard,
+so it is reviewable and travels with the repository. Verify with:
 
 ```bash
 npx wrangler deploy --dry-run
