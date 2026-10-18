@@ -35,24 +35,22 @@ enabled = true
 
 # Central contacts database, shared by every app.
 #
-# Commented out on purpose: Cloudflare validates database_id as a UUID, so a
-# placeholder here fails the whole deploy and nothing goes live — including the
-# static site, which does not need the database at all. The site therefore ships
-# first and the binding is added second.
+# Created with `wrangler d1 create contacts` and migrated from
+# migrations/0001_contacts.sql. The id below is not a secret: it names the
+# database, and only a Worker this account binds to it can read or write it.
 #
-# To turn the download form on:
-#   1. wrangler d1 create contacts
-#   2. uncomment the block below and paste in the returned database_id
-#   3. wrangler d1 execute contacts --remote --file=./migrations/0001_contacts.sql
+# `contacts` holds one row per person keyed by email; `contact_events` records
+# each interaction and which app it came from, so a second app inserts events
+# rather than duplicating people. Full walkthrough in docs/CONTACTS.md.
 #
-# Until then /api/contact answers 500 and names CONTACTS_DB as the missing
-# binding, which is deliberate — it never pretends to have saved a contact.
-# Full walkthrough in docs/CONTACTS.md.
-#
-# [[d1_databases]]
-# binding = "CONTACTS_DB"
-# database_name = "contacts"
-# database_id = "<paste the id from wrangler d1 create>"
+# Until this block existed, /api/contact answered 500 and named CONTACTS_DB as
+# the missing binding — correct behaviour, but it meant every download form
+# submission on the live site failed.
+
+[[d1_databases]]
+binding = "CONTACTS_DB"
+database_name = "contacts"
+database_id = "dfd0eb85-430c-4f06-95b3-9468d94a00f9"
 
 [vars]
 # Which app a contact_events row is attributed to. Every app writing to the

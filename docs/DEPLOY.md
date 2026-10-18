@@ -1,12 +1,55 @@
 # Deploying track2mix.com
 
-The domain is registered and already on Cloudflare nameservers, so this is a
-dashboard flow plus one optional CLI step. Roughly five minutes.
+The domain is registered and already on Cloudflare nameservers, and the Worker
+exists, so publishing a change is one command from a checkout. Roughly five
+minutes for a first-time setup.
+
+## 0. Deploys run from a checkout, not from Workers Builds
+
+Deploy with:
+
+```bash
+npx wrangler deploy
+```
+
+from a clean, up-to-date checkout of `main`. `npm run deploy` is the same
+command.
+
+This is deliberate. Workers Builds — Cloudflare's own CI, triggered by pushes
+to the connected repository — fails on this project and has not been diagnosed.
+The builds run for 13 to 19 seconds and then fail: long enough to clone and
+start installing dependencies, not long enough to finish an install and deploy.
+The leading suspect is the dependency install, since only `bun.lock` is
+committed and a build command of `npm ci` fails without a `package-lock.json`,
+but that is a guess until someone reads a build log.
+
+Note when reading the GitHub check: its `started_at` and `completed_at` are
+always the same second, because the Cloudflare app posts one already-completed
+check run rather than opening it at build start. That is a reporting artifact,
+not a build that never ran — the real timings are in the bot's pull request
+comment, which goes from "In progress" to "Failed".
+
+Deploying from a checkout removes the dependency on any of this.
+
+**Disconnect the integration** so the red check stops appearing on every pull
+request: Cloudflare dashboard → **Workers & Pages** → `track2mix` → **Settings**
+→ **Builds** → disconnect the repository. The Worker, its routes, its custom
+domains and its bindings are untouched by this; only the automatic build on
+push goes away.
+
+The trade-off is that nothing deploys unless someone runs the command, so a
+merged change sits unpublished until then. `wrangler deploy --dry-run` runs in
+CI on every pull request and catches a broken config before merge, but it
+cannot deploy. Check what is actually live after merging something:
+
+```bash
+curl -s https://track2mix.com/styles.css | wc -c
+```
 
 ## 1. The Cloudflare project
 
-The project already exists as a **Workers** service named `track2mix`, with
-Workers Builds connected to `astralisone/track2mix`. Nothing to create.
+The project exists as a **Workers** service named `track2mix`. Nothing to
+create.
 
 That is what the repository is configured for. The site ships as **Workers
 Static Assets**:
@@ -22,8 +65,7 @@ Static Assets**:
 everything else to the asset server, adding the response headers on the way out.
 
 There is no build step — the landing page is hand-written HTML, CSS and one JS
-file — so Workers Builds needs only its default deploy command, `npx wrangler
-deploy`. `npm run deploy` runs the same thing by hand.
+file — so deploying is a single `npx wrangler deploy`, as above.
 
 Check the config before pushing:
 
@@ -79,26 +121,19 @@ it; Cloudflare will redirect it to the apex.
 
 ## 3. Turn the download form on
 
-Until this is done, `/api/contact` returns a 500 that names `CONTACTS_DB` as the
-missing binding. That is deliberate: the form reports the failure rather than
-pretending someone was signed up. The rest of the site works normally.
+The database half is done: `contacts` exists, both tables and all four indexes
+are applied, and the `[[d1_databases]]` block in `wrangler.toml` binds it. On a
+Workers service the binding lives in config, not in the dashboard, so
+`npx wrangler deploy --dry-run` lists `env.CONTACTS_DB` among the bindings.
 
-```bash
-npm install -g wrangler
-wrangler login
+This has to reach the edge to take effect. A binding added to `wrangler.toml`
+does nothing until the next deploy, so the live `/api/contact` keeps answering
+500 and naming `CONTACTS_DB` until one runs. That 500 is deliberate — the form
+reports the failure rather than pretending someone was signed up — but it means
+every submission is lost while it lasts, so deploy promptly after merging a
+binding change.
 
-wrangler d1 create contacts
-# paste the printed database_id into wrangler.toml and uncomment that block
-
-wrangler d1 execute contacts --remote --file=./migrations/0001_contacts.sql
-```
-
-Uncommenting the `[[d1_databases]]` block in `wrangler.toml` is what binds it —
-on a Workers service the binding lives in config, not in the dashboard. Confirm
-it took with `npx wrangler deploy --dry-run`, which lists `env.CONTACTS_DB`
-among the bindings.
-
-Finally the mailing list, so the download link can actually be sent:
+What remains is the mailing list, so the download link can actually be sent:
 
 ```bash
 wrangler secret put LIST_ENDPOINT
@@ -123,8 +158,11 @@ Until at least one handle is set, the tip jar renders disabled and says so.
 - [ ] Turn on **Cloudflare Web Analytics** (free, no cookie banner) so you can
       see which channel actually sends traffic.
 
-## Why the D1 block is commented out
+## Why the D1 block was commented out
 
-Cloudflare validates `database_id` as a UUID. A placeholder there fails config
-validation and blocks the entire deploy — including the static site, which does
-not need the database. So the site ships first and the binding is added second.
+It is filled in now, but the reason it shipped commented out is worth keeping:
+Cloudflare validates `database_id` as a UUID, so a placeholder there fails
+config validation and blocks the entire deploy — including the static site,
+which does not need the database at all. That is why the site shipped first and
+the binding followed. If you ever need to stage this again on a new account,
+comment the block out rather than leaving a placeholder id in it.
