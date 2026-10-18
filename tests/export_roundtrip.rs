@@ -74,11 +74,7 @@ fn skips_rows_with_no_resolvable_path() {
 #[test]
 fn newlines_in_metadata_cannot_break_the_file_format() {
     let out = tmp("inject.m3u8");
-    let rows = vec![row(
-        "Bad\nName",
-        "Bad\r\nArtist",
-        Some("/music/ok.wav"),
-    )];
+    let rows = vec![row("Bad\nName", "Bad\r\nArtist", Some("/music/ok.wav"))];
 
     let written = write_m3u8(&out, "Set", &rows).unwrap();
     assert_eq!(written, 1);

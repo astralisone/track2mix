@@ -1,10 +1,14 @@
 /**
  * POST /api/contact — capture a contact, then hand back the download link.
  *
- * Runs as a Cloudflare Pages Function, so the D1 binding and the list
- * credential stay server-side. The browser never sees either, which is the
- * whole reason this endpoint exists rather than posting straight from
- * site/main.js.
+ * Invoked by worker/index.js, which routes /api/contact here. Running on the
+ * server is the whole point: the D1 binding and the list credential stay here
+ * and the browser never sees either, rather than site/main.js posting straight
+ * to the mailing-list provider with a key in the page source.
+ *
+ * The signature is Cloudflare's Pages Function shape ({ request, env }) because
+ * it costs nothing to keep and means this file works unchanged if the project
+ * is ever moved to Pages.
  *
  * Order of operations matters: the contact is written to the central database
  * FIRST and the mailing-list subscription is attempted second. A list outage

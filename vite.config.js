@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 // Tauri expects a fixed port, fails if it's in use
@@ -26,6 +26,10 @@ export default defineConfig({
             // tell vite to ignore watching `src-tauri`
             ignored: ["**/src-tauri/**", "**/target/**"],
         },
+    },
+    test: {
+        include: ["ui/src/**/*.test.ts"],
+        environment: "node",
     },
     build: {
         target: "es2022",

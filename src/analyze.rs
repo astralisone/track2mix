@@ -96,7 +96,9 @@ where
                 if !remapped.exists() {
                     dropped.missing_file += 1;
                     if dropped.missing_examples.len() < 10 {
-                        dropped.missing_examples.push(remapped.display().to_string());
+                        dropped
+                            .missing_examples
+                            .push(remapped.display().to_string());
                     }
                 } else {
                     resolved.push((t, remapped));
@@ -171,7 +173,7 @@ where
                 });
             }
         }
-        let emit = n <= 3 || n == total || n % emit_every == 0;
+        let emit = n <= 3 || n == total || n.is_multiple_of(emit_every);
         if emit {
             on_progress(ProgressEvent::Track {
                 done: n,

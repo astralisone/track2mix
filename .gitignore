@@ -33,3 +33,4 @@ Thumbs.db
 
 # Locally built release artifacts
 release-v0.1.0/*.tar.gz
+release-build/

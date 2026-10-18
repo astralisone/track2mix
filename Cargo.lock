@@ -4435,6 +4435,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "track2mix",
+ "urlencoding",
 ]
 
 [[package]]
