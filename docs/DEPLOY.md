@@ -1,12 +1,47 @@
 # Deploying track2mix.com
 
-The domain is registered and already on Cloudflare nameservers, so this is a
-dashboard flow plus one optional CLI step. Roughly five minutes.
+The domain is registered and already on Cloudflare nameservers, and the Worker
+exists, so publishing a change is one command from a checkout. Roughly five
+minutes for a first-time setup.
+
+## 0. Deploys run from a checkout, not from Workers Builds
+
+Deploy with:
+
+```bash
+npx wrangler deploy
+```
+
+from a clean, up-to-date checkout of `main`. `npm run deploy` is the same
+command.
+
+This is deliberate. Workers Builds — Cloudflare's own CI, triggered by pushes
+to the connected repository — has been failing on this project with builds that
+report zero duration: `started_at` and `completed_at` land on the same second,
+so nothing is cloned, installed or deployed. No change to this repository can
+fix a build that never starts, and the Builds API is not reachable from the
+tooling here to read why. Deploying from a checkout removes the dependency
+entirely.
+
+**Disconnect the integration** so the red check stops appearing on every pull
+request: Cloudflare dashboard → **Workers & Pages** → `track2mix` → **Settings**
+→ **Builds** → disconnect the repository. The Worker, its routes, its custom
+domains and its bindings are untouched by this; only the automatic build on
+push goes away.
+
+The trade-off is that nothing deploys unless someone runs the command, so a
+merged change sits unpublished until then. `wrangler deploy --dry-run` runs in
+CI on every pull request and catches a broken config before merge, but it
+cannot deploy. Check what is actually live after merging something:
+
+```bash
+curl -s https://track2mix.com/styles.css | wc -c
+```
 
 ## 1. The Cloudflare project
 
-The project already exists as a **Workers** service named `track2mix`, with
-Workers Builds connected to `astralisone/track2mix`. Nothing to create.
+The project exists as a **Workers** service named `track2mix`. Nothing to
+create.
 
 That is what the repository is configured for. The site ships as **Workers
 Static Assets**:
@@ -22,8 +57,7 @@ Static Assets**:
 everything else to the asset server, adding the response headers on the way out.
 
 There is no build step — the landing page is hand-written HTML, CSS and one JS
-file — so Workers Builds needs only its default deploy command, `npx wrangler
-deploy`. `npm run deploy` runs the same thing by hand.
+file — so deploying is a single `npx wrangler deploy`, as above.
 
 Check the config before pushing:
 
