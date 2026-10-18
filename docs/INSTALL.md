@@ -92,6 +92,20 @@ track2mix analyze --xml ~/rekordbox.xml \
 
 ---
 
+## Building on Linux
+
+The in-app preview player plays audio through ALSA, so building from source on
+Linux needs the ALSA development headers:
+
+- **Debian/Ubuntu:** `sudo apt install libasound2-dev` (the runtime package is
+  `libasound2`, usually already installed)
+- **Arch:** `alsa-lib` (already installed on most systems)
+- **Fedora:** `alsa-lib-devel`
+
+PipeWire and PulseAudio systems work too, through their ALSA compatibility layer.
+
+---
+
 ## Troubleshooting
 
 **A lot of tracks failed to analyse.** Check the coverage summary from

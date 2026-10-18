@@ -19,6 +19,8 @@ anyhow = "1"
 urlencoding = "2"
 
 track2mix = { path = ".." }
+rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-all"] }
+symphonia = "0.5"
 
 [features]
 default = ["custom-protocol"]

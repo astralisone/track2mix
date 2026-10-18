@@ -50,14 +50,68 @@ export async function compat(args: CompatArgs): Promise<UiTrack[]> {
   return invoke<UiTrack[]>("compat", { args });
 }
 
+/** m3u8 = Rekordbox-ready with #EXTINF, m3u = plain paths only, txt = numbered tracklist. */
+export type ExportFormat = "m3u8" | "m3u" | "txt";
+
 export type ExportArgs = {
   path: string;
   playlist_name: string;
   track_ids: string[];
+  /** Accepted for forward compatibility; the current backend always writes m3u8. */
+  format?: ExportFormat;
 };
 
+/** Resolves to the number of tracks written. */
 export async function exportPlaylist(args: ExportArgs): Promise<number> {
   return invoke<number>("export_playlist", { args });
+}
+
+/** Snapshot of the Rust-side player, emitted as `player:state`. */
+export type PlayerState = {
+  queue: string[]; // track ids
+  index: number; // position in queue, -1 when idle
+  playing: boolean;
+  position: number; // seconds
+  duration: number | null; // seconds
+  volume: number; // 0..1
+  /**
+   * `<code>: <detail>` where code is one of nofile | nopath | decode |
+   * device | seek | skipped. The UI maps on the code only.
+   */
+  error: string | null;
+  /** Bumped once per processed command; ticks repeat the current value. */
+  seq: number;
+};
+
+export async function playerPlay(trackIds: string[], startIndex = 0): Promise<void> {
+  return invoke("player_play", { trackIds, startIndex });
+}
+export async function playerToggle(): Promise<void> {
+  return invoke("player_toggle");
+}
+export async function playerNext(): Promise<void> {
+  return invoke("player_next");
+}
+export async function playerPrev(): Promise<void> {
+  return invoke("player_prev");
+}
+export async function playerSeek(secs: number): Promise<void> {
+  return invoke("player_seek", { secs });
+}
+export async function playerVolume(v: number): Promise<void> {
+  return invoke("player_volume", { v });
+}
+export async function playerStop(): Promise<void> {
+  return invoke("player_stop");
+}
+export async function playerStatus(): Promise<PlayerState> {
+  return invoke<PlayerState>("player_status");
+}
+
+export async function onPlayerState(
+  handler: (s: PlayerState) => void,
+): Promise<UnlistenFn> {
+  return listen<PlayerState>("player:state", (e) => handler(e.payload));
 }
 
 export type AnalyzeArgs = {
