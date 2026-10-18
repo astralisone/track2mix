@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { UiTrack } from "@/lib/tauri";
 import type { CompositionEngine } from "@/audio/engine";
+import { describeAudioError } from "@/audio/errors";
 import { formatTime } from "@/audio/model";
 import { cn, formatBpm } from "@/lib/utils";
 import { Button } from "./ui/Button";
@@ -106,7 +107,13 @@ export function PreviewPlayer({ engine, track, onClose, onAddToCompose }: Props)
     const buf = bufferRef.current;
     const g = gainRef.current;
     if (!buf || !g) return;
-    if (ctx.state === "suspended") await ctx.resume();
+    try {
+      if (ctx.state === "suspended") await ctx.resume();
+    } catch (e) {
+      // WebKitGTK reports a missing audio sink here, not at construction.
+      setErr(describeAudioError(e));
+      return;
+    }
     stopSource();
     pos = Math.max(0, Math.min(pos, buf.duration));
     const src = ctx.createBufferSource();

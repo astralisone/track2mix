@@ -18,6 +18,7 @@ import { ExportDialog } from "./components/ExportDialog";
 import { PreviewPlayer } from "./components/PreviewPlayer";
 import { ComposeView } from "./components/compose/ComposeView";
 import { CompositionEngine } from "@/audio/engine";
+import { describeAudioError } from "@/audio/errors";
 import {
   DEFAULT_LANE,
   emptyComposition,
@@ -56,11 +57,19 @@ function App() {
 
   // One AudioContext for the whole app: the library preview and the
   // composer share its decode cache.
+  // Creating the AudioContext can itself fail (no audio device, missing
+  // GStreamer plugins on Linux); the library must stay usable when it does.
   const engineRef = React.useRef<CompositionEngine | null>(null);
-  if (!engineRef.current) {
-    engineRef.current = new CompositionEngine(emptyComposition());
+  const audioErrRef = React.useRef<string | null>(null);
+  if (!engineRef.current && !audioErrRef.current) {
+    try {
+      engineRef.current = new CompositionEngine(emptyComposition());
+    } catch (e) {
+      audioErrRef.current = describeAudioError(e);
+    }
   }
   const engine = engineRef.current;
+  const [audioErr, setAudioErr] = React.useState<string | null>(audioErrRef.current);
   // The engine outlives React's effect lifecycle on purpose: StrictMode
   // runs every effect's cleanup once on mount, and a disposed AudioContext
   // can't be revived, so disposing there would leave the rendered tree
@@ -139,10 +148,10 @@ function App() {
       setAnchorId(null);
       setFilters(emptyFilters);
       setPreviewId(null);
-      engine.stop();
+      engine?.stop();
       // Track ids are per-export, so buffers decoded for the old library
       // must not be served under the new library's ids.
-      engine.loader.clear();
+      engine?.loader.clear();
       setComp(emptyComposition());
     } catch (e) {
       setLoadErr(String(e));
@@ -212,11 +221,13 @@ function App() {
   );
 
   function togglePreview(id: string) {
+    if (!engine) return; // audio unavailable; the banner says why
     setPreviewId((cur) => (cur === id ? null : id));
   }
 
   /** Add tracks as lanes (no clips yet) and jump to the composer. */
   function addToCompose(toAdd: UiTrack[]) {
+    if (!engine) return;
     setComp((prev) => {
       const existing = new Set(prev.lanes.map((l) => l.track.track_id));
       const fresh = toAdd.filter((t) => t.file_path && !existing.has(t.track_id));
@@ -410,13 +421,30 @@ function App() {
 
       {/* Body */}
       <main className="flex-1 flex flex-col min-h-0 p-3 gap-3">
+        {audioErr && (
+          <div className="glass rounded-lg p-3 border border-red-500/30 text-sm text-red-200 flex items-start justify-between gap-3">
+            <div>
+              <div className="font-medium mb-0.5">Audio output unavailable</div>
+              <div className="text-xs text-red-300/90">{audioErr}</div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => setAudioErr(null)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         {view === "compose" ? (
-          <ComposeView
-            engine={engine}
-            comp={comp}
-            onCompChange={setComp}
-            tracks={tracks}
-          />
+          engine ? (
+            <ComposeView
+              engine={engine}
+              comp={comp}
+              onCompChange={setComp}
+              tracks={tracks}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center glass rounded-lg text-sm text-muted-foreground">
+              The composer needs an audio device. Fix the output above and restart.
+            </div>
+          )
         ) : (
           <>
         <FilterBar
@@ -496,7 +524,7 @@ function App() {
               />
             )}
 
-            {previewTrack && (
+            {previewTrack && engine && (
               <PreviewPlayer
                 engine={engine}
                 track={previewTrack}

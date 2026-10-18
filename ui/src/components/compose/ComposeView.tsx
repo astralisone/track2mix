@@ -3,6 +3,7 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeRecording, type UiTrack } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 import type { CompositionEngine, EngineState } from "@/audio/engine";
+import { describeAudioError } from "@/audio/errors";
 import {
   autoCrossfade,
   DEFAULT_LANE,
@@ -80,7 +81,7 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
   // ---- transport -------------------------------------------------------
   const playPause = React.useCallback(() => {
     if (engine.state().playing) engine.pause();
-    else engine.play().catch((e) => setErr(String(e)));
+    else engine.play().catch((e) => setErr(describeAudioError(e)));
   }, [engine]);
 
   React.useEffect(() => {
