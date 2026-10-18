@@ -9,10 +9,10 @@
 /* ------------------------------------------------------------------ config */
 
 /**
- * Where the contact form posts. This is the site's own Cloudflare Pages
- * Function (functions/api/contact.js), which writes to the central D1
- * contacts database and subscribes the person to the mailing list. The
- * database binding and the list credential live server-side, so nothing
+ * Where the contact form posts. This is the site's own Cloudflare Worker
+ * (worker/contact.js, routed there by worker/index.js), which writes to the
+ * central D1 contacts database and subscribes the person to the mailing list.
+ * The database binding and the list credential live server-side, so nothing
  * secret appears in this file. The download URL is returned by that endpoint
  * rather than hardcoded here, so it is not in the page source before someone
  * fills the form in.

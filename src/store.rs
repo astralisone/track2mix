@@ -99,9 +99,7 @@ fn migrate_sub_genre(conn: &Connection) -> Result<()> {
              WHERE sub_genre IS NULL AND file_path IS NOT NULL",
         )?;
         let collected = stmt
-            .query_map([], |r| {
-                Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
-            })?
+            .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
             .collect::<Result<Vec<_>, _>>()?;
         collected
     };
@@ -243,7 +241,9 @@ impl Store {
     ) -> Result<Vec<TrackRow>> {
         let col = metric_column(metric)?;
         let order = if asc { "ASC" } else { "DESC" };
-        let genre_pat = genre.map(|g| format!("%{}%", g)).unwrap_or_else(|| "%".into());
+        let genre_pat = genre
+            .map(|g| format!("%{}%", g))
+            .unwrap_or_else(|| "%".into());
         match sub_genre {
             Some(sg) => {
                 let sg_pat = format!("%{}%", sg);

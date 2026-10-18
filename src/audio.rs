@@ -18,8 +18,7 @@ pub struct DecodedAudio {
 /// work downstream. For very long tracks (DJ tools, ambient sets) this
 /// can eat memory; the sampling strategy in features.rs compensates.
 pub fn decode_mono(path: &Path, target_sr: u32) -> Result<DecodedAudio> {
-    let file = std::fs::File::open(path)
-        .with_context(|| format!("opening {}", path.display()))?;
+    let file = std::fs::File::open(path).with_context(|| format!("opening {}", path.display()))?;
     let mss = MediaSourceStream::new(Box::new(file), Default::default());
 
     let mut hint = Hint::new();
@@ -45,11 +44,7 @@ pub fn decode_mono(path: &Path, target_sr: u32) -> Result<DecodedAudio> {
         .codec_params
         .sample_rate
         .ok_or_else(|| anyhow!("unknown sample rate"))?;
-    let channels = track
-        .codec_params
-        .channels
-        .map(|c| c.count())
-        .unwrap_or(2);
+    let channels = track.codec_params.channels.map(|c| c.count()).unwrap_or(2);
 
     let mut decoder = symphonia::default::get_codecs()
         .make(&track.codec_params, &DecoderOptions::default())
