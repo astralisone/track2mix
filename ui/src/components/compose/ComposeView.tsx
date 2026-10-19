@@ -1,11 +1,20 @@
 import * as React from "react";
-import { save } from "@tauri-apps/plugin-dialog";
+import { ask, save } from "@tauri-apps/plugin-dialog";
 import { writeRecording, type RenderFormat, type UiTrack } from "@/lib/tauri";
 import { fileStem } from "@/audio/project";
 import type { ProjectApi } from "@/lib/useProject";
 import { cn } from "@/lib/utils";
 import type { CompositionEngine, EngineState } from "@/audio/engine";
 import { describeAudioError } from "@/audio/errors";
+import { beatGridFromBuffer } from "@/audio/beats";
+import {
+  autoArrange,
+  DEFAULT_ARRANGE,
+  describeArrangement,
+  OVERLAP_CHOICES,
+  type ArrangeOrder,
+  type LaneAudio,
+} from "@/audio/arrange";
 import {
   autoCrossfade,
   DEFAULT_LANE,
@@ -21,7 +30,7 @@ import { LaneStrip, LANE_HEIGHT } from "./LaneStrip";
 import { Timeline, RULER_HEIGHT } from "./Timeline";
 import { TrackPicker } from "./TrackPicker";
 import { Transport } from "./Transport";
-import { Check, FilePlus, FolderOpen, Plus, Save, Shuffle, X } from "lucide-react";
+import { Check, FilePlus, FolderOpen, Plus, Save, Shuffle, Wand2, X } from "lucide-react";
 
 type Props = {
   engine: CompositionEngine;
@@ -50,6 +59,9 @@ export function ComposeView({ engine, comp, onCompChange, tracks, projectApi }: 
   const [revision, setRevision] = React.useState(0);
   const [bouncing, setBouncing] = React.useState<number | null>(null);
   const [encoding, setEncoding] = React.useState(false);
+  const [arranging, setArranging] = React.useState(false);
+  const [arrangeOrder, setArrangeOrder] = React.useState<ArrangeOrder>(DEFAULT_ARRANGE.order);
+  const [overlapBars, setOverlapBars] = React.useState<number>(DEFAULT_ARRANGE.overlapBars);
   const [err, setErr] = React.useState<string | null>(null);
   const [toast, setToast] = React.useState<string | null>(null);
   // The most recent WAV (live take or bounce) that hasn't been written to
@@ -234,6 +246,52 @@ export function ComposeView({ engine, comp, onCompChange, tracks, projectApi }: 
     const c = compRef.current;
     commit({ ...c, clips: c.clips.filter((cl) => cl.id !== id) });
     if (selectedClipId === id) setSelectedClipId(null);
+  }
+
+  // ---- auto-arrange ----------------------------------------------------
+  /**
+   * Lay every lane out as one continuous mix: harmonic/energy order, median
+   * tempo, clips trimmed to their detected downbeat on bar lines, phrase-
+   * aligned overlaps with crossfades. Replaces all existing clips, so it
+   * asks first when there is something to lose.
+   */
+  async function arrange() {
+    const c = compRef.current;
+    if (c.lanes.length === 0 || arranging) return;
+    if (c.clips.length > 0) {
+      const ok = await ask(
+        `Auto-arrange replaces the ${c.clips.length} clip${c.clips.length === 1 ? "" : "s"} on the timeline with a fresh layout. Continue?`,
+        { title: "Auto-arrange", kind: "warning", okLabel: "Arrange", cancelLabel: "Cancel" },
+      );
+      if (!ok) return;
+    }
+    setErr(null);
+    setArranging(true);
+    try {
+      engine.stop();
+      await engine.preload();
+      // Let the "Arranging…" label paint before the beat analysis blocks the thread.
+      await new Promise((r) => setTimeout(r, 0));
+      const audio = new Map<string, LaneAudio>();
+      for (const lane of compRef.current.lanes) {
+        const buf = engine.loader.get(lane.track.track_id);
+        if (!buf) continue;
+        audio.set(lane.id, { duration: buf.duration, grid: beatGridFromBuffer(buf, lane.track.bpm) });
+      }
+      const result = autoArrange(compRef.current, audio, {
+        overlapBars,
+        order: arrangeOrder,
+        startLaneId: null,
+      });
+      commit(result.comp);
+      setSelectedClipId(null);
+      engine.seek(0);
+      setToast(describeArrangement(result));
+    } catch (e) {
+      setErr(`Auto-arrange failed: ${String(e)}`);
+    } finally {
+      setArranging(false);
+    }
   }
 
   // ---- recording / bounce ---------------------------------------------
@@ -462,6 +520,43 @@ export function ComposeView({ engine, comp, onCompChange, tracks, projectApi }: 
               <Shuffle className="h-3.5 w-3.5" />
               Auto-crossfade
             </Button>
+            <div className="h-5 w-px bg-white/10" />
+            <div className="flex items-center gap-1" title="Order lanes by key and energy, match beats at the median tempo, and blend each track into the next on a phrase boundary">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[11px] text-gold-300 hover:text-gold-200"
+                onClick={() => void arrange()}
+                disabled={comp.lanes.length === 0 || arranging}
+              >
+                <Wand2 className="h-3.5 w-3.5" />
+                {arranging ? "Arranging…" : "Auto-arrange"}
+              </Button>
+              <select
+                className="h-6 rounded border border-white/10 bg-white/[0.04] px-1 text-[11px] text-muted-foreground focus:outline-none"
+                value={arrangeOrder}
+                onChange={(e) => setArrangeOrder(e.target.value as ArrangeOrder)}
+                aria-label="Arrangement order"
+                disabled={arranging}
+              >
+                <option value="harmonic">Harmonic flow</option>
+                <option value="energy">Energy rise</option>
+                <option value="keep">Lane order</option>
+              </select>
+              <select
+                className="h-6 rounded border border-white/10 bg-white/[0.04] px-1 text-[11px] text-muted-foreground focus:outline-none"
+                value={overlapBars}
+                onChange={(e) => setOverlapBars(Number(e.target.value))}
+                aria-label="Blend length in bars"
+                disabled={arranging}
+              >
+                {OVERLAP_CHOICES.map((b) => (
+                  <option key={b} value={b}>
+                    {b}-bar blend
+                  </option>
+                ))}
+              </select>
+            </div>
             <span className="flex-1" />
             <span className="text-[11px] text-muted-foreground">
               {comp.lanes.length} lane{comp.lanes.length === 1 ? "" : "s"} ·{" "}
