@@ -22,7 +22,17 @@
  *   DOWNLOAD_URL      link handed back      (required)
  *   LIST_ENDPOINT     mailing-list API URL  (secret, optional)
  *   LIST_AUTH_HEADER  e.g. "Token abc123"   (secret, optional)
+ *
+ * The optional `interest` field says what the person is after:
+ *   "desktop" (default)  the free desktop download — the response carries
+ *                        DOWNLOAD_URL and the event is `download_requested`.
+ *   "ipad" | "android"   the paid tablet app, which is bought in the store, not
+ *                        downloaded here. The event is `store_interest` with
+ *                        the platform in its metadata, and no download link
+ *                        is returned because there is none to give.
  */
+
+const INTERESTS = new Set(["desktop", "ipad", "android"]);
 
 const MAX_NAME = 120;
 const MAX_EMAIL = 254;
@@ -94,16 +104,19 @@ export async function onRequestPost({ request, env }) {
 
   let name;
   let email;
+  let interest;
   try {
     const contentType = request.headers.get("Content-Type") || "";
     if (contentType.includes("application/json")) {
       const body = await request.json();
       name = body.name;
       email = body.email;
+      interest = body.interest;
     } else {
       const form = await request.formData();
       name = form.get("name");
       email = form.get("email");
+      interest = form.get("interest");
     }
   } catch (error) {
     return json({ error: `Could not read the submitted form: ${error}` }, 400);
@@ -111,9 +124,17 @@ export async function onRequestPost({ request, env }) {
 
   name = String(name ?? "").trim().slice(0, MAX_NAME);
   email = String(email ?? "").trim().toLowerCase().slice(0, MAX_EMAIL);
+  interest = String(interest ?? "desktop").trim().toLowerCase() || "desktop";
 
-  if (name.length < 2) return json({ error: "Please enter your name." }, 400);
+  if (!INTERESTS.has(interest)) {
+    return json({ error: `Unknown interest "${interest}" — expected desktop, ipad or android.` }, 400);
+  }
+  // The tablet notify form asks for an email only; a name is still required
+  // for the desktop download, where it has always been part of the gate.
+  const storeInterest = interest !== "desktop";
+  if (!storeInterest && name.length < 2) return json({ error: "Please enter your name." }, 400);
   if (!looksLikeEmail(email)) return json({ error: "That doesn't look like an email address." }, 400);
+  if (storeInterest && name.length < 2) name = email.split("@")[0].slice(0, MAX_NAME);
 
   const warnings = [];
 
@@ -141,12 +162,14 @@ export async function onRequestPost({ request, env }) {
 
     await env.CONTACTS_DB.prepare(
       `INSERT INTO contact_events (contact_id, app, event, metadata)
-       VALUES (?1, ?2, 'download_requested', ?3)`
+       VALUES (?1, ?2, ?3, ?4)`
     )
       .bind(
         contact.id,
         env.APP_NAME,
+        storeInterest ? "store_interest" : "download_requested",
         JSON.stringify({
+          platform: interest,
           referrer: request.headers.get("Referer") || null,
           country: request.cf?.country || null,
           list_subscribed: list.ok,
@@ -155,9 +178,15 @@ export async function onRequestPost({ request, env }) {
       )
       .run();
 
+    if (storeInterest) {
+      // Nothing to download: the tablet app is bought in the store. The
+      // contact is saved so they can be told when the listing goes live.
+      return json({ ok: true, interest, warnings });
+    }
+
     // The link comes from the server, so it is not sitting in the page source
     // before anyone fills the form in.
-    return json({ ok: true, download_url: env.DOWNLOAD_URL, warnings });
+    return json({ ok: true, interest, download_url: env.DOWNLOAD_URL, warnings });
   } catch (error) {
     console.error("/api/contact database write failed:", error);
     return json({ error: `Could not save your details: ${error.message || error}` }, 500);

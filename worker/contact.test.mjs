@@ -55,7 +55,7 @@ globalThis.fetch = async () => new Response("{}", { status: 200 });
   check("no warnings when list succeeds", body.warnings.length === 0, JSON.stringify(body.warnings));
   check("email normalised to lowercase+trimmed", db.calls[0].args[0] === "alex@example.com", db.calls[0].args[0]);
   check("writes contact then event", db.calls.length === 2 && db.calls[1].sql.includes("contact_events"));
-  check("event records list success", db.calls[1].args[2].includes('"list_subscribed":true'));
+  check("event records list success", db.calls[1].args[3].includes('"list_subscribed":true'));
 }
 
 // 2. list down -> contact still saved, download still granted, warning surfaced
@@ -68,10 +68,61 @@ globalThis.fetch = async () => new Response("upstream exploded", { status: 503, 
   check("list outage still returns 200", res.status === 200, res.status);
   check("list outage still grants download", !!body.download_url);
   check("list outage surfaces a warning", body.warnings.some(w => w.includes("503")), JSON.stringify(body.warnings));
-  check("list failure recorded on event", db.calls[1].args[2].includes('"list_subscribed":false'));
+  check("list failure recorded on event", db.calls[1].args[3].includes('"list_subscribed":false'));
 }
 
 // 3. validation
+// store interest: iPad — no download link, store_interest event, email-only form
+globalThis.fetch = async () => new Response("{}", { status: 200 });
+{
+  const db = makeDb();
+  const res = await onRequestPost({ request: req({ email: "dj@example.com", interest: "ipad" }),
+    env: baseEnv(db, { LIST_ENDPOINT: "https://list.test/sub" }) });
+  const body = await res.json();
+  check("ipad interest returns 200 without a name", res.status === 200, res.status);
+  check("ipad interest returns no download_url", body.download_url === undefined, JSON.stringify(body));
+  check("ipad interest echoes the interest", body.interest === "ipad", body.interest);
+  check("ipad interest derives a name from the address", db.calls[0].args[1] === "dj", db.calls[0].args[1]);
+  check("ipad interest writes a store_interest event", db.calls[1].args[2] === "store_interest", db.calls[1].args[2]);
+  check("ipad interest records the platform", db.calls[1].args[3].includes('"platform":"ipad"'), db.calls[1].args[3]);
+}
+
+// store interest: Android, with a name, form-encoded
+{
+  const db = makeDb();
+  const res = await onRequestPost({ request: req({ name: "Sam", email: "sam@example.com", interest: "android" }, "application/x-www-form-urlencoded"),
+    env: baseEnv(db) });
+  const body = await res.json();
+  check("android interest returns 200", res.status === 200, res.status);
+  check("android interest keeps the given name", db.calls[0].args[1] === "Sam", db.calls[0].args[1]);
+  check("android interest records the platform", db.calls[1].args[3].includes('"platform":"android"'));
+  check("android interest returns no download_url", body.download_url === undefined);
+}
+
+// desktop is the default and still gated on a name
+{
+  const db = makeDb();
+  const res = await onRequestPost({ request: req({ name: "Alex", email: "alex@example.com" }), env: baseEnv(db) });
+  const body = await res.json();
+  check("no interest defaults to desktop", body.interest === "desktop", body.interest);
+  check("desktop event is download_requested", db.calls[1].args[2] === "download_requested", db.calls[1].args[2]);
+  check("desktop metadata records the platform", db.calls[1].args[3].includes('"platform":"desktop"'));
+}
+{
+  const db = makeDb();
+  const res = await onRequestPost({ request: req({ email: "alex@example.com", interest: "desktop" }), env: baseEnv(db) });
+  check("desktop without a name is still rejected", res.status === 400, res.status);
+  check("desktop without a name writes nothing", db.calls.length === 0, db.calls.length);
+}
+{
+  const db = makeDb();
+  const res = await onRequestPost({ request: req({ name: "Alex", email: "alex@example.com", interest: "windows-phone" }), env: baseEnv(db) });
+  const body = await res.json();
+  check("unknown interest is rejected", res.status === 400, res.status);
+  check("unknown interest names the value", body.error.includes("windows-phone"), body.error);
+  check("unknown interest writes nothing", db.calls.length === 0, db.calls.length);
+}
+
 globalThis.fetch = realFetch;
 for (const [label, body, want] of [
   ["rejects missing name", { name: "", email: "a@b.co" }, "name"],

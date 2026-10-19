@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Track2Mix — Which of your tracks actually mixes with this one?</title>
-<meta name="description" content="Track2Mix analyses your Rekordbox library on your own machine and tells you which tracks actually belong next to each other — harmonically, by BPM, and by energy. Free desktop app for Windows and Linux.">
+<meta name="description" content="Track2Mix analyses your Rekordbox library on your own machine, tells you which tracks actually belong next to each other — harmonically, by BPM, and by energy — then helps you audition, arrange and blend them. Pay-what-you-want desktop app for Windows and Linux, and a tablet app for iPad and Android.">
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -46,6 +46,7 @@
       <a href="#analysis">The analysis</a>
       <a href="#features">Features</a>
       <a href="#honest">What it does &amp; doesn't</a>
+      <a href="#tablet">iPad &amp; Android</a>
       <a href="#faq">FAQ</a>
       <a href="https://downloads.track2mix.com">Downloads</a>
     </nav>
@@ -61,13 +62,15 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <p class="eyebrow">Pay what you want · Windows &amp; Linux · Runs offline</p>
+        <p class="eyebrow">Windows &amp; Linux · iPad &amp; Android tablets · Runs offline</p>
         <h1>Your library already knows what to play next. <span class="accent">Rekordbox just won't tell you.</span></h1>
         <p class="lede">
           Rekordbox stores your keys and your BPMs. It has no idea which of your
           eight thousand tracks actually belong next to each other. Track2Mix reads
           your collection, listens to every file on your own machine, and scores
-          each track for energy — then hands you the shortlist that mixes.
+          each track for energy — then hands you the shortlist that mixes, lets you
+          audition it, arranges it into a set, and blends it on a timeline you can
+          render to MP3.
         </p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#get">
@@ -79,6 +82,7 @@
         <div class="hero-meta">
           <span class="pill pill-iris">Harmonic + BPM matching</span>
           <span class="pill pill-iris">Energy scoring</span>
+          <span class="pill pill-iris">Playlist builder + composer</span>
           <span class="pill pill-gold"><span class="dot"></span>Nothing leaves your machine</span>
         </div>
       </div>
@@ -242,8 +246,8 @@
           <p>Track2Mix decodes every track — MP3, FLAC, WAV, AIFF, M4A — and measures loudness, dynamics, brightness, spectral movement and rhythmic density, in parallel, across all your cores.</p>
         </div>
         <div class="step">
-          <h3>Dig, then export</h3>
-          <p>Click any track to get its harmonically and rhythmically compatible neighbours, ranked. Tick the ones you want and export an M3U8 that Rekordbox imports directly.</p>
+          <h3>Dig, arrange, export</h3>
+          <p>Click any track to get its harmonically and rhythmically compatible neighbours, ranked. Audition them, tick the ones you want, let the playlist builder order them into a harmonic flow, and export an M3U8 that Rekordbox imports directly — or lay them on the composer's timeline and render the blend.</p>
         </div>
       </div>
 
@@ -506,12 +510,27 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
         <div class="card">
           <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15V8a2 2 0 0 0-2-2h-7L9 3H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2Z"/></svg></div>
           <h3>Round-trips into Rekordbox</h3>
-          <p>Exports standard M3U8 playlists that Rekordbox imports without complaint. Track2Mix is a lens on your library, not a replacement for it — nothing to migrate, nothing to lose.</p>
+          <p>Exports standard M3U8 playlists that Rekordbox imports without complaint (plain M3U and text tracklists too). Track2Mix is a lens on your library, not a replacement for it — nothing to migrate, nothing to lose.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg></div>
+          <h3>Audition before you commit</h3>
+          <p>A built-in player on every row. Queue a whole selection, scrub, skip ahead 30 seconds, and hear whether the energy jump you're about to program is the one you meant.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h7"/><path d="m17 14 3 3-3 3"/></svg></div>
+          <h3>A playlist builder that knows the wheel</h3>
+          <p>Your picks are ordered into a harmonic flow, an energy ramp or by BPM. Every transition gets a badge — perfect, relative, ±1, boost, drop, clash — and a score, and <em>Suggest next</em> keeps the set going.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h7v4H3z"/><path d="M9 14h9v4H9z"/><path d="M14 6h7v4h-7z"/></svg></div>
+          <h3>A composer that beat-matches for you</h3>
+          <p>Lay tracks on a timeline, one lane each, with EQ, filters and tempo sync. <em>Auto-arrange</em> finds each track's downbeat, lines phrases up and blends them over 4–32 bars. Record live, bounce to WAV, or export a 320 kbps MP3.</p>
         </div>
         <div class="card">
           <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m8 9 3 3-3 3"/><path d="M13 15h3"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg></div>
           <h3>GUI and CLI, same engine</h3>
-          <p>A desktop app for digging and a scriptable command-line analyzer for everything else. Both read the same database, so you can automate the boring parts.</p>
+          <p>A desktop app for digging, arranging and composing, and a scriptable command-line analyzer for everything else. Both read the same database, so you can automate the boring parts.</p>
         </div>
       </div>
     </div>
@@ -558,7 +577,11 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
         </li>
         <li>
           <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          <span><b>Does not build the set for you.</b> It narrows eight thousand tracks to a handful worth auditioning. The selection is still yours.</span>
+          <span><b>Does not pick the set for you.</b> It narrows eight thousand tracks to a handful worth auditioning and will order and beat-match the ones you choose — but the choosing is still yours.</span>
+        </li>
+        <li>
+          <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          <span><b>Does not analyse on a tablet.</b> Rekordbox lives on your computer, so the analysis does too. The iPad and Android apps open the library you analysed there.</span>
         </li>
       </ul>
     </div>
@@ -566,16 +589,141 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
 
   <hr class="rule">
 
-  <!-- ================= GET IT / PAY WHAT YOU WANT ================= -->
+  <!-- ================= TABLET ================= -->
+  <section id="tablet">
+    <div class="wrap two-col">
+      <div>
+        <p class="eyebrow">iPad &amp; Android tablets</p>
+        <h2>Your whole analysed library, on the tablet next to the decks.</h2>
+        <p class="lede" style="margin-top:14px">
+          Track2Mix for iPad and Android tablets is the digging half of the app,
+          built for landscape and a finger: the same track table, filters, Camelot
+          wheel, compatibility matching and playlist builder, reading the library
+          you analysed on your computer. Sold once, in the store, no subscription.
+        </p>
+
+        <div class="stores">
+          <a class="store" id="store-appstore" href="#tablet">
+            <span class="store-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.37 12.7c-.03-2.6 2.13-3.86 2.23-3.92-1.22-1.78-3.1-2.02-3.77-2.05-1.6-.16-3.13.95-3.94.95-.82 0-2.07-.93-3.4-.9-1.75.03-3.36 1.02-4.26 2.58-1.82 3.16-.46 7.83 1.31 10.4.87 1.25 1.9 2.66 3.25 2.61 1.3-.05 1.8-.84 3.38-.84 1.57 0 2.02.84 3.4.81 1.4-.02 2.29-1.27 3.15-2.53 1-1.45 1.4-2.86 1.43-2.93-.03-.02-2.74-1.05-2.78-4.18zM13.78 5.05c.72-.87 1.2-2.08 1.07-3.29-1.03.04-2.29.69-3.03 1.56-.67.77-1.25 2-1.09 3.18 1.15.09 2.33-.58 3.05-1.45z"/></svg>
+            </span>
+            <span class="store-text">
+              <span class="store-status">Coming soon</span>
+              <span class="store-name">Track2Mix for iPad</span>
+              <span class="store-price">from <span data-tablet-price>$19.99</span>, once</span>
+            </span>
+          </a>
+          <a class="store" id="store-play" href="#tablet">
+            <span class="store-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.3c-.3.3-.5.8-.5 1.4v16.6c0 .6.2 1.1.5 1.4l.1.1 9.3-9.3v-.2L3.7 2.2l-.1.1z"/><path d="M16.1 15.6 13 12.5v-.2l3.1-3.1.1.1 3.7 2.1c1 .6 1 1.6 0 2.2l-3.7 2.1-.1-.1z" opacity=".85"/><path d="M16.2 15.5 13 12.3 3.6 21.7c.3.4.9.4 1.6 0l11-6.2" opacity=".7"/><path d="M16.2 9.1 5.2 2.9c-.7-.4-1.3-.3-1.6 0l9.4 9.4 3.2-3.2z" opacity=".55"/></svg>
+            </span>
+            <span class="store-text">
+              <span class="store-status">Coming soon</span>
+              <span class="store-name">Track2Mix for Android tablets</span>
+              <span class="store-price">from <span data-tablet-price>$19.99</span>, once</span>
+            </span>
+          </a>
+        </div>
+
+        <p id="tablet-notify-intro" style="margin-top:22px;color:var(--fg-muted);font-size:0.9375rem">
+          Not in the store yet? Leave an address and you'll get exactly one email
+          when the listing goes live.
+        </p>
+        <form id="tablet-notify-form" novalidate>
+          <div class="notify-platforms" role="radiogroup" aria-label="Which tablet">
+            <label><input type="radio" name="interest" value="ipad"> iPad</label>
+            <label><input type="radio" name="interest" value="android"> Android tablet</label>
+          </div>
+          <div class="notify-row">
+            <input id="tablet-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required aria-label="Email address">
+            <button class="btn btn-ghost" type="submit" id="tablet-submit">Tell me when it's out</button>
+          </div>
+        </form>
+        <p class="form-msg" id="tablet-msg" role="status" aria-live="polite"></p>
+      </div>
+
+      <div>
+        <div class="tablet-frame" role="img" aria-label="Track2Mix on a tablet in landscape, showing the compatible-tracks table">
+          <div class="tablet-screen">
+            <div class="glass preview">
+              <div class="preview-bar">
+                <span class="preview-title">Track2Mix — library.db · Library</span>
+              </div>
+              <div class="tbl tbl-head">
+                <span>Title</span><span class="cell-sub">Artist</span><span style="text-align:right">BPM</span><span>Key</span><span class="col-energy">Energy</span>
+              </div>
+              <div class="tbl tbl-row anchor">
+                <span class="cell-title">Anchor · selected track</span>
+                <span class="cell-sub">Your library</span>
+                <span class="cell-bpm">128</span>
+                <span><span class="keychip match">11A</span></span>
+                <span class="col-energy"><span class="meter"><span style="width:64%"></span></span></span>
+              </div>
+              <div class="tbl tbl-row">
+                <span class="cell-title">Compatible · same key</span>
+                <span class="cell-sub">—</span>
+                <span class="cell-bpm">127</span>
+                <span><span class="keychip match">11A</span></span>
+                <span class="col-energy"><span class="meter"><span style="width:70%"></span></span></span>
+              </div>
+              <div class="tbl tbl-row">
+                <span class="cell-title">Compatible · relative major</span>
+                <span class="cell-sub">—</span>
+                <span class="cell-bpm">128</span>
+                <span><span class="keychip">11B</span></span>
+                <span class="col-energy"><span class="meter"><span style="width:58%"></span></span></span>
+              </div>
+              <div class="tbl tbl-row">
+                <span class="cell-title">Compatible · +1 on the wheel</span>
+                <span class="cell-sub">—</span>
+                <span class="cell-bpm">130</span>
+                <span><span class="keychip">12A</span></span>
+                <span class="col-energy"><span class="meter"><span style="width:77%"></span></span></span>
+              </div>
+              <div class="preview-foot">
+                <span>4 of 6,210 tracks · ±3 BPM · harmonic</span>
+                <span>Build playlist →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="tablet-scope">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+            <span><b>Works from the database alone.</b> Copy <code>library.db</code> from your computer — Files, Drive, AirDrop, USB — open it, and browse, filter, match and build playlists exactly as on the desktop.</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+            <span><b>Exports M3U8 to the tablet's files</b>, ready to move back to Rekordbox.</span>
+          </li>
+          <li>
+            <svg class="note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 8v5"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
+            <span><b>Previewing and composing need the audio files on the tablet.</b> If a track's file isn't there, the app says so for that track rather than failing quietly.</span>
+          </li>
+          <li>
+            <svg class="note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 8v5"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
+            <span><b>Tablets only.</b> Designed for iPadOS 16+ and Android 8+ tablets in landscape; it is not a phone app.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ================= GET ================= -->
   <section id="get">
     <div class="wrap">
       <div class="section-head" style="text-align:center;margin-inline:auto">
         <p class="eyebrow">Get Track2Mix</p>
-        <h2>Download it free. Pay what it's worth to you — or nothing at all.</h2>
+        <h2>Download the desktop app free. Pay what it's worth to you — or nothing at all.</h2>
         <p style="margin-inline:auto">
-          There is no paywall, no trial timer and no locked features. If Track2Mix
-          earns you a better set, tip what it's worth. If money's tight, take it
-          free and don't think twice — that's not a loophole, it's the deal.
+          On Windows and Linux there is no paywall, no trial timer and no locked
+          features. If Track2Mix earns you a better set, tip what it's worth. If
+          money's tight, take it free and don't think twice — that's not a
+          loophole, it's the deal. (The <a href="#tablet">tablet apps</a> are sold
+          through their stores instead.)
         </p>
       </div>
 
@@ -583,7 +731,7 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
         <div class="glass" style="padding:clamp(24px,3.5vw,36px)">
           <h3 style="font-size:1.25rem;margin-bottom:10px">Get the build</h3>
           <p style="color:var(--fg-muted);font-size:0.9375rem;margin-bottom:20px">
-            Windows 10+, Debian/Ubuntu and Arch Linux (macOS coming soon).
+            Windows 10+, Debian/Ubuntu, Arch and other Linux (macOS coming soon).
             Requires Rekordbox 6 or 7 for the collection export. Tell me who you
             are and the download link appears right here, and lands in your inbox.
           </p>
@@ -626,8 +774,9 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
           <h3 style="font-size:1.25rem;margin-bottom:10px">Tip jar</h3>
           <p style="color:var(--fg-muted);font-size:0.9375rem;margin-bottom:20px">
             Track2Mix has no investors and no ads. Tips are what decide whether
-            Serato support, key detection and set-arc planning get built. Pay by
-            PayPal in two taps — no account needed on my side, none created on yours.
+            Serato support, key detection and key-lock time-stretching get built.
+            Pay by PayPal in two taps — no account needed on my side, none created
+            on yours.
           </p>
 
           <div class="tiers" id="tip-tiers">
@@ -680,11 +829,11 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
       <div class="faq">
         <details>
           <summary>Does this touch my Rekordbox collection?</summary>
-          <p>No. Track2Mix only reads the XML file you export, and it only ever writes M3U8 playlists plus its own SQLite database. Your collection file and your audio files are never modified.</p>
+          <p>No. Track2Mix only reads the XML file you export. It writes the playlists you export (M3U8, M3U or a text tracklist), its own SQLite database, composer project files, and any WAV or MP3 you render. Your collection file and your audio files are never modified.</p>
         </details>
         <details>
           <summary>How long does analysis take?</summary>
-          <p>It depends on your machine and your library, and it's parallelised across all your cores. Because Track2Mix samples representative stretches of each track rather than decoding whole files, it's dramatically cheaper than a full Rekordbox re-analysis. Use <code>--dry-run</code> first to see how many of your tracks actually resolve to files on disk before committing to a long run.</p>
+          <p>It depends on your machine and your library, and it's parallelised across all your cores. Because Track2Mix samples three 30-second stretches of each track rather than decoding whole files, it's dramatically cheaper than a full Rekordbox re-analysis. The import screen reports how many entries resolved to files on disk; the CLI's <code>--dry-run</code> tells you the same before a single file is decoded.</p>
         </details>
         <details>
           <summary>Why does it need keys from Rekordbox instead of detecting its own?</summary>
@@ -695,12 +844,24 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
           <p>Not yet — Track2Mix reads the Rekordbox XML format today. The analysis engine is library-agnostic, so other sources are a matter of adding parsers. If you want one, say so in the signup form and it moves up the list.</p>
         </details>
         <details>
-          <summary>Is it really free? What's the catch?</summary>
+          <summary>Does the composer replace my DJ software?</summary>
+          <p>No, and it isn't trying to. Compose is for hearing whether a sequence works: lay the tracks out, let <em>Auto-arrange</em> beat-match and blend them, tweak the EQ and fades, and render the result. Tempo sync is vinyl-style — pitch follows tempo, there's no key-lock yet — so it's a sketchpad for a set, not a performance tool. The export is a WAV or a 320 kbps MP3 you can listen back to or send to someone.</p>
+        </details>
+        <details>
+          <summary>Why is the desktop app pay-what-you-want but the tablet app has a price?</summary>
+          <p>Because the stores don't do pay-what-you-want. The App Store and Google Play take a fixed price, so the tablet apps have one — a single purchase, no subscription, no in-app upgrades — and it's set so that a desktop user who tipped the typical amount isn't paying more for the tablet version than they chose to pay for the desktop one. The desktop builds stay free to download, with the tip jar, exactly as before.</p>
+        </details>
+        <details>
+          <summary>Can the tablet app analyse my library?</summary>
+          <p>No. Rekordbox runs on your computer, so the export and the analysis happen there. Copy the resulting <code>library.db</code> to the tablet with Files, Google Drive, AirDrop, a USB drive — whatever you already use — and open it. Browsing, filters, the Camelot wheel, compatibility matching, the playlist builder and M3U8 export all work from that one file. Preview and Compose need the audio files on the tablet too.</p>
+        </details>
+        <details>
+          <summary>Is the desktop app really free? What's the catch?</summary>
           <p>No catch on the money. Track2Mix is pay-what-you-want: the full app downloads free with nothing held back, and you tip only if it earns it. If you genuinely can't afford to pay, use it free — that's the intended path, not an exploit. The one thing I do ask for is your name and email before the download, because during beta I need to be able to tell you when something is fixed or broken. That's the whole reason, and the list is used for nothing else.</p>
         </details>
         <details>
-          <summary>Why pay-what-you-want instead of a price?</summary>
-          <p>Because I don't yet know what this is worth to you, and guessing wrong in either direction is expensive. A fixed price on an unproven tool filters out exactly the DJs whose feedback I need most. Tips tell me what people actually value, and they fund what gets built next. If Track2Mix becomes essential to enough people, a paid tier for heavier features makes sense later — what's free today stays free.</p>
+          <summary>Why pay-what-you-want on the desktop instead of a price?</summary>
+          <p>Because I don't yet know what this is worth to you, and guessing wrong in either direction is expensive. A fixed price on an unproven tool filters out exactly the DJs whose feedback I need most. Tips tell me what people actually value, and they fund what gets built next. What's free on the desktop today stays free.</p>
         </details>
         <details>
           <summary>Does my music or data get uploaded anywhere?</summary>
@@ -714,10 +875,11 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
 
 <footer>
   <div class="wrap footer-inner">
-    <span>Track2Mix — DJ library intelligence for Rekordbox. Pay what you want.</span>
+    <span>Track2Mix — DJ library intelligence for Rekordbox. Desktop: pay what you want. Tablets: in the stores.</span>
     <nav class="footer-links">
       <a href="#how">How it works</a>
       <a href="#honest">Scope</a>
+      <a href="#tablet">iPad &amp; Android</a>
       <a href="#faq">FAQ</a>
       <a href="https://downloads.track2mix.com">Downloads</a>
       <a href="https://github.com/astralisone/track2mix">GitHub</a>

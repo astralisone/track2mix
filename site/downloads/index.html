@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Downloads — Track2Mix</title>
-<meta name="description" content="Download Track2Mix 0.1.0 for Windows, Debian/Ubuntu or Arch Linux, with install and first-run instructions.">
+<meta name="description" content="Download Track2Mix for Windows, Debian/Ubuntu, Arch or other Linux, with install and first-run instructions. iPad and Android tablet apps are sold through the App Store and Google Play.">
 <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
 <link rel="apple-touch-icon" href="/assets/app-icon-256.png">
 <meta property="og:title" content="Download Track2Mix">
-<meta property="og:description" content="Free desktop app for Windows and Linux. Runs entirely on your machine.">
+<meta property="og:description" content="Pay-what-you-want desktop app for Windows and Linux, and a tablet app for iPad and Android. Runs entirely on your machine.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <style>
@@ -53,13 +53,14 @@ a{color:#bec0ef}a:hover{color:#dedff7}
 
   <section style="padding: 88px 0 56px; background: radial-gradient(ellipse 70% 60% at 50% 0%, #0d0f28 0%, #01020f 70%)">
     <div class="wrap" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px">
-      <p class="eyebrow">Version 0.1.0 · released 14 Oct 2026</p>
+      <p class="eyebrow" id="release-eyebrow">Version 0.1.0 · released 14 Oct 2026</p>
       <h1 style="margin: 0; font-size: clamp(40px, 6vw, 68px); line-height: 1.04; font-weight: 700; letter-spacing: -0.02em; max-width: 820px">Download Track2Mix</h1>
-      <p style="margin: 0; max-width: 640px; font-size: 19px; line-height: 30px; color: #9ea4b2">Pick your system below. Every build is free, runs entirely on your machine, and needs nothing but a Rekordbox 6 or 7 collection export.</p>
+      <p style="margin: 0; max-width: 640px; font-size: 19px; line-height: 30px; color: #9ea4b2">Pick your system below. Every desktop build is free to download, runs entirely on your machine, and needs nothing but a Rekordbox 6 or 7 collection export. The iPad and Android tablet apps are sold through their stores.</p>
       <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 8px">
         <a href="#windows" class="dl dl-secondary" style="min-height: 44px; padding: 8px 18px; font-weight: 600">Windows</a>
         <a href="#debian" class="dl dl-secondary" style="min-height: 44px; padding: 8px 18px; font-weight: 600">Debian / Ubuntu</a>
         <a href="#arch" class="dl dl-secondary" style="min-height: 44px; padding: 8px 18px; font-weight: 600">Arch Linux</a>
+        <a href="#tablets" class="dl dl-secondary" style="min-height: 44px; padding: 8px 18px; font-weight: 600">iPad &amp; Android</a>
       </div>
       <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; margin-top: 8px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea4b2">
         <span>No account</span><span>No upload</span><span>Works offline</span><span>Never edits your Rekordbox collection</span>
@@ -77,11 +78,11 @@ a{color:#bec0ef}a:hover{color:#dedff7}
             <h2 style="margin: 0; font-size: 28px; font-weight: 700">Windows</h2>
           </div>
           <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Windows 10 or later, 64-bit. Two installers, same app: the .msi is the standard choice; the setup .exe is a smaller wizard-style installer.</p>
-          <a class="dl dl-primary" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64_en-US.msi">
+          <a class="dl dl-primary" data-asset="msi" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64_en-US.msi">
             <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download .msi</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #dedff7">Track2Mix_0.1.0_x64_en-US.msi</span></span>
             <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap">4.8 MB</span>
           </a>
-          <a class="dl dl-secondary" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64-setup.exe">
+          <a class="dl dl-secondary" data-asset="exe" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64-setup.exe">
             <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download setup .exe</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #9ea4b2">Track2Mix_0.1.0_x64-setup.exe</span></span>
             <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea4b2; white-space: nowrap">3.4 MB</span>
           </a>
@@ -106,10 +107,18 @@ a{color:#bec0ef}a:hover{color:#dedff7}
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ea0e7" stroke-width="1.6" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"></path><path d="M4 7.5 12 12l8-4.5"></path><path d="M12 12v9"></path></svg>
             <h2 style="margin: 0; font-size: 28px; font-weight: 700">Debian / Ubuntu</h2>
           </div>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">64-bit (amd64). Needs WebKitGTK 4.1, which ships with Ubuntu 22.04 and Debian 12 or newer, plus Mint, Pop!_OS and other derivatives.</p>
-          <a class="dl dl-primary" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_amd64.deb">
+          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">64-bit (amd64). Needs WebKitGTK 4.1, which ships with Ubuntu 22.04 and Debian 12 or newer, plus Mint, Pop!_OS and other derivatives. Other distributions: the AppImage runs anywhere and bundles GStreamer for the composer; Fedora and friends take the .rpm.</p>
+          <a class="dl dl-primary" data-asset="deb" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_amd64.deb">
             <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download .deb</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #dedff7">Track2Mix_0.1.0_amd64.deb</span></span>
             <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap">5.0 MB</span>
+          </a>
+          <a class="dl dl-secondary" data-asset="appimage" data-optional hidden href="https://github.com/astralisone/track2mix/releases/latest">
+            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download AppImage</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #9ea4b2">Any 64-bit Linux · bundles GStreamer for the composer</span></span>
+            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea4b2; white-space: nowrap"></span>
+          </a>
+          <a class="dl dl-secondary" data-asset="rpm" data-optional hidden href="https://github.com/astralisone/track2mix/releases/latest">
+            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download .rpm</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #9ea4b2">Fedora and other RPM distributions</span></span>
+            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea4b2; white-space: nowrap"></span>
           </a>
         </div>
         <div style="flex: 1 1 380px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
@@ -130,11 +139,11 @@ a{color:#bec0ef}a:hover{color:#dedff7}
             <h2 style="margin: 0; font-size: 28px; font-weight: 700">Arch Linux</h2>
           </div>
           <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">x86_64 pacman package. Installs the desktop app and the <span class="ic">track2mix</span> command-line tool. Works on Arch and its derivatives (EndeavourOS, Manjaro, Omarchy).</p>
-          <a class="dl dl-primary" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/track2mix-0.1.0-1-x86_64.pkg.tar.zst">
+          <a class="dl dl-primary" data-asset="arch" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/track2mix-0.1.0-1-x86_64.pkg.tar.zst">
             <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download .pkg.tar.zst</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #dedff7">track2mix-0.1.0-1-x86_64.pkg.tar.zst</span></span>
             <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap">6.4 MB</span>
           </a>
-          <a class="dl dl-secondary" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/PKGBUILD">
+          <a class="dl dl-secondary" data-asset="pkgbuild" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/PKGBUILD">
             <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">PKGBUILD</b><span style="font-size: 13px; color: #9ea4b2">Build it yourself with makepkg</span></span>
           </a>
         </div>
@@ -152,11 +161,35 @@ a{color:#bec0ef}a:hover{color:#dedff7}
         </div>
       </article>
 
-      <div class="card" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 20px 32px; background: transparent; border-style: dashed">
+      <div class="card" id="macos-card" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 20px 32px; background: transparent; border-style: dashed">
         <b style="font-size: 16px">macOS</b>
-        <span style="color: #9ea4b2; font-size: 15px; flex: 1 1 300px">A universal build for Apple Silicon and Intel is coming in a later release.</span>
-        <a href="https://github.com/astralisone/track2mix/releases" style="font-size: 15px; min-height: 44px; display: flex; align-items: center">Watch releases on GitHub</a>
+        <span id="macos-note" style="color: #9ea4b2; font-size: 15px; flex: 1 1 300px">A universal build for Apple Silicon and Intel is coming in a later release.</span>
+        <a id="macos-link" data-asset="dmg" href="https://github.com/astralisone/track2mix/releases" style="font-size: 15px; min-height: 44px; display: flex; align-items: center">Watch releases on GitHub</a>
       </div>
+
+      <article id="tablets" class="card plat" style="display: flex; flex-wrap: wrap; gap: 32px; padding: 32px">
+        <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+          <div style="display: flex; align-items: center; gap: 14px">
+            <h2 style="margin: 0; font-size: 28px; font-weight: 700">iPad &amp; Android tablets</h2>
+          </div>
+          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">The digging half of Track2Mix for a tablet in landscape: track table, filters, Camelot wheel, compatibility matching, playlist builder and M3U8 export, reading the library you analysed on your computer. A one-time purchase through the store — no subscription. iPadOS 16+ and Android 8+ tablets; not a phone app.</p>
+          <a class="dl dl-primary" href="https://track2mix.com/#tablet">
+            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">App Store &amp; Google Play</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #dedff7">Store links and current availability</span></span>
+            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap">from $19.99</span>
+          </a>
+        </div>
+        <div style="flex: 1 1 380px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+          <p class="eyebrow">Set up</p>
+          <ol class="steps">
+            <li>Analyse your collection with the desktop app or the CLI (above). The result is one file, <span class="ic">library.db</span>.</li>
+            <li>Copy it to the tablet — Files / iCloud Drive, Google Drive, AirDrop, a USB drive.</li>
+            <li>Open the app, tap <b style="color: #e1e1e3">Open library.db</b> and pick the file. It is copied into the app's own storage and opened.</li>
+          </ol>
+          <div style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: rgba(245,183,28,0.08); border: 1px solid rgba(245,183,28,0.25); font-size: 14px; line-height: 21px; color: #e9dcb8">
+            <span>Previewing audio and the composer need the audio files on the tablet; the database points at the paths they had on your computer, so tracks whose files aren't present say so individually.</span>
+          </div>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -164,7 +197,7 @@ a{color:#bec0ef}a:hover{color:#dedff7}
     <div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
       <div style="display: flex; flex-direction: column; gap: 12px; max-width: 680px">
         <p class="eyebrow">First run</p>
-        <h2 style="margin: 0; font-size: clamp(32px, 4vw, 44px); line-height: 1.1; font-weight: 700; letter-spacing: -0.01em">From Rekordbox to a ranked shortlist in five steps</h2>
+        <h2 style="margin: 0; font-size: clamp(32px, 4vw, 44px); line-height: 1.1; font-weight: 700; letter-spacing: -0.01em">From Rekordbox to a ranked shortlist — and a rendered mix — in five steps</h2>
         <p style="margin: 0; color: #9ea4b2; font-size: 17px; line-height: 27px">The same on every system. Track2Mix only reads the XML you export; your collection file and audio are never modified.</p>
       </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
@@ -175,24 +208,24 @@ a{color:#bec0ef}a:hover{color:#dedff7}
         </div>
         <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
           <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">02</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Point Track2Mix at it</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Open the app and choose that XML file.</p>
+          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Import it</h3>
+          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Open the app, click <b style="color: #e1e1e3">Import Rekordbox XML</b> and choose the file. The database is written next to it.</p>
         </div>
         <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
           <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">03</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Check coverage first</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">A dry run reports how many tracks resolve to real files (moved drives and streaming stubs don't) before a long analysis.</p>
+          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Watch the coverage</h3>
+          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">The import screen reports how many entries resolved to real files (moved drives and streaming stubs don't) and lists failures. For a check before decoding anything, the CLI has a dry run:</p>
           <code class="code">track2mix analyze --xml ~/rekordbox.xml --dry-run</code>
         </div>
         <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
           <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">04</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Run the analysis</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">It uses every CPU core. Results land in <span class="ic">library.db</span>, a single SQLite file you own and can delete.</p>
+          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Let it finish</h3>
+          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">It uses every CPU core. Results land in a single SQLite file you own and can delete; leave <b style="color: #e1e1e3">skip analyzed</b> ticked so a re-import only decodes new tracks.</p>
         </div>
         <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
           <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">05</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Pick and export</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Click any track to see its compatible neighbours, ranked. Tick the ones you want and export an M3U8; Rekordbox imports it directly.</p>
+          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Dig, arrange, export</h3>
+          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Click any track to see its compatible neighbours, ranked; press play to audition. Tick the ones you want, open <b style="color: #e1e1e3">Playlist</b> to order them harmonically and export an M3U8 — Rekordbox imports it directly — or open <b style="color: #e1e1e3">Compose</b>, hit Auto-arrange, and export the blend as MP3.</p>
         </div>
         <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px; background: #0d0f28">
           <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea0e7">TIP</span>
@@ -211,11 +244,11 @@ a{color:#bec0ef}a:hover{color:#dedff7}
       <div style="flex: 1 1 400px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
         <p class="eyebrow">Verify your download</p>
         <h2 style="margin: 0; font-size: 32px; line-height: 1.15; font-weight: 700">Check it's the file we built</h2>
-        <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Every release publishes a <a href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/SHA256SUMS">SHA256SUMS</a> file. Put it next to your download and run:</p>
+        <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Every release publishes a<a data-asset="sha256sums" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/SHA256SUMS">SHA256SUMS</a> file. Put it next to your download and run:</p>
         <p style="margin: 0; font-size: 14px; color: #9ea4b2">Linux</p>
         <code class="code">sha256sum -c SHA256SUMS --ignore-missing</code>
         <p style="margin: 0; font-size: 14px; color: #9ea4b2">Windows (PowerShell): compare the hash to the matching line</p>
-        <code class="code">Get-FileHash .\Track2Mix_0.1.0_x64_en-US.msi</code>
+        <code class="code" id="verify-example">Get-FileHash .\Track2Mix_0.1.0_x64_en-US.msi</code>
       </div>
       <div style="flex: 1 1 400px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
         <p class="eyebrow">Common questions</p>
@@ -229,7 +262,7 @@ a{color:#bec0ef}a:hover{color:#dedff7}
         </div>
         <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 6px">
           <h3 style="margin: 0; font-size: 16px; font-weight: 600">Does it change my Rekordbox library?</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">No. It reads the exported XML and writes only M3U8 playlists and its own database.</p>
+          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">No. It reads the exported XML and writes only the playlists, project files and renders you export, plus its own database.</p>
         </div>
       </div>
     </div>
@@ -239,7 +272,7 @@ a{color:#bec0ef}a:hover{color:#dedff7}
     <div class="wrap" style="display: flex; flex-direction: column; gap: 20px">
       <p class="eyebrow">Resources</p>
       <div style="display: flex; flex-wrap: wrap; gap: 16px">
-        <a class="card res" href="https://github.com/astralisone/track2mix/releases/tag/v0.1.0"><b style="font-size: 16px">Release notes</b><span style="color: #9ea4b2; font-size: 14px; line-height: 21px">What's in 0.1.0.</span></a>
+        <a class="card res" id="release-notes-link" href="https://github.com/astralisone/track2mix/releases/tag/v0.1.0"><b style="font-size: 16px">Release notes</b><span id="release-notes-note" style="color: #9ea4b2; font-size: 14px; line-height: 21px">What's in 0.1.0.</span></a>
         <a class="card res" href="https://github.com/astralisone/track2mix/blob/main/docs/INSTALL.md"><b style="font-size: 16px">Full install guide</b><span style="color: #9ea4b2; font-size: 14px; line-height: 21px">Every step and troubleshooting tip.</span></a>
         <a class="card res" href="https://github.com/astralisone/track2mix"><b style="font-size: 16px">Source code</b><span style="color: #9ea4b2; font-size: 14px; line-height: 21px">The analysis engine and desktop app.</span></a>
         <a class="card res" href="https://github.com/astralisone/track2mix/issues/new"><b style="font-size: 16px">Report a problem</b><span style="color: #9ea4b2; font-size: 14px; line-height: 21px">Install trouble or a wrong score.</span></a>
@@ -249,10 +282,92 @@ a{color:#bec0ef}a:hover{color:#dedff7}
 
   <footer style="border-top: 1px solid rgba(255,255,255,0.08)">
     <div class="wrap" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-top: 28px; padding-bottom: 28px; font-size: 14px; color: #9ea4b2">
-      <span>Track2Mix 0.1.0</span>
+      <span id="footer-version">Track2Mix 0.1.0</span>
       <a href="https://track2mix.com">Back to track2mix.com</a>
     </div>
   </footer>
 </div>
+
+<script>
+/* The cards above are a snapshot of one release. This fills them from the
+   latest GitHub release instead, so a new tag shows up here without a site
+   edit: version, date, every asset's real file name and size, and the macOS
+   card once a .dmg exists. If the API is unreachable (rate limit, offline)
+   the static markup stands, and the console says why. */
+(async () => {
+  const API = "https://api.github.com/repos/astralisone/track2mix/releases/latest";
+  const MATCH = {
+    msi: (n) => /\.msi$/i.test(n),
+    exe: (n) => /-setup\.exe$/i.test(n),
+    deb: (n) => /\.deb$/i.test(n),
+    rpm: (n) => /\.rpm$/i.test(n),
+    appimage: (n) => /\.AppImage$/i.test(n),
+    arch: (n) => /\.pkg\.tar\.zst$/i.test(n) && !/-debug-/.test(n),
+    pkgbuild: (n) => n === "PKGBUILD",
+    dmg: (n) => /\.dmg$/i.test(n),
+    sha256sums: (n) => /^SHA256SUMS/i.test(n),
+  };
+  const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
+
+  let rel;
+  try {
+    const res = await fetch(API, { headers: { Accept: "application/vnd.github+json" } });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    rel = await res.json();
+  } catch (err) {
+    console.warn("downloads: could not fetch the latest release; showing the static snapshot.", err);
+    return;
+  }
+  if (!rel || !Array.isArray(rel.assets) || !rel.tag_name) return;
+
+  const version = rel.tag_name.replace(/^v/, "");
+  const published = rel.published_at
+    ? new Date(rel.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    : null;
+
+  const eyebrow = document.getElementById("release-eyebrow");
+  if (eyebrow) eyebrow.textContent = `Version ${version}${published ? ` · released ${published}` : ""}${rel.prerelease ? " · pre-release" : ""}`;
+  const footer = document.getElementById("footer-version");
+  if (footer) footer.textContent = `Track2Mix ${version}`;
+  const notes = document.getElementById("release-notes-link");
+  if (notes) notes.href = rel.html_url;
+  const notesNote = document.getElementById("release-notes-note");
+  if (notesNote) notesNote.textContent = `What's in ${version}.`;
+
+  const missing = [];
+  for (const el of document.querySelectorAll("[data-asset]")) {
+    const kind = el.dataset.asset;
+    const asset = rel.assets.find((a) => MATCH[kind] && MATCH[kind](a.name));
+    if (!asset) {
+      // An optional slot (rpm, AppImage) just stays hidden; a slot the static
+      // page shows (msi, deb…) keeps its snapshot link, and the gap is logged
+      // so a release missing an installer gets noticed.
+      if (!el.hasAttribute("data-optional") && kind !== "dmg") missing.push(kind);
+      continue;
+    }
+    el.href = asset.browser_download_url;
+    el.hidden = false;
+    // File name is the small mono line; size is the trailing mono span.
+    const nameEl = el.querySelector("span > span:last-child");
+    if (nameEl && kind !== "pkgbuild") nameEl.textContent = asset.name;
+    const sizeEl = el.querySelector(":scope > span:last-child");
+    if (sizeEl && kind !== "pkgbuild") sizeEl.textContent = mb(asset.size);
+    if (kind === "msi") {
+      const ex = document.getElementById("verify-example");
+      if (ex) ex.textContent = `Get-FileHash .\\${asset.name}`;
+    }
+    if (kind === "dmg") {
+      const note = document.getElementById("macos-note");
+      const card = document.getElementById("macos-card");
+      if (note) note.textContent = `Universal build for Apple Silicon and Intel (${asset.name}, ${mb(asset.size)}). Open the .dmg and drag Track2Mix to Applications; right-click → Open the first time if Gatekeeper objects.`;
+      if (card) card.style.borderStyle = "solid";
+      el.textContent = "Download .dmg";
+    }
+  }
+  if (missing.length) {
+    console.warn(`downloads: release ${rel.tag_name} has no asset for: ${missing.join(", ")} — those cards still link to the previous snapshot.`);
+  }
+})();
+</script>
 </body>
 </html>

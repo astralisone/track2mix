@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — Track2Mix</title>
+<meta name="description" content="What Track2Mix collects (nothing, in the app) and what the website collects (a name and email if you give them).">
+<link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/app-icon-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .prose { max-width: 720px; margin: 0 auto; padding: 72px var(--gutter) 96px; }
+  .prose h1 { font-size: clamp(2rem, 4vw, 2.75rem); letter-spacing: -0.02em; margin: 0 0 8px; }
+  .prose h2 { font-size: 1.25rem; margin: 40px 0 10px; }
+  .prose p, .prose li { color: var(--fg-muted); line-height: 1.65; }
+  .prose li b, .prose p b { color: var(--fg); }
+  .prose ul { padding-left: 20px; }
+  .prose .updated { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-faint); }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="/">
+      <img src="/assets/logo.svg" alt="" width="28" height="28" aria-hidden="true">
+      <span>Track2Mix</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/#how">How it works</a>
+      <a href="/#tablet">iPad &amp; Android</a>
+      <a href="/#faq">FAQ</a>
+      <a href="https://downloads.track2mix.com">Downloads</a>
+    </nav>
+  </div>
+</header>
+
+<main class="prose">
+  <p class="updated">Privacy policy · updated 19 October 2026</p>
+  <h1>Track2Mix doesn't collect your data. Here is exactly what that means.</h1>
+  <p>
+    This policy covers the Track2Mix desktop app (Windows, Linux, macOS), the
+    Track2Mix apps for iPad and Android tablets, the command-line tool, and the
+    website at track2mix.com. It is written to be read, not to cover anyone.
+  </p>
+
+  <h2>The apps</h2>
+  <ul>
+    <li><b>No account.</b> There is nothing to sign in to.</li>
+    <li><b>No network requests.</b> The apps do not contact any server, including ours. Analysis, playback, playlist building and composing all happen on your device. There is no telemetry, crash reporting or analytics in the apps.</li>
+    <li><b>What they read:</b> the Rekordbox collection export you choose, the audio files it points to, and library databases you open.</li>
+    <li><b>What they write:</b> their own SQLite database, the playlists, project files and renders you export, all to locations you choose. Your Rekordbox collection and your audio files are never modified.</li>
+    <li><b>On a tablet,</b> the library you open through the system file picker is copied into the app's private storage so it can be read; deleting the app deletes that copy.</li>
+    <li><b>Purchases</b> of the tablet apps are handled entirely by Apple or Google. We receive sales figures from them, never your name, address or payment details.</li>
+  </ul>
+
+  <h2>The website</h2>
+  <ul>
+    <li><b>Download form.</b> If you ask for the desktop download link, the name and email you enter are stored in our contacts database (Cloudflare D1) and subscribed to our mailing list so we can send the link and release notes. Every email has a one-click unsubscribe; unsubscribing also stops any further mail. We never sell, rent or pass the list on.</li>
+    <li><b>"Tell me when it's out" form.</b> If you ask to be told when a tablet app reaches a store, the email you enter is stored the same way, with which platform you asked about, and used for exactly that one email.</li>
+    <li><b>What's recorded with a form submission:</b> the time, the page you came from, your country as reported by Cloudflare, and whether the mailing-list subscription succeeded. Not your IP address.</li>
+    <li><b>Analytics.</b> If enabled, the site uses Cloudflare Web Analytics, which is cookie-free and does not track individuals across sites.</li>
+    <li><b>Cookies.</b> The site sets none.</li>
+    <li><b>Hosting.</b> The site and the form endpoint run on Cloudflare; GitHub hosts the downloadable builds and the source code. Those providers see the usual server logs for requests you make to them.</li>
+  </ul>
+
+  <h2>Your rights</h2>
+  <p>
+    To see what we hold about you, correct it or delete it, email the address
+    on the <a href="https://github.com/astralisone/track2mix">project's GitHub
+    page</a>, or unsubscribe from any email we send. Deletion removes your
+    contact row and its events.
+  </p>
+
+  <h2>Changes</h2>
+  <p>
+    If any of the above changes — in particular if an app ever makes a network
+    request — this page will say so, with the date, and the release notes will
+    call it out. Quietly adding tracking to a tool marketed on "nothing leaves
+    your machine" is the one thing we promise not to do.
+  </p>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <span>Track2Mix — DJ library intelligence for Rekordbox.</span>
+    <nav class="footer-links">
+      <a href="/">Home</a>
+      <a href="https://downloads.track2mix.com">Downloads</a>
+      <a href="https://github.com/astralisone/track2mix">GitHub</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

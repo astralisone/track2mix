@@ -1,9 +1,9 @@
-/* Track2Mix site — email capture and tip-jar wiring.
+/* Track2Mix site — email capture, tip-jar and store-link wiring.
  *
- * Two constants need filling in before launch. Both are documented in
- * site/README.md. Neither fails silently: if a constant is empty, the affected
- * control tells the visitor it isn't wired up and logs the reason, rather than
- * pretending to work.
+ * Three constants need filling in before launch: PAYMENTS, STORES and
+ * TABLET_PRICE. All are documented in site/README.md. None fails silently: if
+ * a constant is empty, the affected control tells the visitor it isn't wired
+ * up and logs the reason, rather than pretending to work.
  */
 
 /* ------------------------------------------------------------------ config */
@@ -41,6 +41,29 @@ const PAYMENTS = {
 
 /** Currency the suggested tier amounts are denominated in. */
 const TIP_CURRENCY = "USD";
+
+/**
+ * Store listings for the tablet apps. The desktop builds are pay-what-you-want
+ * and are downloaded from this site; the iPad and Android tablet apps are sold
+ * through the stores, so the tablet section links there and nowhere else.
+ *
+ *   appStore   the App Store listing, e.g. "https://apps.apple.com/app/id1234567890"
+ *   googlePlay the Play listing, e.g. "https://play.google.com/store/apps/details?id=com.track2mix.app"
+ *
+ * An empty value renders that badge as "coming soon" and shows the notify form
+ * for that platform instead of a dead link.
+ */
+const STORES = {
+  appStore: "",
+  googlePlay: "",
+};
+
+/**
+ * The tablet app's list price. Stores localise the actual charge per country
+ * (Apple's price tiers, Play's per-country pricing), so the site shows it as
+ * "from" and the store shows the exact figure at checkout.
+ */
+const TABLET_PRICE = { amount: "19.99", currency: "USD", display: "$19.99" };
 
 /**
  * PayPal.me carries the amount as a PATH segment, not a query parameter:
@@ -264,5 +287,118 @@ if (replayButton) {
     replayButton.remove();
   } else {
     replayButton.addEventListener("click", playRanking);
+  }
+}
+
+/* -------------------------------------------------- tablet apps: stores */
+
+/**
+ * Each store badge links to its listing when configured. When it isn't, the
+ * badge is marked "coming soon", stays unlinked, and the notify form below it
+ * takes over — the contact endpoint records the platform so the person can be
+ * told when the listing goes live.
+ */
+function wireStore(id, url, label) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  const status = el.querySelector(".store-status");
+  if (url) {
+    el.href = url;
+    el.target = "_blank";
+    el.rel = "noopener noreferrer";
+    el.removeAttribute("aria-disabled");
+    if (status) status.textContent = `Buy on ${label}`;
+    return true;
+  }
+  el.removeAttribute("href");
+  el.setAttribute("aria-disabled", "true");
+  if (status) status.textContent = "Coming soon";
+  console.warn(`Track2Mix site: STORES.${id === "store-appstore" ? "appStore" : "googlePlay"} is not set in main.js — ${label} badge renders as coming soon.`);
+  return false;
+}
+
+for (const el of document.querySelectorAll("[data-tablet-price]")) {
+  el.textContent = TABLET_PRICE.display;
+}
+
+const haveAppStore = wireStore("store-appstore", STORES.appStore, "the App Store");
+const havePlay = wireStore("store-play", STORES.googlePlay, "Google Play");
+
+/* ------------------------------------------- tablet apps: notify form */
+
+const tabletForm = document.getElementById("tablet-notify-form");
+const tabletEmail = document.getElementById("tablet-email");
+const tabletSubmit = document.getElementById("tablet-submit");
+const tabletMsg = document.getElementById("tablet-msg");
+
+if (tabletForm) {
+  // Only offer "tell me when it's out" for platforms that aren't out yet.
+  const platformInputs = Array.from(tabletForm.querySelectorAll('input[name="interest"]'));
+  const live = { ipad: haveAppStore, android: havePlay };
+  let offered = 0;
+  for (const inp of platformInputs) {
+    const wrapper = inp.closest("label") || inp;
+    if (live[inp.value]) {
+      wrapper.remove();
+    } else {
+      offered++;
+    }
+  }
+  if (offered === 0) {
+    // Both listings are live, so there's nothing to be notified about.
+    tabletForm.remove();
+    const intro = document.getElementById("tablet-notify-intro");
+    if (intro) intro.remove();
+  } else {
+    const first = tabletForm.querySelector('input[name="interest"]');
+    if (first && !tabletForm.querySelector('input[name="interest"]:checked')) first.checked = true;
+
+    tabletForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const email = tabletEmail.value.trim();
+      const chosen = tabletForm.querySelector('input[name="interest"]:checked');
+      if (!looksLikeEmail(email)) {
+        setMsg(tabletMsg, "error", "That doesn't look like an email address — check it and try again.");
+        tabletEmail.focus();
+        return;
+      }
+      if (!chosen) {
+        setMsg(tabletMsg, "error", "Pick iPad or Android so I know which listing to tell you about.");
+        return;
+      }
+      tabletSubmit.disabled = true;
+      const originalLabel = tabletSubmit.textContent;
+      tabletSubmit.textContent = "Sending…";
+      setMsg(tabletMsg, "", "");
+      try {
+        const response = await fetch(CONTACT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ email, interest: chosen.value }),
+        });
+        let payload = null;
+        try {
+          payload = await response.json();
+        } catch {
+          // Non-JSON means the endpoint didn't run; the status message below covers it.
+        }
+        if (!response.ok) {
+          throw new Error(payload?.error || `${response.status} ${response.statusText}`);
+        }
+        const which = chosen.value === "ipad" ? "the App Store" : "Google Play";
+        setMsg(tabletMsg, "ok", `Done — you'll get one email when Track2Mix is live on ${which}.`);
+        tabletForm.reset();
+        if (first) first.checked = true;
+        if (Array.isArray(payload?.warnings) && payload.warnings.length) {
+          console.warn("Track2Mix site: store interest saved with warnings:", payload.warnings);
+        }
+      } catch (error) {
+        setMsg(tabletMsg, "error", `Couldn't save that: ${error.message}. Please try again.`);
+        console.error("Track2Mix site: store-interest POST failed.", error);
+      } finally {
+        tabletSubmit.disabled = false;
+        tabletSubmit.textContent = originalLabel;
+      }
+    });
   }
 }

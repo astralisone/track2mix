@@ -5,13 +5,19 @@ Static HTML/CSS/JS. No build step, no dependencies, no framework. Deploy the
 
 ```
 site/
-  index.html     landing page
-  styles.css     tokens mirrored from ../tailwind.config.ts
-  main.js        email capture (needs one line of config, below)
-  _headers       security + cache headers (Cloudflare Pages / Netlify)
+  index.html           landing page
+  downloads/index.html downloads page, served at downloads.track2mix.com
+                       (shows the latest GitHub release; static markup is the fallback)
+  privacy/index.html   privacy policy — required by both app stores
+  styles.css           tokens mirrored from ../tailwind.config.ts
+  main.js              email capture, tip jar and store links (three constants, below)
   robots.txt
-  assets/logo.svg
+  assets/              logo, favicons, app icon
 ```
+
+Response headers are set by `../worker/index.js`, which also routes
+`/api/contact` and rewrites `/` on the downloads host; see
+[docs/DEPLOY.md](../docs/DEPLOY.md).
 
 ## Local preview
 
@@ -56,7 +62,18 @@ majority who arrive via the site, not as access control. Hardening it properly
 would mean serving the binary from R2 behind a signed, expiring URL that
 `/api/contact` issues — worth doing only if the leakage turns out to matter.
 
-## Wire up payments
+## Wire up the store links (tablet apps)
+
+The iPad and Android tablet apps are sold through the App Store and Google
+Play. Set the listing URLs in `STORES` at the top of `main.js` once each is
+live, and the price shown in `TABLET_PRICE`. An unset URL renders that badge as
+"Coming soon" and offers the notify form for that platform (it posts to
+`/api/contact` with `interest: "ipad" | "android"`). The tablet section
+deliberately says nothing about the tip jar or pay-what-you-want: those are
+the desktop deal, and the stores don't allow steering to outside payment.
+Build and submission steps are in [docs/MOBILE.md](../docs/MOBILE.md).
+
+## Wire up payments (desktop tip jar)
 
 Set at least one handle in `PAYMENTS` at the top of `main.js`:
 `paypalMe`, `koFi`, `githubSponsors`. Each link renders only when configured,
@@ -74,8 +91,10 @@ in [docs/CONTACTS.md](../docs/CONTACTS.md#payments).
       your mailing list. See [docs/CONTACTS.md](../docs/CONTACTS.md).
 - [ ] Set at least one handle in `PAYMENTS` and click a tier to confirm it opens
       prefilled at the right amount.
-- [ ] Replace the hero preview with **real screenshots** of the app running on
-      your own library. The markup in `index.html` under
+- [ ] Set `STORES.appStore` and `STORES.googlePlay` once the listings are
+      live, and check `TABLET_PRICE` matches the store price.
+- [ ] Replace the hero preview and the tablet mock with **real screenshots**
+      of the app running on your own library. The markup in `index.html` under
       `<!-- Accurate rendering of the Track2Mix track view -->` is an honest
       rendering of the real columns with anonymised rows, but a genuine
       screenshot converts better and removes any doubt. A side-by-side of
