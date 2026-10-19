@@ -1,5 +1,6 @@
+use crate::mp3::{encode_mp3, parse_wav, Mp3Tags};
 use crate::AppState;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tauri::ipc::{InvokeBody, Request, Response};
 
 /// Raw file bytes for a library track. The webview decodes them with
@@ -48,45 +49,77 @@ pub(crate) fn encode_pcm(sample_rate: u32, samples: &[f32]) -> Vec<u8> {
     out
 }
 
-/// Write a recording the webview produced (already WAV-encoded) to the path
-/// the user picked in the save dialog. The body is the raw bytes; the
-/// destination path travels percent-encoded in the `x-path` header because
-/// HTTP headers can't carry arbitrary unicode.
+/// Write a render the webview produced (always WAV-encoded) to the path
+/// the user picked in the save dialog. A `.wav` destination gets the bytes
+/// as they are; a `.mp3` destination is transcoded with LAME first, at the
+/// `x-bitrate` kbps (default 320) and tagged from `x-title` / `x-artist`.
+/// The body is the raw bytes; everything else travels percent-encoded in
+/// headers because HTTP headers can't carry arbitrary unicode.
 #[tauri::command]
-pub fn write_recording(request: Request<'_>) -> Result<usize, String> {
-    let raw = request
-        .headers()
-        .get("x-path")
-        .and_then(|v| v.to_str().ok())
-        .ok_or_else(|| "missing x-path header".to_string())?;
-    let path_str = urlencoding::decode(raw)
-        .map_err(|e| format!("bad x-path header: {}", e))?
-        .into_owned();
-    let path = Path::new(&path_str);
-    validate_recording_path(path)?;
-    let bytes: &[u8] = match request.body() {
-        InvokeBody::Raw(b) => b,
+pub async fn write_recording(request: Request<'_>) -> Result<usize, String> {
+    let path_str =
+        header(&request, "x-path")?.ok_or_else(|| "missing x-path header".to_string())?;
+    let path = PathBuf::from(&path_str);
+    let format = validate_recording_path(&path)?;
+    let bytes: Vec<u8> = match request.body() {
+        InvokeBody::Raw(b) => b.clone(),
         InvokeBody::Json(_) => return Err("expected a binary body".to_string()),
     };
-    std::fs::write(path, bytes).map_err(|e| format!("write {}: {}", path.display(), e))?;
-    Ok(bytes.len())
+    let kbps = header(&request, "x-bitrate")?
+        .and_then(|v| v.parse::<u32>().ok())
+        .unwrap_or(320);
+    let tags = Mp3Tags {
+        title: header(&request, "x-title")?.unwrap_or_default(),
+        artist: header(&request, "x-artist")?.unwrap_or_default(),
+        comment: "Rendered with Track2Mix".to_string(),
+    };
+    // Encoding a long mix takes seconds; keep it off the main thread.
+    tauri::async_runtime::spawn_blocking(move || {
+        let out: Vec<u8> = match format {
+            RecordingFormat::Wav => bytes,
+            RecordingFormat::Mp3 => {
+                let wav = parse_wav(&bytes)?;
+                encode_mp3(&wav, kbps, &tags)?
+            }
+        };
+        std::fs::write(&path, &out).map_err(|e| format!("write {}: {}", path.display(), e))?;
+        Ok(out.len())
+    })
+    .await
+    .map_err(|e| format!("write task join failed: {}", e))?
 }
 
-/// Recordings may only land in `.wav` files at an absolute path: the path
-/// comes from a save dialog, but the header is still untrusted input.
-pub(crate) fn validate_recording_path(path: &Path) -> Result<(), String> {
+fn header(request: &Request<'_>, name: &str) -> Result<Option<String>, String> {
+    let Some(raw) = request.headers().get(name).and_then(|v| v.to_str().ok()) else {
+        return Ok(None);
+    };
+    urlencoding::decode(raw)
+        .map(|s| Some(s.into_owned()))
+        .map_err(|e| format!("bad {} header: {}", name, e))
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RecordingFormat {
+    Wav,
+    Mp3,
+}
+
+/// Renders may only land in `.wav` or `.mp3` files at an absolute path: the
+/// path comes from a save dialog, but the header is still untrusted input.
+pub(crate) fn validate_recording_path(path: &Path) -> Result<RecordingFormat, String> {
     if !path.is_absolute() {
         return Err("recording path must be absolute".to_string());
     }
-    let ok_ext = path
+    match path
         .extension()
         .and_then(|e| e.to_str())
-        .map(|e| e.eq_ignore_ascii_case("wav"))
-        .unwrap_or(false);
-    if !ok_ext {
-        return Err("recording path must end in .wav".to_string());
+        .map(|e| e.to_ascii_lowercase())
+        .as_deref()
+    {
+        Some("wav") => Ok(RecordingFormat::Wav),
+        Some("mp3") => Ok(RecordingFormat::Mp3),
+        _ => Err("recording path must end in .wav or .mp3".to_string()),
     }
-    Ok(())
 }
 
 #[cfg(test)]
@@ -102,11 +135,21 @@ mod tests {
     }
 
     #[test]
-    fn recording_path_must_be_absolute_wav() {
-        assert!(validate_recording_path(Path::new("/tmp/mix.wav")).is_ok());
-        assert!(validate_recording_path(Path::new("/tmp/mix.WAV")).is_ok());
+    fn recording_path_must_be_absolute_wav_or_mp3() {
+        assert_eq!(
+            validate_recording_path(Path::new("/tmp/mix.wav")),
+            Ok(RecordingFormat::Wav)
+        );
+        assert_eq!(
+            validate_recording_path(Path::new("/tmp/mix.WAV")),
+            Ok(RecordingFormat::Wav)
+        );
+        assert_eq!(
+            validate_recording_path(Path::new("/tmp/mix.mp3")),
+            Ok(RecordingFormat::Mp3)
+        );
         assert!(validate_recording_path(Path::new("mix.wav")).is_err());
-        assert!(validate_recording_path(Path::new("/tmp/mix.mp3")).is_err());
+        assert!(validate_recording_path(Path::new("/tmp/mix.flac")).is_err());
         assert!(validate_recording_path(Path::new("/tmp/mix")).is_err());
     }
 }

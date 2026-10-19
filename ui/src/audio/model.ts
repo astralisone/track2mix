@@ -34,6 +34,12 @@ export type Lane = {
   sync: boolean;
   mute: boolean;
   solo: boolean;
+  /**
+   * True for lanes restored from a project file. They arrive with their
+   * clips, so the composer must not drop a starter clip on them the way it
+   * does for a lane that was just added from the library.
+   */
+  seeded?: boolean;
 };
 
 export type Composition = {

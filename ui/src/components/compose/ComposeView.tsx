@@ -1,6 +1,8 @@
 import * as React from "react";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeRecording, type UiTrack } from "@/lib/tauri";
+import { writeRecording, type RenderFormat, type UiTrack } from "@/lib/tauri";
+import { fileStem } from "@/audio/project";
+import type { ProjectApi } from "@/lib/useProject";
 import { cn } from "@/lib/utils";
 import type { CompositionEngine, EngineState } from "@/audio/engine";
 import { describeAudioError } from "@/audio/errors";
@@ -19,13 +21,14 @@ import { LaneStrip, LANE_HEIGHT } from "./LaneStrip";
 import { Timeline, RULER_HEIGHT } from "./Timeline";
 import { TrackPicker } from "./TrackPicker";
 import { Transport } from "./Transport";
-import { Check, Plus, Save, Shuffle, X } from "lucide-react";
+import { Check, FilePlus, FolderOpen, Plus, Save, Shuffle, X } from "lucide-react";
 
 type Props = {
   engine: CompositionEngine;
   comp: Composition;
   onCompChange: (c: Composition) => void;
   tracks: UiTrack[];
+  projectApi: ProjectApi;
 };
 
 const MIN_ZOOM = 2;
@@ -37,7 +40,8 @@ const MAX_ZOOM = 400;
  * survives switching back to the library view; the engine is told about
  * every change and decides whether it can apply it live.
  */
-export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
+export function ComposeView({ engine, comp, onCompChange, tracks, projectApi }: Props) {
+  const { project } = projectApi;
   const [state, setState] = React.useState<EngineState>(() => engine.state());
   const [pxPerSec, setPxPerSec] = React.useState(12);
   const [selectedClipId, setSelectedClipId] = React.useState<string | null>(null);
@@ -45,12 +49,18 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
   const [autoXfade, setAutoXfade] = React.useState(true);
   const [revision, setRevision] = React.useState(0);
   const [bouncing, setBouncing] = React.useState<number | null>(null);
+  const [encoding, setEncoding] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
   const [toast, setToast] = React.useState<string | null>(null);
   // The most recent WAV (live take or bounce) that hasn't been written to
   // disk yet. A live take can't be re-performed, so a cancelled dialog or a
   // failed write must never be the last anyone sees of it.
-  const [unsaved, setUnsaved] = React.useState<{ wav: ArrayBuffer; name: string; what: string } | null>(null);
+  const [unsaved, setUnsaved] = React.useState<{
+    wav: ArrayBuffer;
+    name: string;
+    what: string;
+    format: RenderFormat;
+  } | null>(null);
 
   // Always-fresh handle on the composition for async callbacks (decode
   // completions, save flows) that outlive the render they started in.
@@ -74,6 +84,14 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
     const t = setTimeout(() => setToast(null), 6000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // Project open/save outcomes surface in the same slots as everything else.
+  const notice = projectApi.notice;
+  React.useEffect(() => {
+    if (!notice) return;
+    if (notice.kind === "ok") setToast(notice.text);
+    else setErr(notice.text);
+  }, [notice]);
 
   const referenceKey = comp.lanes[0]?.track.camelot ?? null;
   const canPlay = comp.clips.length > 0;
@@ -163,6 +181,8 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
           const c = compRef.current;
           // Lane may have been removed while decoding.
           if (!c.lanes.some((l) => l.id === lane.id)) return;
+          // Lanes restored from a project keep exactly the clips they were saved with.
+          if (lane.seeded) return;
           if (c.clips.some((cl) => cl.laneId === lane.id)) return;
           const clip = fullClip(lane.id, playheadSnapped(c), buf.duration);
           commit(finish({ ...c, clips: [...c.clips, clip] }, [clip.id]));
@@ -217,37 +237,66 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
   }
 
   // ---- recording / bounce ---------------------------------------------
-  function stampedName(kind: string): string {
+  function stampedName(kind: string, format: RenderFormat): string {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
-    return `track2mix-${kind}-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.wav`;
+    const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+    return `${fileStem(project.name)}-${kind}-${stamp}.${format}`;
+  }
+
+  /** ID3 artist for exports: every lane's artist, deduplicated, in lane order. */
+  function exportArtist(): string {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const l of compRef.current.lanes) {
+      const a = l.track.artist.trim();
+      if (a && !seen.has(a)) {
+        seen.add(a);
+        out.push(a);
+      }
+    }
+    return out.join(", ");
   }
 
   /**
-   * Offer a save dialog for `wav`. Returns true once the file is on disk.
-   * The GTK dialog does not append the filter's extension when the user
-   * types a bare name, and the Rust side only writes `.wav`, so add it here.
-   * On cancel or failure the take is parked in `unsaved` for another try.
+   * Offer a save dialog for `wav`, writing it as WAV or MP3 by `format`.
+   * Returns true once the file is on disk. The GTK dialog does not append
+   * the filter's extension when the user types a bare name, so add it
+   * here. On cancel or failure the take is parked in `unsaved` for another
+   * try; a live take can't be re-performed, so it must never be lost.
    */
-  async function saveWav(wav: ArrayBuffer, defaultName: string, what: string): Promise<boolean> {
-    setUnsaved({ wav, name: defaultName, what });
+  async function saveAudio(
+    wav: ArrayBuffer,
+    defaultName: string,
+    what: string,
+    format: RenderFormat,
+  ): Promise<boolean> {
+    setUnsaved({ wav, name: defaultName, what, format });
+    const label = format === "mp3" ? "MP3" : "WAV";
     try {
       const picked = await save({
         defaultPath: defaultName,
-        filters: [{ name: "WAV", extensions: ["wav"] }],
+        filters: [{ name: label, extensions: [format] }],
       });
       if (!picked) {
         setToast(`${what} kept in memory — use "Save last recording" to write it.`);
         return false;
       }
-      const path = /\.wav$/i.test(picked) ? picked : `${picked}.wav`;
-      const bytes = await writeRecording(path, wav);
+      const path = new RegExp(`\\.${format}$`, "i").test(picked) ? picked : `${picked}.${format}`;
+      if (format === "mp3") setEncoding(true);
+      const bytes = await writeRecording(path, wav, {
+        bitrate: 320,
+        title: project.name,
+        artist: exportArtist(),
+      });
       setUnsaved(null);
-      setToast(`${what} saved — ${(bytes / 1_048_576).toFixed(1)} MB → ${path}`);
+      setToast(`${what} saved as ${label} — ${(bytes / 1_048_576).toFixed(1)} MB → ${path}`);
       return true;
     } catch (e) {
       setErr(`${what} is still in memory (use "Save last recording"). Save failed: ${String(e)}`);
       return false;
+    } finally {
+      setEncoding(false);
     }
   }
 
@@ -260,7 +309,7 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
           setErr("Nothing was recorded.");
           return;
         }
-        await saveWav(wav, stampedName("live"), "Live take");
+        await saveAudio(wav, stampedName("live", "wav"), "Live take", "wav");
       } else {
         await engine.startRecording();
         if (!engine.state().playing) await engine.play();
@@ -270,17 +319,20 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
     }
   }
 
-  async function bounce() {
+  async function bounce(format: RenderFormat) {
     setErr(null);
     setBouncing(0);
+    let wav: ArrayBuffer;
     try {
-      const wav = await engine.bounce((f) => setBouncing(f));
-      await saveWav(wav, stampedName("bounce"), "Bounce");
+      wav = await engine.bounce((f) => setBouncing(f));
     } catch (e) {
       setErr(String(e));
+      return;
     } finally {
       setBouncing(null);
     }
+    const what = format === "mp3" ? "MP3 export" : "Bounce";
+    await saveAudio(wav, stampedName(format === "mp3" ? "mix" : "bounce", format), what, format);
   }
 
   const existingIds = React.useMemo(
@@ -298,6 +350,7 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
         pxPerSec={pxPerSec}
         canPlay={canPlay}
         bouncing={bouncing}
+        encoding={encoding}
         onPlayPause={playPause}
         onStop={() => engine.stop()}
         onBpm={(masterBpm) => commit({ ...compRef.current, masterBpm })}
@@ -319,6 +372,65 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
       <div className="flex-1 flex gap-3 min-h-0">
         <div className="flex-1 flex flex-col min-w-0 glass rounded-lg overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5">
+            <div
+              className="flex items-center gap-1.5 min-w-0 max-w-[260px]"
+              title={project.path ?? "Not saved yet — Save writes a .t2m project file"}
+            >
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full shrink-0",
+                  project.dirty ? "bg-gold-300 shadow-glow-gold" : "bg-emerald-400/70",
+                )}
+                aria-label={project.dirty ? "Unsaved changes" : "Saved"}
+              />
+              <span className="text-xs font-medium truncate">{project.name}</span>
+              {project.dirty && (
+                <span className="text-[10px] text-muted-foreground shrink-0">unsaved</span>
+              )}
+            </div>
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => void projectApi.newProject()}
+                title="Start an empty composition"
+              >
+                <FilePlus className="h-3.5 w-3.5" />
+                New
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => void projectApi.openProject()}
+                title="Open a .t2m composition (Ctrl+O)"
+              >
+                <FolderOpen className="h-3.5 w-3.5" />
+                Open…
+              </Button>
+              <Button
+                variant={project.dirty ? "primary" : "ghost"}
+                size="sm"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => void projectApi.saveProject()}
+                disabled={!project.dirty && project.path !== null}
+                title={project.path ? `Save to ${project.path} (Ctrl+S)` : "Save as a .t2m project file (Ctrl+S)"}
+              >
+                <Save className="h-3.5 w-3.5" />
+                Save
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => void projectApi.saveProjectAs()}
+                title="Save a copy under a new name (Ctrl+Shift+S)"
+              >
+                Save as…
+              </Button>
+            </div>
+            <div className="h-5 w-px bg-white/10" />
             <Button
               variant={showPicker ? "secondary" : "primary"}
               size="sm"
@@ -333,7 +445,7 @@ export function ComposeView({ engine, comp, onCompChange, tracks }: Props) {
                 variant="gold"
                 size="sm"
                 className="h-7 px-2.5 text-[11px]"
-                onClick={() => void saveWav(unsaved.wav, unsaved.name, unsaved.what)}
+                onClick={() => void saveAudio(unsaved.wav, unsaved.name, unsaved.what, unsaved.format)}
                 title={`${unsaved.what} is in memory and not yet on disk`}
               >
                 <Save className="h-3.5 w-3.5" />

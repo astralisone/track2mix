@@ -116,8 +116,11 @@ impl PlayerHandle {
 
     fn send(&self, cmd: Cmd) -> Result<(), String> {
         let guard = lock(&self.tx);
-        let tx = guard.as_ref().ok_or_else(|| "audio player is not running".to_string())?;
-        tx.send(cmd).map_err(|_| "audio player has stopped".to_string())
+        let tx = guard
+            .as_ref()
+            .ok_or_else(|| "audio player is not running".to_string())?;
+        tx.send(cmd)
+            .map_err(|_| "audio player has stopped".to_string())
     }
 
     pub fn play(&self, items: Vec<QueueItem>, start: usize) -> Result<(), String> {
@@ -300,7 +303,12 @@ fn probe_duration(path: &Path) -> Option<f64> {
         hint.with_extension(ext);
     }
     let probed = symphonia::default::get_probe()
-        .format(&hint, mss, &FormatOptions::default(), &MetadataOptions::default())
+        .format(
+            &hint,
+            mss,
+            &FormatOptions::default(),
+            &MetadataOptions::default(),
+        )
         .ok()?;
     let track = probed.format.default_track()?;
     let params = &track.codec_params;
@@ -354,11 +362,15 @@ impl AudioThread {
     }
 
     fn is_playing(&self) -> bool {
-        self.player.as_ref().is_some_and(|p| !p.is_paused() && !p.empty())
+        self.player
+            .as_ref()
+            .is_some_and(|p| !p.is_paused() && !p.empty())
     }
 
     fn position(&self) -> f64 {
-        self.player.as_ref().map_or(0.0, |p| p.get_pos().as_secs_f64())
+        self.player
+            .as_ref()
+            .map_or(0.0, |p| p.get_pos().as_secs_f64())
     }
 
     fn handle(&mut self, cmd: Cmd) {
@@ -411,8 +423,13 @@ impl AudioThread {
                             // actually plays; otherwise restart it rather than
                             // halting a playable track.
                             let mut skipped = Vec::new();
-                            let earlier =
-                                find_playable(&self.queue, i, Dir::Backward, open_item, &mut skipped);
+                            let earlier = find_playable(
+                                &self.queue,
+                                i,
+                                Dir::Backward,
+                                open_item,
+                                &mut skipped,
+                            );
                             if earlier.is_some() {
                                 self.start_at(i, Dir::Backward);
                             } else {
@@ -424,7 +441,11 @@ impl AudioThread {
             }
             Cmd::Seek(secs) => self.seek_to(secs),
             Cmd::Volume(v) => {
-                self.volume = if v.is_finite() { v.clamp(0.0, 1.0) } else { 1.0 };
+                self.volume = if v.is_finite() {
+                    v.clamp(0.0, 1.0)
+                } else {
+                    1.0
+                };
                 if let Some(p) = &self.player {
                     p.set_volume(self.volume);
                 }
@@ -480,7 +501,11 @@ impl AudioThread {
             self.error = Some(if errors.len() == 1 {
                 errors.remove(0)
             } else {
-                format!("skipped: {} tracks; last: {}", errors.len(), errors[errors.len() - 1])
+                format!(
+                    "skipped: {} tracks; last: {}",
+                    errors.len(),
+                    errors[errors.len() - 1]
+                )
             });
         }
         let Some((i, opened)) = found else {
@@ -500,7 +525,10 @@ impl AudioThread {
 
     /// Auto-advance when the current track has run out.
     fn check_track_end(&mut self) {
-        let finished = self.player.as_ref().is_some_and(|p| p.empty() && !p.is_paused());
+        let finished = self
+            .player
+            .as_ref()
+            .is_some_and(|p| p.empty() && !p.is_paused());
         if !finished {
             return;
         }
@@ -634,7 +662,10 @@ mod tests {
     #[test]
     fn open_errors_use_stable_codes() {
         let code = |path: Option<PathBuf>| {
-            let item = QueueItem { track_id: "x".into(), path };
+            let item = QueueItem {
+                track_id: "x".into(),
+                path,
+            };
             open_item(&item).err().unwrap_or_default()
         };
         assert!(code(None).starts_with("nopath: "));

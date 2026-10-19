@@ -10,12 +10,22 @@ import {
   type UiTrack,
 } from "@/lib/tauri";
 import { open as openFile } from "@tauri-apps/plugin-dialog";
-import { FilterBar, emptyFilters, type FilterState } from "./components/FilterBar";
+import {
+  applyFilters,
+  emptyFilters,
+  facetCounts,
+  libraryBpmBounds,
+  type FilterState,
+} from "@/lib/filters";
+import { proposeOrder, reconcileOrder } from "@/lib/mix";
+import { PlayerProvider, usePlayer, type PlayerApi } from "@/lib/player";
+import { useProject } from "@/lib/useProject";
+import { FilterPane } from "./components/FilterPane";
 import { Logo } from "./components/Logo";
 import { TrackTable, type SortKey } from "./components/TrackTable";
 import { CompatPanel } from "./components/CompatPanel";
-import { ExportDialog } from "./components/ExportDialog";
-import { PreviewPlayer } from "./components/PreviewPlayer";
+import { PlaylistBuilder } from "./components/PlaylistBuilder";
+import { PlayerBar } from "./components/PlayerBar";
 import { ComposeView } from "./components/compose/ComposeView";
 import { CompositionEngine } from "@/audio/engine";
 import { describeAudioError } from "@/audio/errors";
@@ -29,13 +39,22 @@ import { Button } from "./components/ui/Button";
 import { Badge } from "./components/ui/Badge";
 import {
   Database,
-  Download,
   FileUp,
   Library,
+  ListMusic,
+  Play,
   SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
+
+/**
+ * The full queue rides on every player:state tick, so cap it: a select-all
+ * on a big library would otherwise ship megabytes of ids per second.
+ */
+const MAX_QUEUE = 500;
+
+type View = "library" | "builder" | "compose";
 
 function App() {
   const [dbPath, setDbPath] = React.useState<string>("");
@@ -45,15 +64,20 @@ function App() {
   const [loading, setLoading] = React.useState(false);
 
   const [filters, setFilters] = React.useState<FilterState>(emptyFilters);
+  const [filtersCollapsed, setFiltersCollapsed] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<SortKey>("energy");
   const [sortDir, setSortDir] = React.useState<"asc" | "desc">("desc");
 
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [anchorId, setAnchorId] = React.useState<string | null>(null);
-  const [showExport, setShowExport] = React.useState(false);
 
-  const [view, setView] = React.useState<"library" | "compose">("library");
-  const [previewId, setPreviewId] = React.useState<string | null>(null);
+  // Playlist order for the builder. `order` is the user's arrangement; it is
+  // reconciled with the selection so new picks append and deselected drop.
+  // `arranged` stays false until the set has been ordered (proposed or by
+  // hand), so the first visit to the builder gets a harmonic proposal.
+  const [view, setView] = React.useState<View>("library");
+  const [order, setOrder] = React.useState<string[]>([]);
+  const [arranged, setArranged] = React.useState(false);
 
   // One AudioContext for the whole app: the library preview and the
   // composer share its decode cache.
@@ -85,6 +109,36 @@ function App() {
   }, []);
   // Held here rather than in ComposeView so switching tabs keeps the arrangement.
   const [comp, setComp] = React.useState<Composition>(emptyComposition);
+
+  // Project file around the composition: name, path, unsaved-changes state,
+  // and the open/save flows. Replacing the arrangement stops playback first
+  // so the engine never runs clips that no longer exist.
+  const replaceComp = React.useCallback(
+    (next: Composition) => {
+      engineRef.current?.stop();
+      setComp(next);
+      setView("compose");
+    },
+    [],
+  );
+  const projectApi = useProject({ comp, tracks, library: dbPath || null, replace: replaceComp });
+  const { project } = projectApi;
+
+  // Editor shortcuts. Ctrl+O opens a composition; the library has its own
+  // Open DB button. Ignored while typing in a field.
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key !== "s" && key !== "o") return;
+      e.preventDefault();
+      if (key === "o") void projectApi.openProject();
+      else if (e.shiftKey) void projectApi.saveProjectAs();
+      else void projectApi.saveProject();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [projectApi]);
 
   const [analyzing, setAnalyzing] = React.useState(false);
   const [progress, setProgress] = React.useState<ProgressEvent | null>(null);
@@ -147,12 +201,15 @@ function App() {
       setSelected(new Set());
       setAnchorId(null);
       setFilters(emptyFilters);
-      setPreviewId(null);
+      setOrder([]);
+      setArranged(false);
+      setView("library");
       engine?.stop();
       // Track ids are per-export, so buffers decoded for the old library
       // must not be served under the new library's ids.
       engine?.loader.clear();
       setComp(emptyComposition());
+      projectApi.reset();
     } catch (e) {
       setLoadErr(String(e));
     } finally {
@@ -161,6 +218,8 @@ function App() {
   }
 
   async function pickDb() {
+    // Switching libraries throws the arrangement away (track ids are per-export).
+    if (!(await projectApi.confirmDiscard("Open another library"))) return;
     try {
       const picked = await openFile({
         filters: [{ name: "SQLite DB", extensions: ["db", "sqlite", "sqlite3"] }],
@@ -215,16 +274,6 @@ function App() {
     [tracks, anchorId],
   );
 
-  const previewTrack = React.useMemo(
-    () => tracks.find((t) => t.track_id === previewId) ?? null,
-    [tracks, previewId],
-  );
-
-  function togglePreview(id: string) {
-    if (!engine) return; // audio unavailable; the banner says why
-    setPreviewId((cur) => (cur === id ? null : id));
-  }
-
   /** Add tracks as lanes (no clips yet) and jump to the composer. */
   function addToCompose(toAdd: UiTrack[]) {
     if (!engine) return;
@@ -248,29 +297,16 @@ function App() {
     addToCompose(tracks.filter((t) => selected.has(t.track_id)));
   }
 
-  const filtered = React.useMemo(() => {
-    const q = filters.search.trim().toLowerCase();
-    const g = filters.genre.trim().toLowerCase();
-    const sg = filters.subGenre.trim().toLowerCase();
-    const k = filters.key.trim().toLowerCase();
-    const bmin = filters.bpmMin === "" ? -Infinity : Number(filters.bpmMin);
-    const bmax = filters.bpmMax === "" ? Infinity : Number(filters.bpmMax);
-    return tracks.filter((t) => {
-      if (q) {
-        const hay = `${t.name} ${t.artist}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      if (g && !(t.genre || "").toLowerCase().includes(g)) return false;
-      if (sg && !(t.sub_genre || "").toLowerCase().includes(sg)) return false;
-      if (k) {
-        const keyHay = `${t.camelot ?? ""} ${t.tonality ?? ""}`.toLowerCase();
-        if (!keyHay.includes(k)) return false;
-      }
-      const bpm = t.bpm ?? -1;
-      if (bpm < bmin || bpm > bmax) return false;
-      return true;
-    });
-  }, [tracks, filters]);
+  // --- Filtering -------------------------------------------------------------
+  const bpmBounds = React.useMemo(() => libraryBpmBounds(tracks), [tracks]);
+  const filtered = React.useMemo(
+    () => applyFilters(tracks, filters),
+    [tracks, filters],
+  );
+  const facets = React.useMemo(
+    () => facetCounts(tracks, filters, bpmBounds),
+    [tracks, filters, bpmBounds],
+  );
 
   const sorted = React.useMemo(() => {
     const rows = filtered.slice();
@@ -307,6 +343,7 @@ function App() {
     }
   }
 
+  // --- Selection -------------------------------------------------------------
   function toggleSelect(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -337,17 +374,78 @@ function App() {
     });
   }
 
-  const hasAnyFilter =
-    !!(
-      filters.search ||
-      filters.genre ||
-      filters.subGenre ||
-      filters.key ||
-      filters.bpmMin !== "" ||
-      filters.bpmMax !== ""
-    );
+  function removeFromSelection(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    // Drop it from the arrangement too, so re-selecting it appends.
+    setOrder((o) => o.filter((x) => x !== id));
+  }
+
+  // An emptied selection (by any route) starts the next set fresh, with a
+  // new harmonic proposal on the builder's first visit.
+  React.useEffect(() => {
+    if (selected.size === 0) {
+      setOrder([]);
+      setArranged(false);
+    }
+  }, [selected]);
+
+  function clearSelection() {
+    setSelected(new Set());
+    setOrder([]);
+    setArranged(false);
+  }
+
+  // Selection in insertion order (Set iteration order), and the playlist
+  // order reconciled against it.
+  const selectionOrder = React.useMemo(() => Array.from(selected), [selected]);
+  const playlistOrder = React.useMemo(
+    () => reconcileOrder(order, selectionOrder),
+    [order, selectionOrder],
+  );
+
+  // --- Native queue player ---------------------------------------------------
+  // The player API lives below this component (the provider needs `tracks`).
+  // A ref keeps App from re-rendering on every position tick.
+  const playerRef = React.useRef<PlayerApi | null>(null);
+  const play = (ids: string[], start = 0) => {
+    const window = ids.slice(start, start + MAX_QUEUE);
+    playerRef.current?.playTracks(window, 0);
+  };
+
+  // Row play: inside the selection, queue the set in playlist order from this
+  // track; otherwise preview just this track.
+  function playQueueFor(id: string): { ids: string[]; start: number } {
+    const i = playlistOrder.indexOf(id);
+    return i >= 0 ? { ids: playlistOrder, start: i } : { ids: [id], start: 0 };
+  }
+
+  function openBuilder() {
+    if (!arranged) {
+      const set = selectionOrder
+        .map((id) => tracks.find((t) => t.track_id === id))
+        .filter((t): t is UiTrack => !!t);
+      setOrder(proposeOrder(set, anchorId ?? undefined));
+      setArranged(true);
+    }
+    setView("builder");
+  }
+
+  function onOrderChange(next: string[]) {
+    setOrder(next);
+    setArranged(true);
+  }
+
+  const inLibrary = view === "library" || tracks.length === 0;
+  const inBuilder = view === "builder" && tracks.length > 0;
+  const inCompose = view === "compose" && tracks.length > 0;
 
   return (
+    <PlayerProvider tracks={tracks}>
+    <PlayerBridge target={playerRef} />
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Title bar */}
       <header className="drag-region h-10 flex items-center justify-between px-4 border-b border-white/5">
@@ -371,17 +469,38 @@ function App() {
         </div>
         <div className="no-drag flex items-center gap-0.5 rounded-md bg-white/[0.03] border border-white/10 p-0.5">
           <ViewTab
-            active={view === "library"}
+            active={inLibrary}
             onClick={() => setView("library")}
             icon={<Library className="h-3.5 w-3.5" />}
             label="Library"
           />
           <ViewTab
-            active={view === "compose"}
+            active={inBuilder}
+            onClick={openBuilder}
+            disabled={selected.size === 0}
+            icon={<ListMusic className="h-3.5 w-3.5" />}
+            label="Playlist"
+            badge={selected.size > 0 ? selected.size : undefined}
+            title={
+              selected.size === 0
+                ? "Select tracks in the library to build a playlist"
+                : "Arrange the selected tracks harmonically and export"
+            }
+          />
+          <ViewTab
+            active={inCompose}
             onClick={() => setView("compose")}
             icon={<SlidersHorizontal className="h-3.5 w-3.5" />}
             label="Compose"
             badge={comp.lanes.length > 0 ? comp.lanes.length : undefined}
+            dot={project.dirty}
+            title={
+              project.dirty
+                ? `${project.name} has unsaved changes`
+                : project.path
+                  ? project.path
+                  : "Arrange tracks on a timeline"
+            }
           />
         </div>
         <div className="no-drag flex items-center gap-2">
@@ -424,184 +543,208 @@ function App() {
         {audioErr && (
           <div className="glass rounded-lg p-3 border border-red-500/30 text-sm text-red-200 flex items-start justify-between gap-3">
             <div>
-              <div className="font-medium mb-0.5">Audio output unavailable</div>
-              <div className="text-xs text-red-300/90">{audioErr}</div>
+              <div className="font-medium mb-0.5">Webview audio unavailable</div>
+              <div className="text-xs text-red-300/90">
+                {audioErr} Previews and playlists use the native player and still
+                work; the composer needs webview audio.
+              </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setAudioErr(null)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
         )}
-        {view === "compose" ? (
+
+        {inCompose ? (
           engine ? (
             <ComposeView
               engine={engine}
               comp={comp}
               onCompChange={setComp}
               tracks={tracks}
+              projectApi={projectApi}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center glass rounded-lg text-sm text-muted-foreground">
               The composer needs an audio device. Fix the output above and restart.
             </div>
           )
+        ) : inBuilder ? (
+          <PlaylistBuilder
+            tracks={tracks}
+            order={playlistOrder}
+            onOrderChange={onOrderChange}
+            onRemove={removeFromSelection}
+            onAdd={addToSelection}
+            selectionOrder={selectionOrder}
+            anchorId={anchorId}
+            defaultName={anchor ? `${anchor.name} — Track2Mix` : "Track2Mix set"}
+            onBack={() => setView("library")}
+          />
         ) : (
-          <>
-        <FilterBar
-          filters={filters}
-          onChange={setFilters}
-          onReset={() => setFilters(emptyFilters)}
-          hasAny={hasAnyFilter}
-          counts={{ shown: sorted.length, total: tracks.length }}
-        />
-
-        <div className="flex-1 flex gap-3 min-h-0">
-          <div className="flex-1 flex flex-col min-w-0 gap-3">
-            {loadErr && (
-              <div className="glass rounded-lg p-4 border border-red-500/30 text-sm text-red-200">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium">Couldn't load the database</span>
-                  <Button variant="ghost" size="icon" onClick={() => setLoadErr(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="text-xs text-red-300/90 font-mono">{loadErr}</div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Expected path: <span className="text-foreground">{dbPath}</span>
-                </div>
-              </div>
-            )}
-            {loading && tracks.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground animate-pulse">
-                Loading library…
-              </div>
-            ) : tracks.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center glass rounded-lg">
-                <div className="text-center max-w-sm">
-                  <Sparkles className="h-8 w-8 text-iris-300 mx-auto mb-3" />
-                  <div className="text-sm text-foreground mb-1">
-                    No library loaded
-                  </div>
-                  <div className="text-xs text-muted-foreground mb-4">
-                    In Rekordbox: <span className="text-foreground">File →
-                    Export Collection in xml format</span>, then point Track2Mix
-                    at the file.
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <Button variant="primary" onClick={pickXml}>
-                      <FileUp className="h-3.5 w-3.5" />
-                      Import Rekordbox XML
-                    </Button>
-                    <Button variant="secondary" onClick={pickDb}>
-                      <Database className="h-3.5 w-3.5" />
-                      Open existing .db
-                    </Button>
-                  </div>
-                  <label className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground select-none cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="accent-iris-500"
-                      checked={skipAnalyzed}
-                      onChange={(e) => setSkipAnalyzed(e.target.checked)}
-                    />
-                    Skip tracks already analyzed
-                  </label>
-                </div>
-              </div>
-            ) : (
-              <TrackTable
-                rows={sorted}
-                selected={selected}
-                onToggleSelect={toggleSelect}
-                onToggleSelectAll={toggleSelectAllVisible}
-                anchorId={anchorId}
-                onAnchor={setAnchorId}
-                sortBy={sortBy}
-                sortDir={sortDir}
-                onSort={onSort}
-                previewId={previewId}
-                onPreview={togglePreview}
+          <div className="flex-1 flex min-h-0 gap-3">
+            {tracks.length > 0 && (
+              <FilterPane
+                filters={filters}
+                onChange={setFilters}
+                onReset={() => setFilters(emptyFilters)}
+                facets={facets}
+                bpmBounds={bpmBounds}
+                counts={{ shown: sorted.length, total: tracks.length }}
+                anchorKey={anchor?.camelot ?? null}
+                collapsed={filtersCollapsed}
+                onToggleCollapsed={() => setFiltersCollapsed((c) => !c)}
               />
             )}
 
-            {previewTrack && engine && (
-              <PreviewPlayer
-                engine={engine}
-                track={previewTrack}
-                onClose={() => setPreviewId(null)}
-                onAddToCompose={(t) => addToCompose([t])}
-              />
-            )}
-
-            {/* Bottom action bar */}
-            <div className="glass rounded-lg px-4 py-2.5 flex items-center gap-3">
-              <Badge variant={selected.size > 0 ? "iris" : "muted"}>
-                {selected.size} selected
-              </Badge>
-              {selected.size > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelected(new Set())}
-                >
-                  Clear
-                </Button>
-              )}
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={selected.size === 0}
-                onClick={addSelectedToCompose}
-                title="Add the selected tracks as lanes in the composer"
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                Add to Compose
-              </Button>
-              <div className="ml-auto flex items-center gap-2">
-                {anchor ? (
-                  <span className="text-xs text-muted-foreground truncate max-w-[260px]">
-                    Anchor:{" "}
-                    <span className="text-iris-200">
-                      {anchor.name}
-                    </span>
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">
-                    Click a row to set an anchor for compat matching
-                  </span>
+            <div className="flex-1 flex gap-3 min-h-0 min-w-0">
+              <div className="flex-1 flex flex-col min-w-0 gap-3">
+                {loadErr && (
+                  <div className="glass rounded-lg p-4 border border-red-500/30 text-sm text-red-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">Couldn't load the database</span>
+                      <Button variant="ghost" size="icon" onClick={() => setLoadErr(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="text-xs text-red-300/90 font-mono">{loadErr}</div>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Expected path: <span className="text-foreground">{dbPath}</span>
+                    </div>
+                  </div>
                 )}
-                <Button
-                  variant="gold"
-                  size="sm"
-                  disabled={selected.size === 0}
-                  onClick={() => setShowExport(true)}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Export to Rekordbox
-                </Button>
+                {loading && tracks.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center text-muted-foreground animate-pulse">
+                    Loading library…
+                  </div>
+                ) : tracks.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center glass rounded-lg">
+                    <div className="text-center max-w-sm">
+                      <Sparkles className="h-8 w-8 text-iris-300 mx-auto mb-3" />
+                      <div className="text-sm text-foreground mb-1">
+                        No library loaded
+                      </div>
+                      <div className="text-xs text-muted-foreground mb-4">
+                        In Rekordbox: <span className="text-foreground">File →
+                        Export Collection in xml format</span>, then point Track2Mix
+                        at the file.
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button variant="primary" onClick={pickXml}>
+                          <FileUp className="h-3.5 w-3.5" />
+                          Import Rekordbox XML
+                        </Button>
+                        <Button variant="secondary" onClick={pickDb}>
+                          <Database className="h-3.5 w-3.5" />
+                          Open existing .db
+                        </Button>
+                      </div>
+                      <label className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground select-none cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="accent-iris-500"
+                          checked={skipAnalyzed}
+                          onChange={(e) => setSkipAnalyzed(e.target.checked)}
+                        />
+                        Skip tracks already analyzed
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <TrackTable
+                    rows={sorted}
+                    selected={selected}
+                    onToggleSelect={toggleSelect}
+                    onToggleSelectAll={toggleSelectAllVisible}
+                    anchorId={anchorId}
+                    onAnchor={setAnchorId}
+                    sortBy={sortBy}
+                    sortDir={sortDir}
+                    onSort={onSort}
+                    onPlay={(id) => {
+                      const q = playQueueFor(id);
+                      play(q.ids, q.start);
+                    }}
+                  />
+                )}
+
+                <PlayerBar />
+
+                {/* Bottom action bar */}
+                {tracks.length > 0 && (
+                  <div className="glass rounded-lg px-4 py-2.5 flex items-center gap-3">
+                    <Badge variant={selected.size > 0 ? "iris" : "muted"}>
+                      {selected.size} selected
+                    </Badge>
+                    {selected.size > 0 && (
+                      <Button variant="ghost" size="sm" onClick={clearSelection}>
+                        Clear
+                      </Button>
+                    )}
+                    {selected.size > 0 && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => play(playlistOrder, 0)}
+                        title="Play the selected tracks in playlist order"
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                        Play selected
+                      </Button>
+                    )}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={selected.size === 0 || !engine}
+                      onClick={addSelectedToCompose}
+                      title={
+                        engine
+                          ? "Add the selected tracks as lanes in the composer"
+                          : "The composer needs webview audio"
+                      }
+                    >
+                      <SlidersHorizontal className="h-3.5 w-3.5" />
+                      Add to Compose
+                    </Button>
+                    <div className="ml-auto flex items-center gap-2">
+                      {anchor ? (
+                        <span className="text-xs text-muted-foreground truncate max-w-[260px]">
+                          Anchor:{" "}
+                          <span className="text-iris-200">{anchor.name}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          Click a row to set an anchor for compat matching
+                        </span>
+                      )}
+                      <Button
+                        variant="gold"
+                        size="sm"
+                        disabled={selected.size === 0}
+                        onClick={openBuilder}
+                        title="Arrange the selected tracks harmonically and export"
+                      >
+                        <ListMusic className="h-3.5 w-3.5" />
+                        Build playlist
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {anchor && (
+                <CompatPanel
+                  anchor={anchor}
+                  onClose={() => setAnchorId(null)}
+                  onAddToSelection={addToSelection}
+                  onSetAnchor={setAnchorId}
+                  onPlay={(id) => play([id], 0)}
+                />
+              )}
             </div>
           </div>
-
-          {anchor && (
-            <CompatPanel
-              anchor={anchor}
-              onClose={() => setAnchorId(null)}
-              onAddToSelection={addToSelection}
-              onSetAnchor={setAnchorId}
-            />
-          )}
-        </div>
-          </>
         )}
       </main>
-
-      <ExportDialog
-        open={showExport}
-        onOpenChange={setShowExport}
-        selectedIds={Array.from(selected)}
-        defaultName={anchor ? `${anchor.name} — Track2Mix` : "Track2Mix set"}
-      />
 
       {analyzing && (
         <AnalyzeOverlay
@@ -657,7 +800,21 @@ function App() {
         </div>
       )}
     </div>
+    </PlayerProvider>
   );
+}
+
+/** Publishes the player API into a ref owned by App. Renders nothing. */
+function PlayerBridge({
+  target,
+}: {
+  target: React.MutableRefObject<PlayerApi | null>;
+}) {
+  const api = usePlayer();
+  React.useLayoutEffect(() => {
+    target.current = api;
+  }, [target, api]);
+  return null;
 }
 
 function ViewTab({
@@ -666,22 +823,31 @@ function ViewTab({
   icon,
   label,
   badge,
+  dot,
+  disabled,
+  title,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
   badge?: number;
+  /** Unsaved-changes marker. */
+  dot?: boolean;
+  disabled?: boolean;
+  title?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
+      title={title}
       className={
-        "inline-flex items-center gap-1.5 h-6 px-2.5 rounded text-[11px] font-medium transition-colors " +
+        "inline-flex items-center gap-1.5 h-6 px-2.5 rounded text-[11px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed " +
         (active
           ? "bg-iris-500/25 text-iris-100"
-          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05]")
+          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05] disabled:hover:bg-transparent disabled:hover:text-muted-foreground")
       }
     >
       {icon}
@@ -690,6 +856,12 @@ function ViewTab({
         <Badge variant="iris" className="h-4 px-1.5 text-[10px] leading-none">
           {badge}
         </Badge>
+      )}
+      {dot && (
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-gold-300 shadow-glow-gold"
+          aria-label="Unsaved changes"
+        />
       )}
     </button>
   );

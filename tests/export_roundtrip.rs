@@ -7,7 +7,7 @@
 //! synthesised rows.
 
 use std::path::PathBuf;
-use track2mix_core::export::{energy_score, write_m3u8};
+use track2mix_core::export::{energy_score, write_m3u8, write_m3u_plain, write_tracklist_txt};
 use track2mix_core::store::TrackRow;
 
 fn row(name: &str, artist: &str, path: Option<&str>) -> TrackRow {
@@ -136,5 +136,62 @@ fn exports_a_real_analysed_library() {
         );
     }
 
+    std::fs::remove_file(&out).ok();
+}
+
+#[test]
+fn plain_m3u_is_just_paths_in_order() {
+    let out = tmp("plain.m3u");
+    let rows = vec![
+        row("B Side", "Second", Some("/music/b.wav")),
+        row("No File", "Stub", None),
+        row("A Side", "First", Some("/music/a.wav")),
+    ];
+
+    let written = write_m3u_plain(&out, &rows).expect("write should succeed");
+    assert_eq!(written, 2);
+
+    let body = std::fs::read_to_string(&out).unwrap();
+    assert_eq!(body, "/music/b.wav\n/music/a.wav\n");
+
+    std::fs::remove_file(&out).ok();
+}
+
+#[test]
+fn text_tracklist_numbers_every_track_in_order() {
+    let out = tmp("list.txt");
+    let rows = vec![
+        row("Steel Rolling", "Bench Mark", Some("/music/steel.wav")),
+        row("Night\nShift", "Control Group", None),
+    ];
+
+    let written = write_tracklist_txt(&out, "My Set", &rows).expect("write should succeed");
+    assert_eq!(written, 2, "pathless rows still belong in a tracklist");
+
+    let body = std::fs::read_to_string(&out).unwrap();
+    assert_eq!(
+        body,
+        "My Set\n\n01. Bench Mark - Steel Rolling\n02. Control Group - Night Shift\n"
+    );
+
+    std::fs::remove_file(&out).ok();
+}
+
+#[test]
+fn paths_with_line_breaks_are_skipped_not_split() {
+    let rows = vec![
+        row("Evil", "Path", Some("/music/a\n#EXTINF:-1,x\n/etc/passwd")),
+        row("Fine", "Path", Some("/music/fine.wav")),
+    ];
+
+    let out = tmp("newline.m3u8");
+    assert_eq!(write_m3u8(&out, "Set", &rows).unwrap(), 1);
+    let body = std::fs::read_to_string(&out).unwrap();
+    assert_eq!(body.lines().count(), 4, "got: {body:?}");
+    std::fs::remove_file(&out).ok();
+
+    let out = tmp("newline.m3u");
+    assert_eq!(write_m3u_plain(&out, &rows).unwrap(), 1);
+    assert_eq!(std::fs::read_to_string(&out).unwrap(), "/music/fine.wav\n");
     std::fs::remove_file(&out).ok();
 }

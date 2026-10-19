@@ -199,12 +199,41 @@ export async function decodeTrackPcm(
   return { sampleRate: sr, samples };
 }
 
-/** Write an already-encoded WAV to `path` (chosen through the save dialog). */
+export type RenderFormat = "wav" | "mp3";
+
+export type RenderOptions = {
+  /** MP3 only; rounded to the nearest LAME CBR rate. Default 320. */
+  bitrate?: number;
+  /** ID3 tags, MP3 only. */
+  title?: string;
+  artist?: string;
+};
+
+/**
+ * Write a render (always handed over as WAV) to `path`, chosen through the
+ * save dialog. A `.mp3` path is transcoded on the Rust side; a `.wav` path
+ * gets the bytes as they are. Resolves to the bytes written.
+ */
 export async function writeRecording(
   path: string,
   wav: ArrayBuffer,
+  opts: RenderOptions = {},
 ): Promise<number> {
-  return invoke<number>("write_recording", new Uint8Array(wav), {
-    headers: { "x-path": encodeURIComponent(path) },
-  });
+  const headers: Record<string, string> = { "x-path": encodeURIComponent(path) };
+  if (opts.bitrate) headers["x-bitrate"] = String(Math.round(opts.bitrate));
+  if (opts.title) headers["x-title"] = encodeURIComponent(opts.title);
+  if (opts.artist) headers["x-artist"] = encodeURIComponent(opts.artist);
+  return invoke<number>("write_recording", new Uint8Array(wav), { headers });
+}
+
+// ---- Composition project files -----------------------------------------
+
+/** Contents of a `.t2m` project; parse with `parseProject`. */
+export async function readProject(path: string): Promise<string> {
+  return invoke<string>("read_project", { path });
+}
+
+/** Write a serialized project to a `.t2m` path. Resolves to the bytes written. */
+export async function writeProject(path: string, contents: string): Promise<number> {
+  return invoke<number>("write_project", { path, contents });
 }

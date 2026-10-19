@@ -3,9 +3,11 @@ import { Button } from "../ui/Button";
 import { cn } from "@/lib/utils";
 import { formatBar, formatTime } from "@/audio/model";
 import type { CompositionEngine, EngineState } from "@/audio/engine";
+import type { RenderFormat } from "@/lib/tauri";
 import {
   Circle,
   Disc3,
+  FileAudio,
   Grid3x3,
   Pause,
   Play,
@@ -22,13 +24,15 @@ type Props = {
   pxPerSec: number;
   canPlay: boolean;
   bouncing: number | null; // progress 0..1 while bouncing
+  /** Set while the Rust side is encoding the last bounce to MP3. */
+  encoding: boolean;
   onPlayPause: () => void;
   onStop: () => void;
   onBpm: (bpm: number) => void;
   onSnap: (snap: boolean) => void;
   onZoom: (pxPerSec: number) => void;
   onRecordToggle: () => void;
-  onBounce: () => void;
+  onBounce: (format: RenderFormat) => void;
 };
 
 export function Transport({
@@ -39,6 +43,7 @@ export function Transport({
   pxPerSec,
   canPlay,
   bouncing,
+  encoding,
   onPlayPause,
   onStop,
   onBpm,
@@ -140,12 +145,23 @@ export function Transport({
         variant="gold"
         size="sm"
         className="h-7 px-2.5 text-[11px]"
-        onClick={onBounce}
-        disabled={!canPlay || bouncing !== null}
+        onClick={() => onBounce("wav")}
+        disabled={!canPlay || bouncing !== null || encoding}
         title="Render the arranged timeline to a WAV, faster than realtime"
       >
         <Disc3 className={cn("h-3.5 w-3.5", bouncing !== null && "animate-spin")} />
-        {bouncing !== null ? `Bouncing ${Math.round(bouncing * 100)}%` : "Bounce to WAV"}
+        {bouncing !== null ? `Bouncing ${Math.round(bouncing * 100)}%` : "Bounce WAV"}
+      </Button>
+      <Button
+        variant="gold"
+        size="sm"
+        className="h-7 px-2.5 text-[11px]"
+        onClick={() => onBounce("mp3")}
+        disabled={!canPlay || bouncing !== null || encoding}
+        title="Render the arranged timeline and encode it as a 320 kbps MP3"
+      >
+        <FileAudio className={cn("h-3.5 w-3.5", encoding && "animate-pulse")} />
+        {encoding ? "Encoding MP3…" : "Export MP3"}
       </Button>
     </div>
   );

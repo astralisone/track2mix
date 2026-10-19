@@ -30,7 +30,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["ui/src/**/*.test.ts"],
+    include: ["ui/src/**/*.test.ts", "ui/tests/**/*.test.ts"],
     environment: "node",
   },
   build: {

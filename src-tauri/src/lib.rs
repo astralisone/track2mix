@@ -1,16 +1,30 @@
-use track2mix_core::analyze::{self, AnalyzeOptions, AnalyzeSummary};
-use track2mix_core::export::{energy_score as energy_score_fn, write_m3u8};
-use track2mix_core::keys::Camelot;
-use track2mix_core::store::{Store, TrackRow};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
+use track2mix_core::analyze::{self, AnalyzeOptions, AnalyzeSummary};
+use track2mix_core::export::{
+    energy_score as energy_score_fn, write_m3u8, write_m3u_plain, write_tracklist_txt,
+};
+use track2mix_core::keys::Camelot;
+use track2mix_core::store::{Store, TrackRow};
 
 /// Playback / composition support. The webview decodes audio itself via
 /// `decodeAudioData`; these commands only hand it bytes, and only for
 /// tracks that exist in the open library (never arbitrary paths).
 mod playback;
+
+/// MP3 encoding (LAME) for composition exports.
+mod mp3;
+
+/// `.t2m` composition project files.
+mod project;
+
+/// Native queue player (rodio). Drives the player bar and the playlist
+/// builder; works even when the webview has no audio output.
+mod player;
+
+use player::{PlayerHandle, PlayerState, QueueItem};
 
 /// The data we ship to the frontend. `TrackRow` is already serde-friendly but
 /// we add the 0–10 energy score and a parsed Camelot string so the UI doesn't
@@ -61,6 +75,23 @@ pub struct ExportArgs {
     pub path: String,
     pub playlist_name: String,
     pub track_ids: Vec<String>,
+    #[serde(default)]
+    pub format: ExportFormat,
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ExportFormat {
+    #[default]
+    M3u8,
+    M3u,
+    Txt,
+}
+
+/// Lock that survives poisoning: the guarded data is plain state, so a panic
+/// elsewhere shouldn't take every later command down with it.
+fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    m.lock().unwrap_or_else(|e| e.into_inner())
 }
 
 /// App state: the open DB connection and the cached library min/max energy
@@ -82,8 +113,10 @@ impl AppState {
     /// playback commands so the frontend can only ever request files the
     /// user already imported.
     pub(crate) fn file_path_for(&self, track_id: &str) -> Result<PathBuf, String> {
-        let guard = self.inner.lock().unwrap();
-        let s = guard.as_ref().ok_or_else(|| "no library open".to_string())?;
+        let guard = lock(&self.inner);
+        let s = guard
+            .as_ref()
+            .ok_or_else(|| "no library open".to_string())?;
         let t = s
             .cache
             .iter()
@@ -99,7 +132,9 @@ impl AppState {
 
 impl Default for AppState {
     fn default() -> Self {
-        Self { inner: Mutex::new(None) }
+        Self {
+            inner: Mutex::new(None),
+        }
     }
 }
 
@@ -121,7 +156,11 @@ fn map_track(t: &TrackRow, emin: f32, emax: f32) -> UiTrack {
 }
 
 #[tauri::command]
-fn open_library(state: tauri::State<'_, AppState>, db_path: String) -> Result<LibraryPayload, String> {
+fn open_library(
+    state: tauri::State<'_, AppState>,
+    player: tauri::State<'_, PlayerHandle>,
+    db_path: String,
+) -> Result<LibraryPayload, String> {
     let path = PathBuf::from(&db_path);
     let store = Store::open(&path).map_err(|e| format!("open {}: {:#}", db_path, e))?;
     let stats = store.stats().map_err(|e| format!("stats: {:#}", e))?;
@@ -142,13 +181,20 @@ fn open_library(state: tauri::State<'_, AppState>, db_path: String) -> Result<Li
         max_energy: stats.max_energy,
     };
 
-    *state.inner.lock().unwrap() = Some(StateInner {
+    let mut guard = lock(&state.inner);
+    let switched = guard.as_ref().is_some_and(|s| s.db_path != path);
+    if switched {
+        // The queue holds paths from the old library; don't keep playing it.
+        let _ = player.stop();
+    }
+    *guard = Some(StateInner {
         db_path: path,
         store,
         min_energy: emin,
         max_energy: emax,
         cache: tracks,
     });
+    drop(guard);
 
     Ok(LibraryPayload {
         summary,
@@ -158,8 +204,10 @@ fn open_library(state: tauri::State<'_, AppState>, db_path: String) -> Result<Li
 
 #[tauri::command]
 fn compat(state: tauri::State<'_, AppState>, args: CompatArgs) -> Result<Vec<UiTrack>, String> {
-    let guard = state.inner.lock().unwrap();
-    let s = guard.as_ref().ok_or_else(|| "no library open".to_string())?;
+    let guard = lock(&state.inner);
+    let s = guard
+        .as_ref()
+        .ok_or_else(|| "no library open".to_string())?;
     let anchor = s
         .cache
         .iter()
@@ -219,10 +267,15 @@ fn compat(state: tauri::State<'_, AppState>, args: CompatArgs) -> Result<Vec<UiT
         .collect())
 }
 
+/// Write the playlist in the requested format; resolves to the number of
+/// rows actually written (playlist formats skip tracks with no path).
 #[tauri::command]
 fn export_playlist(state: tauri::State<'_, AppState>, args: ExportArgs) -> Result<usize, String> {
-    let guard = state.inner.lock().unwrap();
-    let s = guard.as_ref().ok_or_else(|| "no library open".to_string())?;
+    let guard = lock(&state.inner);
+    let s = guard
+        .as_ref()
+        .ok_or_else(|| "no library open".to_string())?;
+    // Keep the caller's order; ids not in the library are dropped here.
     let selected: Vec<TrackRow> = args
         .track_ids
         .iter()
@@ -231,12 +284,82 @@ fn export_playlist(state: tauri::State<'_, AppState>, args: ExportArgs) -> Resul
     if selected.is_empty() {
         return Err("no tracks selected".to_string());
     }
-    write_m3u8(
-        std::path::Path::new(&args.path),
-        &args.playlist_name,
-        &selected,
-    )
+    let out = std::path::Path::new(&args.path);
+    match args.format {
+        ExportFormat::M3u8 => write_m3u8(out, &args.playlist_name, &selected),
+        ExportFormat::M3u => write_m3u_plain(out, &selected),
+        ExportFormat::Txt => write_tracklist_txt(out, &args.playlist_name, &selected),
+    }
     .map_err(|e| format!("export: {:#}", e))
+}
+
+// --- Player commands -------------------------------------------------------
+// Flat params: the frontend sends `{ trackIds, startIndex }`, `{ secs }`,
+// `{ v }`, which Tauri maps to these snake_case names.
+
+#[tauri::command]
+fn player_play(
+    state: tauri::State<'_, AppState>,
+    player: tauri::State<'_, PlayerHandle>,
+    track_ids: Vec<String>,
+    start_index: usize,
+) -> Result<(), String> {
+    let items: Vec<QueueItem> = {
+        let guard = lock(&state.inner);
+        let s = guard
+            .as_ref()
+            .ok_or_else(|| "no library open".to_string())?;
+        // Index-based queue: duplicates are kept, unknown ids stay as pathless
+        // entries so the UI's indices line up and the player skips them.
+        track_ids
+            .into_iter()
+            .map(|id| {
+                let path = s
+                    .cache
+                    .iter()
+                    .find(|t| t.track_id == id)
+                    .and_then(|t| t.file_path.as_ref())
+                    .map(PathBuf::from);
+                QueueItem { track_id: id, path }
+            })
+            .collect()
+    };
+    player.play(items, start_index)
+}
+
+#[tauri::command]
+fn player_toggle(player: tauri::State<'_, PlayerHandle>) -> Result<(), String> {
+    player.toggle()
+}
+
+#[tauri::command]
+fn player_next(player: tauri::State<'_, PlayerHandle>) -> Result<(), String> {
+    player.next()
+}
+
+#[tauri::command]
+fn player_prev(player: tauri::State<'_, PlayerHandle>) -> Result<(), String> {
+    player.prev()
+}
+
+#[tauri::command]
+fn player_seek(player: tauri::State<'_, PlayerHandle>, secs: f64) -> Result<(), String> {
+    player.seek(secs)
+}
+
+#[tauri::command]
+fn player_volume(player: tauri::State<'_, PlayerHandle>, v: f32) -> Result<(), String> {
+    player.volume(v)
+}
+
+#[tauri::command]
+fn player_stop(player: tauri::State<'_, PlayerHandle>) -> Result<(), String> {
+    player.stop()
+}
+
+#[tauri::command]
+fn player_status(player: tauri::State<'_, PlayerHandle>) -> PlayerState {
+    player.status()
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -251,10 +374,7 @@ pub struct AnalyzeArgs {
 }
 
 #[tauri::command]
-async fn analyze_xml(
-    app: tauri::AppHandle,
-    args: AnalyzeArgs,
-) -> Result<AnalyzeSummary, String> {
+async fn analyze_xml(app: tauri::AppHandle, args: AnalyzeArgs) -> Result<AnalyzeSummary, String> {
     let opts = AnalyzeOptions {
         xml_path: PathBuf::from(&args.xml_path),
         db_path: PathBuf::from(&args.db_path),
@@ -302,6 +422,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState::default())
+        .setup(|app| {
+            let handle = app.handle().clone();
+            app.manage(PlayerHandle::spawn(Box::new(move |s| {
+                let _ = handle.emit(player::STATE_EVENT, s);
+            })));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             open_library,
             compat,
@@ -310,8 +437,26 @@ pub fn run() {
             analyze_xml,
             playback::read_track_audio,
             playback::decode_track_pcm,
-            playback::write_recording
+            playback::write_recording,
+            project::read_project,
+            project::write_project,
+            player_play,
+            player_toggle,
+            player_next,
+            player_prev,
+            player_seek,
+            player_volume,
+            player_stop,
+            player_status
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                // Stop the audio thread before the runtime tears down.
+                if let Some(p) = app.try_state::<PlayerHandle>() {
+                    p.shutdown();
+                }
+            }
+        });
 }
