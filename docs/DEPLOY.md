@@ -23,28 +23,34 @@ There is no build step — the pages are hand-written HTML, CSS and one JS file.
 
 ### Deploys happen on push to main
 
-`.github/workflows/deploy.yml` runs `wrangler deploy` on every push to `main`
-that touches `site/`, `worker/`, `migrations/` or `wrangler.toml` (and on
-manual dispatch), after running the Worker tests. It needs two repository
-secrets:
+**Cloudflare Workers Builds** is connected to `astralisone/track2mix` and runs
+`wrangler deploy` on every push to `main`; the deployments it makes show up in
+`npx wrangler deployments list` with no source message. Verify after a push
+with:
+
+```bash
+npx wrangler deployments list | grep -A1 Created | tail -4
+```
+
+Build settings live in the Cloudflare dashboard (**Workers & Pages →
+track2mix → Settings → Builds**), not in the repository. The default deploy
+command is all it needs because there is no build step.
+
+**Manual fallback.** `.github/workflows/deploy.yml` runs the same deploy from
+GitHub Actions on manual dispatch (Actions → *Deploy site (manual fallback)* →
+Run workflow), after the Worker tests. It needs two repository secrets:
 
 | Secret | Value |
 | --- | --- |
-| `CLOUDFLARE_ACCOUNT_ID` | the account ID shown by `npx wrangler whoami` |
+| `CLOUDFLARE_ACCOUNT_ID` | the account ID shown by `npx wrangler whoami` (already set) |
 | `CLOUDFLARE_API_TOKEN` | [dash.cloudflare.com → My Profile → API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token** → *Edit Cloudflare Workers* template |
 
 ```bash
-gh secret set CLOUDFLARE_ACCOUNT_ID --body "<account id>"
 gh secret set CLOUDFLARE_API_TOKEN            # paste the token when prompted
 ```
 
-A missing secret fails the job with a message naming it. Watch a run with
-`gh run watch`. The deploy job uses a GitHub environment called `production`;
-if you want a manual approval gate, add required reviewers to that
-environment in **Settings → Environments**.
-
-`npm run deploy` still deploys by hand from a checkout using your local
-`wrangler login`, which is how the first deploys were done.
+`npm run deploy` deploys by hand from a checkout using your local
+`wrangler login`.
 
 Check the config before pushing:
 

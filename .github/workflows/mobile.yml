@@ -17,6 +17,8 @@ jobs:
   android:
     name: Android (tablet, .aab + .apk)
     runs-on: ubuntu-latest
+    env:
+      HAVE_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,7 +48,9 @@ jobs:
       - name: Write keystore.properties
         # Absent secrets → the step is skipped and Gradle logs that the build
         # is unsigned (see app/build.gradle.kts). Nothing fails silently.
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        # (`secrets` cannot be read in an `if`, so the presence check is
+        # computed into HAVE_KEYSTORE at the job level.)
+        if: ${{ env.HAVE_KEYSTORE == 'true' }}
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}

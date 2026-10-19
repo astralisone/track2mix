@@ -1,9 +1,10 @@
-name: Deploy site
+name: Deploy site (manual fallback)
 
-# Every push to main that touches the site or the Worker deploys
-# track2mix.com. The deploy is the same `wrangler deploy` that docs/DEPLOY.md
-# describes for a manual run, preceded by the Worker tests so a broken contact
-# endpoint never ships.
+# track2mix.com deploys on every push to main through Cloudflare Workers
+# Builds, which is connected to this repository and runs `wrangler deploy`
+# (see docs/DEPLOY.md). This workflow is the fallback for when that is
+# unavailable: run it by hand from the Actions tab. It runs the Worker tests
+# first so a broken contact endpoint never ships.
 #
 # Needs two repository secrets:
 #   CLOUDFLARE_ACCOUNT_ID  the account that owns the "track2mix" Worker
@@ -13,14 +14,6 @@ name: Deploy site
 # inside wrangler with an authentication error.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "site/**"
-      - "worker/**"
-      - "migrations/**"
-      - "wrangler.toml"
-      - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
 concurrency:
