@@ -36,6 +36,40 @@ Build settings live in the Cloudflare dashboard (**Workers & Pages →
 track2mix → Settings → Builds**), not in the repository. The default deploy
 command is all it needs because there is no build step.
 
+### The domain is still on the old Pages project (as of 19 Oct 2026)
+
+Workers Builds deploys the Worker on every push, and the result is live at
+`https://track2mix.gregory-a-starr.workers.dev`. But `track2mix.com` and
+`downloads.track2mix.com` are still **custom domains of the Cloudflare Pages
+project `track2mix`** (`npx wrangler pages project list` shows them there),
+whose last deployment was the mid-October site. So pushes update the Worker
+and the domain keeps serving the old pages.
+
+To point the domain at the Worker (one-time, a couple of minutes):
+
+1. Dashboard → **Workers & Pages → track2mix (the Pages project) → Custom
+   domains** → remove `track2mix.com` and `downloads.track2mix.com`. This
+   deletes the CNAMEs to `track2mix.pages.dev`.
+2. Add the hostnames to `wrangler.toml` as Worker Custom Domains, so they
+   travel with the config:
+
+   ```toml
+   routes = [
+     { pattern = "track2mix.com", custom_domain = true },
+     { pattern = "downloads.track2mix.com", custom_domain = true },
+   ]
+   ```
+
+3. `npx wrangler deploy` once from a checkout (it creates the DNS records and
+   certificates), or push and let Workers Builds do it. Confirm with
+   `curl -sI https://track2mix.com/ | grep cf-ray` and a look at the page.
+4. Optionally delete the Pages project afterwards
+   (`npx wrangler pages project delete track2mix`) so it cannot be deployed to
+   by mistake.
+
+Wrangler cannot detach a Pages custom domain, which is why step 1 is a
+dashboard action.
+
 **Manual fallback.** `.github/workflows/deploy.yml` runs the same deploy from
 GitHub Actions on manual dispatch (Actions → *Deploy site (manual fallback)* →
 Run workflow), after the Worker tests. It needs two repository secrets:
