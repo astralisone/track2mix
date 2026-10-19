@@ -4615,7 +4615,7 @@ dependencies = [
 
 [[package]]
 name = "track2mix"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -4631,7 +4631,7 @@ dependencies = [
 
 [[package]]
 name = "track2mix-tauri"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "mp3lame-encoder",
@@ -4642,6 +4642,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
+ "tauri-plugin-fs",
  "track2mix",
  "urlencoding",
 ]

@@ -24,9 +24,26 @@ returning contact updates their name and `updated_at` instead of inserting
 again.
 
 **`contact_events`** — one row per interaction, carrying `app`, `event` and a
-JSON `metadata` blob. Track2Mix writes `download_requested` with
-`app = "track2mix"`. Your next app writes its own events against the same
-contact.
+JSON `metadata` blob. Track2Mix writes two events with `app = "track2mix"`:
+
+| `event` | When | `metadata.platform` |
+| --- | --- | --- |
+| `download_requested` | the desktop download form (name + email) | `"desktop"` |
+| `store_interest` | the tablet "tell me when it's out" form (email only) | `"ipad"` or `"android"` |
+
+The form sends `interest`; anything other than `desktop`, `ipad` or `android`
+is rejected with a 400 that names the value. A `store_interest` response
+carries no `download_url` — there is nothing to download, the app is bought in
+the store. Your next app writes its own events against the same contact.
+
+Everyone waiting for a store listing, so they can be emailed when it goes live:
+
+```sql
+SELECT c.email, json_extract(e.metadata, '$.platform') AS platform, e.occurred_at
+FROM contact_events e JOIN contacts c ON c.id = e.contact_id
+WHERE e.app = 'track2mix' AND e.event = 'store_interest'
+ORDER BY platform, e.occurred_at;
+```
 
 To find everyone who has touched anything:
 
@@ -109,8 +126,8 @@ npx wrangler deploy --dry-run
 ### 5. Test it locally before deploying
 
 ```bash
-node worker/contact.test.mjs                # 21 assertions, no network
-node worker/index.test.mjs                  # 22 assertions, routing and headers
+node worker/contact.test.mjs                # 39 assertions, no network
+node worker/index.test.mjs                  # 28 assertions, routing and headers
 wrangler dev --d1 CONTACTS_DB=contacts
 ```
 

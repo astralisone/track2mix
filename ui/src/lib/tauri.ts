@@ -38,6 +38,15 @@ export async function openLibrary(dbPath: string): Promise<LibraryPayload> {
   return invoke<LibraryPayload>("open_library", { dbPath });
 }
 
+/**
+ * Tablet builds: copy a library chosen in the system file picker into the
+ * app's data directory and open it. `source` is whatever the dialog returned —
+ * a path, a `file://` URL, or an Android `content://` URI.
+ */
+export async function importLibrary(source: string): Promise<LibraryPayload> {
+  return invoke<LibraryPayload>("import_library", { source });
+}
+
 export type CompatArgs = {
   track_id: string;
   bpm_tol: number;
@@ -57,7 +66,7 @@ export type ExportArgs = {
   path: string;
   playlist_name: string;
   track_ids: string[];
-  /** Accepted for forward compatibility; the current backend always writes m3u8. */
+  /** Defaults to m3u8 on the backend; m3u and txt are written as described above. */
   format?: ExportFormat;
 };
 

@@ -337,8 +337,10 @@ would cost you.
 Revenue becomes realistic later, in one of three ways, and you'll know which by
 what people ask for:
 
-1. **A paid tier** for genuinely heavier features (set-arc planning, learned
-   energy weights, Serato/Traktor support) while today's features stay free.
+1. **The tablet apps**, already priced and in the stores (§7b), and later a
+   paid desktop tier for genuinely heavier features (learned energy weights,
+   Serato/Traktor support, key-lock time-stretching) while today's features
+   stay free.
 2. **Recurring support** from the small group for whom it becomes essential —
    Ko-fi monthly, GitHub Sponsors.
 3. **Nothing.** It stays a free tool that builds your reputation as someone who
@@ -351,6 +353,33 @@ adding tracking to a tool marketed on "nothing leaves your machine" would cost
 you more than the data is worth.
 
 ---
+
+## 7b. The tablet apps: a fixed price, and why
+
+The desktop stays pay-what-you-want. The iPad and Android tablet builds go
+through the App Store and Google Play, which don't do PWYW, so they carry a
+price: **$19.99 one-time** (launch fortnight at $14.99), no subscription, no
+in-app purchases. The full reasoning and the comparison set are in
+[docs/MOBILE.md](docs/MOBILE.md#pricing); the short version:
+
+- It's anchored to the $15 "most common" tip, so the FAQ's promise holds: a
+  desktop user who tipped the typical amount doesn't pay more for the tablet.
+- After the stores' 15 % small-business cut it nets ~$17 a sale. Halving the
+  price would need twice the buyers just to break even, and this niche doesn't
+  have them.
+- It sits clearly under Mixed In Key ($58) and the subscription tools
+  ($10–15/month) while reading as a real tool rather than a $2.99 utility.
+
+Rules for the store listings and the site's tablet section: don't mention the
+tip jar or pay-what-you-want there (the stores prohibit steering to outside
+payment, and it muddies the offer); do say the free desktop analyser exists,
+because the tablet app needs a library made with it. Someone who lands on the
+store page and buys without ever seeing the site is the best case, not a leak.
+
+What to measure: visits to `#tablet` → store badge clicks (Cloudflare Web
+Analytics), store page views → purchases (App Store Connect / Play Console),
+and the `store_interest` rows while the listings are still "coming soon" —
+that count is the pre-order list.
 
 ## 8. The next three things to build
 
