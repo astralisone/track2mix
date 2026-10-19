@@ -1,0 +1,70 @@
+name: Deploy site
+
+# Every push to main that touches the site or the Worker deploys
+# track2mix.com. The deploy is the same `wrangler deploy` that docs/DEPLOY.md
+# describes for a manual run, preceded by the Worker tests so a broken contact
+# endpoint never ships.
+#
+# Needs two repository secrets:
+#   CLOUDFLARE_ACCOUNT_ID  the account that owns the "track2mix" Worker
+#   CLOUDFLARE_API_TOKEN   a token with the "Edit Cloudflare Workers" template
+#                          (dash.cloudflare.com → My Profile → API Tokens)
+# A missing token fails the job with a message naming it, rather than failing
+# inside wrangler with an authentication error.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "worker/**"
+      - "migrations/**"
+      - "wrangler.toml"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: wrangler deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check the secrets exist
+        env:
+          HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          HAS_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          ok=true
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is not set. Create a token with the 'Edit Cloudflare Workers' template and add it: gh secret set CLOUDFLARE_API_TOKEN"
+            ok=false
+          fi
+          if [ "$HAS_ACCOUNT" != "true" ]; then
+            echo "::error::CLOUDFLARE_ACCOUNT_ID is not set: gh secret set CLOUDFLARE_ACCOUNT_ID"
+            ok=false
+          fi
+          $ok
+
+      - name: Test the Worker before shipping it
+        run: |
+          node --check site/main.js
+          node worker/contact.test.mjs
+          node worker/index.test.mjs
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
+          command: deploy
