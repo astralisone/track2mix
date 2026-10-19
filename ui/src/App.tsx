@@ -4,6 +4,7 @@ import {
   defaultDbPath,
   onAnalyzeProgress,
   openLibrary,
+  importLibrary,
   type AnalyzeSummary,
   type LibrarySummary,
   type ProgressEvent,
@@ -20,6 +21,7 @@ import {
 import { proposeOrder, reconcileOrder } from "@/lib/mix";
 import { PlayerProvider, usePlayer, type PlayerApi } from "@/lib/player";
 import { useProject } from "@/lib/useProject";
+import { isMobile } from "@/lib/platform";
 import { FilterPane } from "./components/FilterPane";
 import { Logo } from "./components/Logo";
 import { TrackTable, type SortKey } from "./components/TrackTable";
@@ -191,11 +193,13 @@ function App() {
     };
   }, []);
 
-  async function loadDb(p: string) {
+  async function loadDb(p: string, mode: "open" | "import" = "open") {
     setLoading(true);
     setLoadErr(null);
     try {
-      const payload = await openLibrary(p);
+      const payload =
+        mode === "import" ? await importLibrary(p) : await openLibrary(p);
+      setDbPath(payload.summary.db_path);
       setSummary(payload.summary);
       setTracks(payload.tracks);
       setSelected(new Set());
@@ -226,7 +230,9 @@ function App() {
       });
       if (typeof picked === "string") {
         setDbPath(picked);
-        await loadDb(picked);
+        // Tablets: the picker's result is not a path SQLite can open in
+        // place, so the library is copied into the app's data directory.
+        await loadDb(picked, isMobile ? "import" : "open");
       }
     } catch (e) {
       setLoadErr(String(e));
@@ -449,7 +455,7 @@ function App() {
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       {/* Title bar */}
       <header className="drag-region h-10 flex items-center justify-between px-4 border-b border-white/5">
-        <div className="flex items-center gap-2 pl-16">
+        <div className={`flex items-center gap-2 ${isMobile ? "pl-1" : "pl-16"}`}>
           <Logo className="h-[18px] w-[18px]" />
           <span className="text-sm font-medium tracking-tight">
             Track2Mix
@@ -504,28 +510,34 @@ function App() {
           />
         </div>
         <div className="no-drag flex items-center gap-2">
-          <label
-            className="flex items-center gap-1.5 text-[11px] text-muted-foreground select-none cursor-pointer pr-1"
-            title="When importing XML, skip tracks that are already in the database"
-          >
-            <input
-              type="checkbox"
-              className="accent-iris-500"
-              checked={skipAnalyzed}
-              onChange={(e) => setSkipAnalyzed(e.target.checked)}
-              disabled={analyzing}
-            />
-            skip analyzed
-          </label>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={pickXml}
-            disabled={analyzing}
-          >
-            <FileUp className="h-3.5 w-3.5" />
-            Import Rekordbox XML
-          </Button>
+          {/* Analysis needs the audio files and the Rekordbox export, which
+              live on the computer; the tablet builds only open libraries. */}
+          {!isMobile && (
+            <>
+              <label
+                className="flex items-center gap-1.5 text-[11px] text-muted-foreground select-none cursor-pointer pr-1"
+                title="When importing XML, skip tracks that are already in the database"
+              >
+                <input
+                  type="checkbox"
+                  className="accent-iris-500"
+                  checked={skipAnalyzed}
+                  onChange={(e) => setSkipAnalyzed(e.target.checked)}
+                  disabled={analyzing}
+                />
+                skip analyzed
+              </label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={pickXml}
+                disabled={analyzing}
+              >
+                <FileUp className="h-3.5 w-3.5" />
+                Import Rekordbox XML
+              </Button>
+            </>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -624,30 +636,50 @@ function App() {
                       <div className="text-sm text-foreground mb-1">
                         No library loaded
                       </div>
-                      <div className="text-xs text-muted-foreground mb-4">
-                        In Rekordbox: <span className="text-foreground">File →
-                        Export Collection in xml format</span>, then point Track2Mix
-                        at the file.
-                      </div>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button variant="primary" onClick={pickXml}>
-                          <FileUp className="h-3.5 w-3.5" />
-                          Import Rekordbox XML
-                        </Button>
-                        <Button variant="secondary" onClick={pickDb}>
-                          <Database className="h-3.5 w-3.5" />
-                          Open existing .db
-                        </Button>
-                      </div>
-                      <label className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground select-none cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="accent-iris-500"
-                          checked={skipAnalyzed}
-                          onChange={(e) => setSkipAnalyzed(e.target.checked)}
-                        />
-                        Skip tracks already analyzed
-                      </label>
+                      {isMobile ? (
+                        <>
+                          <div className="text-xs text-muted-foreground mb-4">
+                            Analyse your collection with Track2Mix on your
+                            computer, copy the resulting{" "}
+                            <span className="text-foreground">library.db</span>{" "}
+                            to this tablet (Files, Drive, AirDrop, USB), then open
+                            it here.
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button variant="primary" onClick={pickDb}>
+                              <Database className="h-3.5 w-3.5" />
+                              Open library.db
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-xs text-muted-foreground mb-4">
+                            In Rekordbox: <span className="text-foreground">File →
+                            Export Collection in xml format</span>, then point Track2Mix
+                            at the file.
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button variant="primary" onClick={pickXml}>
+                              <FileUp className="h-3.5 w-3.5" />
+                              Import Rekordbox XML
+                            </Button>
+                            <Button variant="secondary" onClick={pickDb}>
+                              <Database className="h-3.5 w-3.5" />
+                              Open existing .db
+                            </Button>
+                          </div>
+                          <label className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground select-none cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="accent-iris-500"
+                              checked={skipAnalyzed}
+                              onChange={(e) => setSkipAnalyzed(e.target.checked)}
+                            />
+                            Skip tracks already analyzed
+                          </label>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (

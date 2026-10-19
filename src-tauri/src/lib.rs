@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
+use tauri_plugin_fs::{FilePath, FsExt, OpenOptions};
 use track2mix_core::analyze::{self, AnalyzeOptions, AnalyzeSummary};
 use track2mix_core::export::{
     energy_score as energy_score_fn, write_m3u8, write_m3u_plain, write_tracklist_txt,
@@ -161,7 +162,73 @@ fn open_library(
     player: tauri::State<'_, PlayerHandle>,
     db_path: String,
 ) -> Result<LibraryPayload, String> {
-    let path = PathBuf::from(&db_path);
+    open_library_at(&state, &player, PathBuf::from(&db_path))
+}
+
+/// Where the tablet builds keep the library: the app's own data directory.
+/// Nothing else on iPadOS or Android is a stable, writable, plain file path.
+fn app_library_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("app data dir: {e}"))?;
+    std::fs::create_dir_all(&dir).map_err(|e| format!("create {}: {e}", dir.display()))?;
+    Ok(dir.join("library.db"))
+}
+
+/// Copy a library the user picked in the system file picker into the app's
+/// data directory and open it. On iPadOS the picker returns a security-scoped
+/// copy and on Android a `content://` URI; neither is a path SQLite can open
+/// directly, so the bytes are pulled through the fs plugin, which resolves
+/// both, and written to a real file. The copy is atomic (temp file + rename)
+/// so a failed import never leaves a half-written database behind.
+#[tauri::command]
+fn import_library(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    player: tauri::State<'_, PlayerHandle>,
+    source: FilePath,
+) -> Result<LibraryPayload, String> {
+    let dest = app_library_path(&app)?;
+    let tmp = dest.with_extension("db.importing");
+
+    let mut opts = OpenOptions::new();
+    opts.read(true);
+    let mut from = app
+        .fs()
+        .open(source.clone(), opts)
+        .map_err(|e| format!("open {}: {e}", source))?;
+    let mut to =
+        std::fs::File::create(&tmp).map_err(|e| format!("create {}: {e}", tmp.display()))?;
+    let copied = std::io::copy(&mut from, &mut to)
+        .map_err(|e| format!("copy {} → {}: {e}", source, tmp.display()))?;
+    drop(to);
+    if copied < 100 {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(format!(
+            "{} is {} bytes — not a Track2Mix library (expected a SQLite file produced by the desktop app or the CLI)",
+            source, copied
+        ));
+    }
+    // The library may be the one currently open; drop it before replacing the file.
+    {
+        let mut guard = lock(&state.inner);
+        if guard.as_ref().is_some_and(|s| s.db_path == dest) {
+            let _ = player.stop();
+            *guard = None;
+        }
+    }
+    std::fs::rename(&tmp, &dest).map_err(|e| format!("replace {}: {e}", dest.display()))?;
+
+    open_library_at(&state, &player, dest)
+}
+
+fn open_library_at(
+    state: &tauri::State<'_, AppState>,
+    player: &tauri::State<'_, PlayerHandle>,
+    path: PathBuf,
+) -> Result<LibraryPayload, String> {
+    let db_path = path.display().to_string();
     let store = Store::open(&path).map_err(|e| format!("open {}: {:#}", db_path, e))?;
     let stats = store.stats().map_err(|e| format!("stats: {:#}", e))?;
     let tracks = store.list_all().map_err(|e| format!("list: {:#}", e))?;
@@ -270,7 +337,11 @@ fn compat(state: tauri::State<'_, AppState>, args: CompatArgs) -> Result<Vec<UiT
 /// Write the playlist in the requested format; resolves to the number of
 /// rows actually written (playlist formats skip tracks with no path).
 #[tauri::command]
-fn export_playlist(state: tauri::State<'_, AppState>, args: ExportArgs) -> Result<usize, String> {
+fn export_playlist(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    args: ExportArgs,
+) -> Result<usize, String> {
     let guard = lock(&state.inner);
     let s = guard
         .as_ref()
@@ -284,13 +355,52 @@ fn export_playlist(state: tauri::State<'_, AppState>, args: ExportArgs) -> Resul
     if selected.is_empty() {
         return Err("no tracks selected".to_string());
     }
-    let out = std::path::Path::new(&args.path);
-    match args.format {
-        ExportFormat::M3u8 => write_m3u8(out, &args.playlist_name, &selected),
-        ExportFormat::M3u => write_m3u_plain(out, &selected),
-        ExportFormat::Txt => write_tracklist_txt(out, &args.playlist_name, &selected),
+    // The save dialog returns a plain path on the desktop. On iPadOS and
+    // Android it returns a location std::fs cannot write (a security-scoped
+    // URL, a content:// URI), so the playlist is written to a temp file and
+    // the bytes are copied through the fs plugin, which resolves both.
+    let dest: FilePath = args
+        .path
+        .parse()
+        .map_err(|e| format!("export destination {:?}: {e}", args.path))?;
+    let direct = dest.as_path().map(|p| p.to_path_buf());
+
+    let (out, staged): (PathBuf, bool) = match direct {
+        Some(p) if !cfg!(mobile) => (p, false),
+        _ => {
+            let dir = app
+                .path()
+                .app_cache_dir()
+                .map_err(|e| format!("app cache dir: {e}"))?;
+            std::fs::create_dir_all(&dir).map_err(|e| format!("create {}: {e}", dir.display()))?;
+            let ext = match args.format {
+                ExportFormat::M3u8 => "m3u8",
+                ExportFormat::M3u => "m3u",
+                ExportFormat::Txt => "txt",
+            };
+            (dir.join(format!("export.{ext}")), true)
+        }
+    };
+
+    let written = match args.format {
+        ExportFormat::M3u8 => write_m3u8(&out, &args.playlist_name, &selected),
+        ExportFormat::M3u => write_m3u_plain(&out, &selected),
+        ExportFormat::Txt => write_tracklist_txt(&out, &args.playlist_name, &selected),
     }
-    .map_err(|e| format!("export: {:#}", e))
+    .map_err(|e| format!("export: {:#}", e))?;
+
+    if staged {
+        let bytes = std::fs::read(&out).map_err(|e| format!("read {}: {e}", out.display()))?;
+        let mut opts = OpenOptions::new();
+        opts.read(false).write(true).create(true).truncate(true);
+        let mut file = app
+            .fs()
+            .open(dest.clone(), opts)
+            .map_err(|e| format!("open {} for writing: {e}", dest))?;
+        std::io::Write::write_all(&mut file, &bytes).map_err(|e| format!("write {}: {e}", dest))?;
+        let _ = std::fs::remove_file(&out);
+    }
+    Ok(written)
 }
 
 // --- Player commands -------------------------------------------------------
@@ -395,8 +505,18 @@ async fn analyze_xml(app: tauri::AppHandle, args: AnalyzeArgs) -> Result<Analyze
 }
 
 #[tauri::command]
-fn default_db_path() -> String {
-    // Heuristic: cwd/library.db. Falls back to ~/library.db.
+fn default_db_path(app: tauri::AppHandle) -> String {
+    // Tablets: the only library is the one imported into the app's data dir.
+    if cfg!(mobile) {
+        match app_library_path(&app) {
+            Ok(p) => return p.display().to_string(),
+            Err(e) => {
+                eprintln!("default_db_path: {e}");
+                return "library.db".to_string();
+            }
+        }
+    }
+    // Desktop heuristic: cwd/library.db. Falls back to ~/library.db.
     if let Ok(cwd) = std::env::current_dir() {
         let p = cwd.join("library.db");
         if p.exists() {
@@ -421,6 +541,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .manage(AppState::default())
         .setup(|app| {
             let handle = app.handle().clone();
@@ -431,6 +552,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             open_library,
+            import_library,
             compat,
             export_playlist,
             default_db_path,

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "com.track2mix.app",
+  "productName": "Track2Mix",
+  "app": {
+    "windows": [
+      {
+        "title": "Track2Mix",
+        "decorations": false,
+        "titleBarStyle": "Visible",
+        "backgroundColor": "#01020F"
+      }
+    ]
+  },
+  "bundle": {
+    "android": {
+      "minSdkVersion": 26
+    }
+  }
+}

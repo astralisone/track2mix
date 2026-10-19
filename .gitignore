@@ -34,3 +34,11 @@ Thumbs.db
 # Locally built release artifacts
 release-v0.1.0/*.tar.gz
 release-build/
+
+# Android signing material (see docs/MOBILE.md) — never in git
+src-tauri/gen/android/keystore.properties
+*.jks
+*.keystore
+
+# Local wrangler state (dev server cache, temp bundles)
+.wrangler/
