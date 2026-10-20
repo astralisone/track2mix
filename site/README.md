@@ -86,7 +86,7 @@ in [docs/CONTACTS.md](../docs/CONTACTS.md#payments).
 
 ## Before you launch
 
-- [ ] Create the D1 database, apply the schema and bind it, then submit the
+- [x] Create the D1 database, apply the schema and bind it, then submit the
       form once and confirm the row lands in `contacts` and the person lands in
       your mailing list. See [docs/CONTACTS.md](../docs/CONTACTS.md).
 - [ ] Set at least one handle in `PAYMENTS` and click a tier to confirm it opens

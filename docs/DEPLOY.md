@@ -36,39 +36,45 @@ Build settings live in the Cloudflare dashboard (**Workers & Pages →
 track2mix → Settings → Builds**), not in the repository. The default deploy
 command is all it needs because there is no build step.
 
-### The domain is still on the old Pages project (as of 19 Oct 2026)
+### The domain: Worker Custom Domains (moved 20 Oct 2026)
 
-Workers Builds deploys the Worker on every push, and the result is live at
-`https://track2mix.gregory-a-starr.workers.dev`. But `track2mix.com` and
-`downloads.track2mix.com` are still **custom domains of the Cloudflare Pages
-project `track2mix`** (`npx wrangler pages project list` shows them there),
-whose last deployment was the mid-October site. So pushes update the Worker
-and the domain keeps serving the old pages.
+`track2mix.com` and `downloads.track2mix.com` are Worker Custom Domains,
+declared in `wrangler.toml` so they travel with the config:
 
-To point the domain at the Worker (one-time, a couple of minutes):
+```toml
+routes = [
+  { pattern = "track2mix.com", custom_domain = true },
+  { pattern = "downloads.track2mix.com", custom_domain = true },
+]
+workers_dev = true
+```
 
-1. Dashboard → **Workers & Pages → track2mix (the Pages project) → Custom
-   domains** → remove `track2mix.com` and `downloads.track2mix.com`. This
-   deletes the CNAMEs to `track2mix.pages.dev`.
-2. Add the hostnames to `wrangler.toml` as Worker Custom Domains, so they
-   travel with the config:
+`workers_dev = true` is there on purpose: declaring routes makes wrangler turn
+the `https://track2mix.gregory-a-starr.workers.dev` URL off by default, and that
+URL is the way to check a deploy independently of DNS.
 
-   ```toml
-   routes = [
-     { pattern = "track2mix.com", custom_domain = true },
-     { pattern = "downloads.track2mix.com", custom_domain = true },
-   ]
-   ```
+Before 20 Oct the two hostnames were custom domains of a **Cloudflare Pages
+project also named `track2mix`**, so pushes updated the Worker while the domain
+kept serving the old Pages site. The move, for the record and for the next
+domain that needs it:
 
-3. `npx wrangler deploy` once from a checkout (it creates the DNS records and
-   certificates), or push and let Workers Builds do it. Confirm with
-   `curl -sI https://track2mix.com/ | grep cf-ray` and a look at the page.
-4. Optionally delete the Pages project afterwards
-   (`npx wrangler pages project delete track2mix`) so it cannot be deployed to
-   by mistake.
+1. Detach the hostnames from the Pages project. The dashboard does it under
+   **Workers & Pages → track2mix (Pages) → Custom domains**; so does the API
+   with the `wrangler login` token:
+   `DELETE /accounts/<id>/pages/projects/track2mix/domains/<hostname>`.
+2. **Delete the DNS records the Pages project left behind** (the CNAMEs to
+   `track2mix.pages.dev`), in **DNS → Records** on the zone. Detaching does
+   *not* remove them, and while they exist the domain answers **522** and the
+   Worker refuses to claim it: *"already has externally managed DNS records,
+   delete them first"* (code 100117). Wrangler's "DNS records conflict, update
+   them?" prompt does not get past this either, and in a non-interactive shell
+   the prompt is auto-declined so the deploy silently skips the attach.
+3. `npx wrangler deploy` — Cloudflare creates the records and certificates.
+   Confirm with `curl -sI https://track2mix.com/ | grep -i cf-ray`.
 
-Wrangler cannot detach a Pages custom domain, which is why step 1 is a
-dashboard action.
+The Pages project still exists with no domains; delete it when convenient
+(`npx wrangler pages project delete track2mix`) so nothing deploys to it by
+mistake.
 
 **Manual fallback.** `.github/workflows/deploy.yml` runs the same deploy from
 GitHub Actions on manual dispatch (Actions → *Deploy site (manual fallback)* →
@@ -132,32 +138,21 @@ configured, already has the project, and gets the same result.
 
 ## 2. Attach the domain
 
-Project → **Custom domains → Set up a custom domain** → `track2mix.com`.
-
-Because the domain is already in the same Cloudflare account, the DNS record and
-certificate are created for you. Add `www.track2mix.com` the same way if you want
-it; Cloudflare will redirect it to the apex.
+Done — see "The domain: Worker Custom Domains" above. To add a hostname (say
+`www.track2mix.com`), append it to `routes` in `wrangler.toml` and deploy;
+make sure no DNS record for it exists first.
 
 ## 3. Turn the download form on
 
-Until this is done, `/api/contact` returns a 500 that names `CONTACTS_DB` as the
-missing binding. That is deliberate: the form reports the failure rather than
-pretending someone was signed up. The rest of the site works normally.
-
-```bash
-npm install -g wrangler
-wrangler login
-
-wrangler d1 create contacts
-# paste the printed database_id into wrangler.toml and uncomment that block
-
-wrangler d1 execute contacts --remote --file=./migrations/0001_contacts.sql
-```
-
-Uncommenting the `[[d1_databases]]` block in `wrangler.toml` is what binds it —
-on a Workers service the binding lives in config, not in the dashboard. Confirm
-it took with `npx wrangler deploy --dry-run`, which lists `env.CONTACTS_DB`
-among the bindings.
+Done — the `contacts` D1 database (`dfd0eb85-…`) is bound as `CONTACTS_DB` in
+`wrangler.toml` and the schema from `migrations/0001_contacts.sql` is applied.
+`npx wrangler deploy --dry-run` lists `env.CONTACTS_DB` among the bindings.
+Had it not been: `wrangler d1 create contacts`, paste the id into the
+`[[d1_databases]]` block, then
+`wrangler d1 execute contacts --remote --file=./migrations/0001_contacts.sql`.
+Without the binding `/api/contact` answers 500 naming `CONTACTS_DB`, which is
+deliberate: the form reports the failure rather than pretending someone was
+signed up.
 
 Finally the mailing list, so the download link can actually be sent:
 
@@ -197,23 +192,24 @@ apps is covered in [MOBILE.md](MOBILE.md).
 
 ## 6. Check it end to end
 
-- [ ] `https://track2mix.com` loads over HTTPS with no certificate warning.
-- [ ] Submit the download form with a real address, then confirm the row landed:
+- [x] `https://track2mix.com` loads over HTTPS with no certificate warning.
+- [x] Submit the download form with a real address, then confirm the row landed:
       `wrangler d1 execute contacts --remote --command "SELECT * FROM contacts"`.
 - [ ] Confirm the same address reached your mailing list.
 - [ ] Click a tip tier and confirm PayPal opens prefilled at the right amount.
 - [ ] On the iPad & Android section, confirm each badge either opens its store
       listing or says "Coming soon", and that the notify form saves a row with
       `event = 'store_interest'`.
-- [ ] Open `https://downloads.track2mix.com` and confirm the cards show the
+- [x] Open `https://downloads.track2mix.com` and confirm the cards show the
       latest GitHub release (the page fetches it; the static markup is the
       fallback when the API is unreachable).
-- [ ] `https://track2mix.com/privacy/` loads — both stores require it.
+- [x] `https://track2mix.com/privacy/` loads — both stores require it.
 - [ ] Turn on **Cloudflare Web Analytics** (free, no cookie banner) so you can
       see which channel actually sends traffic.
 
-## Why the D1 block is commented out
+## Why `database_id` must never be a placeholder
 
 Cloudflare validates `database_id` as a UUID. A placeholder there fails config
 validation and blocks the entire deploy — including the static site, which does
-not need the database. So the site ships first and the binding is added second.
+not need the database. That is why the block was commented out until the real
+id existed.

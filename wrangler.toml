@@ -17,6 +17,17 @@ main = "worker/index.js"
 # what changes: https://developers.cloudflare.com/workers/configuration/compatibility-dates/
 compatibility_date = "2025-09-30"
 
+# Worker Custom Domains: Cloudflare creates the DNS records and certificates on
+# deploy. These hostnames used to be custom domains of the old Pages project of
+# the same name; the move is documented in docs/DEPLOY.md.
+routes = [
+  { pattern = "track2mix.com", custom_domain = true },
+  { pattern = "downloads.track2mix.com", custom_domain = true },
+]
+# Declaring routes makes wrangler disable the workers.dev URL by default. Keep
+# it: docs/DEPLOY.md uses it to check a deploy independently of DNS.
+workers_dev = true
+
 [assets]
 # The static site, exactly as it sits in the repository. No build step: the
 # landing page is hand-written HTML, CSS and one JS file.
@@ -35,24 +46,15 @@ enabled = true
 
 # Central contacts database, shared by every app.
 #
-# Commented out on purpose: Cloudflare validates database_id as a UUID, so a
-# placeholder here fails the whole deploy and nothing goes live — including the
-# static site, which does not need the database at all. The site therefore ships
-# first and the binding is added second.
-#
-# To turn the download form on:
-#   1. wrangler d1 create contacts
-#   2. uncomment the block below and paste in the returned database_id
-#   3. wrangler d1 execute contacts --remote --file=./migrations/0001_contacts.sql
-#
-# Until then /api/contact answers 500 and names CONTACTS_DB as the missing
-# binding, which is deliberate — it never pretends to have saved a contact.
+# Created with `wrangler d1 create contacts`; the schema is applied with
+# `wrangler d1 execute contacts --remote --file=./migrations/0001_contacts.sql`.
+# Cloudflare validates database_id as a UUID, so never put a placeholder here:
+# it fails the whole deploy, including the static site.
 # Full walkthrough in docs/CONTACTS.md.
-#
-# [[d1_databases]]
-# binding = "CONTACTS_DB"
-# database_name = "contacts"
-# database_id = "<paste the id from wrangler d1 create>"
+[[d1_databases]]
+binding = "CONTACTS_DB"
+database_name = "contacts"
+database_id = "dfd0eb85-430c-4f06-95b3-9468d94a00f9"
 
 [vars]
 # Which app a contact_events row is attributed to. Every app writing to the
