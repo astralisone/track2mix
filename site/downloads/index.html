@@ -40,7 +40,8 @@
   .install-sub { color: var(--muted); margin-top: 10px; line-height: 1.5; max-width: 36ch; }
   .install-row ol { grid-column: 7 / 13; display: grid; gap: 14px; padding-left: 1.4em; max-width: 46ch; line-height: 1.55; }
   .install-row li::marker { color: var(--muted); }
-  pre { margin: 10px 0 0; max-width: 100%; padding: 12px 14px; background: var(--surface); font-family: var(--font-ui); font-size: 0.9375rem; line-height: 1.5; overflow-x: auto; white-space: pre; }
+  .install-row ol, .install-row li, .firstrun-grid ol, .firstrun-grid li, .firstrun-aside { min-width: 0; }
+  pre { margin: 10px 0 0; max-width: 100%; min-width: 0; padding: 12px 14px; background: var(--surface); font-family: var(--font-ui); font-size: 0.9375rem; line-height: 1.5; overflow-x: auto; white-space: pre; }
   .install-row .note { grid-column: 7 / 13; margin-top: 14px; max-width: 46ch; color: var(--muted); }
 
   .firstrun { padding: calc(var(--section) / 2) var(--margin); background: var(--surface); }
