@@ -62,6 +62,27 @@ majority who arrive via the site, not as access control. Hardening it properly
 would mean serving the binary from R2 behind a signed, expiring URL that
 `/api/contact` issues — worth doing only if the leakage turns out to matter.
 
+## The look: the dark room
+
+Both pages follow one art direction, dealt by the `design-taste-frontend` skill
+in `.agents/skills/` (direction "dark-room", seed 1132536334, brand palette and
+type kept; the sheet is reprinted with `node .agents/skills/design-taste-frontend/scripts/draw.mjs --show`).
+One dark ground, and in it lit things: the app's own interface fragments
+(`data-ui` blocks in `index.html`, styled under `[data-ui]` in `styles.css`), and
+four openly licensed pictures in `assets/pics/` with their credits in
+`assets/pics/credits.json` and in the footer. House rules the skill enforces:
+no eyebrow labels, no monospace outside the app fragments and code, no
+gradients, no glows, no icon cards, two-line headlines everywhere. Check a change
+with:
+
+```bash
+node .agents/skills/design-taste-frontend/scripts/lint.mjs site/index.html site/styles.css site/main.js
+node .agents/skills/design-taste-frontend/scripts/inspect.mjs site/index.html --allow palette-purple,mono
+```
+
+`--allow palette-purple,mono` is deliberate: iris is the app's own key colour and
+JetBrains Mono its own figures face, and both appear only inside the fragments.
+
 ## No tablet marketing here
 
 The site sells the desktop app only. The paid Android tablet app is marketed
@@ -88,7 +109,7 @@ in [docs/CONTACTS.md](../docs/CONTACTS.md#payments).
 - [x] Set at least one handle in `PAYMENTS` (`astralisboss`, the Astralis One
       business account; its PayPal.Me drops the amount, so the page says to
       enter it on PayPal's side).
-- [ ] Replace the hero preview and the Compose mock with **real screenshots**
+- [ ] Replace the interface fragments (the band and the Compose cards) with **real screenshots**
       of the app running on your own library. The markup in `index.html` under
       `<!-- Accurate rendering of the Track2Mix track view -->` is an honest
       rendering of the real columns with anonymised rows, but a genuine

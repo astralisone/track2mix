@@ -3,273 +3,254 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Downloads — Track2Mix</title>
-<meta name="description" content="Download Track2Mix for Windows, Debian/Ubuntu, Arch or other Linux, with install and first-run instructions.">
+<title>Download Track2Mix for Windows and Linux</title>
+<meta name="description" content="Download Track2Mix for Windows, Debian and Ubuntu, Fedora, Arch or any other Linux, with install and first-run steps and the checksums to verify the file.">
+<meta name="theme-color" content="#01020f">
 <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
 <link rel="apple-touch-icon" href="/assets/app-icon-256.png">
 <meta property="og:title" content="Download Track2Mix">
-<meta property="og:description" content="Pay-what-you-want desktop app for Windows and Linux. Runs entirely on your machine.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<meta property="og:description" content="Free, pay-what-you-want desktop app for Windows and Linux. Runs entirely on your machine.">
+<meta property="og:image" content="https://track2mix.com/assets/og.png">
+<link rel="preload" href="/assets/fonts/DMSans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add("js")</script>
+<link rel="stylesheet" href="/styles.css">
 <style>
-body{margin:0;background:#01020f}
-html{scroll-behavior:smooth}
-:target{scroll-margin-top:24px}
-a{color:#bec0ef}a:hover{color:#dedff7}
-.wrap{max-width:1120px;margin:0 auto;padding:0 24px;box-sizing:border-box}
-.eyebrow{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9ea0e7;margin:0}
-.card{background:#06071a;border:1px solid rgba(255,255,255,.08);border-radius:14px;box-sizing:border-box}
-.code{display:block;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;line-height:20px;background:#00010a;border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:10px 12px;color:#e1e1e3;overflow-x:auto;white-space:pre}
-.ic{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.92em;background:#0d0f28;border-radius:4px;padding:1px 5px;color:#e1e1e3}
-.dl{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:10px 16px;border-radius:10px;text-decoration:none;box-sizing:border-box}
-.dl-primary{background:#575ad0;color:#ffffff}
-.dl-primary:hover{background:#4a4dbd;color:#ffffff}
-.dl-secondary{background:#0d0f28;color:#e1e1e3;border:1px solid rgba(255,255,255,.08)}
-.dl-secondary:hover{background:#14173a;color:#ffffff}
-.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;color:#c9cbd3;font-size:15px;line-height:23px}
-.res{display:flex;flex-direction:column;gap:6px;padding:20px;text-decoration:none;color:#e1e1e3;flex:1 1 240px;min-height:44px}
-.res:hover{border-color:rgba(124,126,229,.5);color:#ffffff}
-@media (max-width:600px){.topnav a:not(:last-child){display:none}.plat{padding:20px !important;gap:24px !important}.wrap{padding:0 16px}}
+  /* This page: the dark room's other first screen, one dim photograph with the title at its foot. */
+  .dl-hero { position: relative; min-height: 92svh; overflow: hidden; background: var(--surface); display: grid; align-content: end; padding: 120px var(--margin) 48px; }
+  .dl-hero .hero-pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; filter: brightness(0.32) contrast(1.1); }
+  .dl-hero > * { position: relative; z-index: 1; }
+  .dl-hero h1 { font-size: var(--step-display); line-height: 0.9; letter-spacing: -0.035em; font-weight: 500; max-width: 10ch; margin-left: -0.04em; }
+  .dl-line { margin-top: 24px; font-size: var(--step-lead); max-width: 40ch; line-height: 1.35; }
+  .dl-version { margin-top: 12px; font-size: max(1.125rem, var(--step-body)); color: var(--muted); }
+  .dl-actions { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .dl-alt { text-decoration-color: currentColor; }
+
+  .lineup .row-link { text-decoration: none; }
+  .lineup .row-link span:last-child { color: var(--accent); }
+  .lineup .row-link:hover span:last-child { text-decoration: underline; text-underline-offset: 0.18em; }
+  .lineup .row-muted { color: var(--muted); }
+  .lineup .lineup-note { margin-top: 28px; font-size: var(--step-body); color: var(--muted); max-width: 60ch; line-height: 1.5; }
+
+  .install { padding: calc(var(--section) / 2) var(--margin); }
+  .install-row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: start; }
+  .install-row + .install-row { margin-top: 88px; }
+  .install-head { grid-column: 1 / 6; }
+  .install-row h2 { font-size: var(--step-head); font-weight: 500; }
+  .install-sub { color: var(--muted); margin-top: 10px; line-height: 1.5; max-width: 36ch; }
+  .install-row ol { grid-column: 7 / 13; display: grid; gap: 14px; padding-left: 1.4em; max-width: 46ch; line-height: 1.55; }
+  .install-row li::marker { color: var(--muted); }
+  pre { margin: 10px 0 0; max-width: 100%; padding: 12px 14px; background: var(--surface); font-family: var(--font-ui); font-size: 0.9375rem; line-height: 1.5; overflow-x: auto; white-space: pre; }
+  .install-row .note { grid-column: 7 / 13; margin-top: 14px; max-width: 46ch; color: var(--muted); }
+
+  .firstrun { padding: calc(var(--section) / 2) var(--margin); background: var(--surface); }
+  .firstrun h2 { font-size: var(--step-head); font-weight: 500; max-width: 20ch; }
+  .firstrun-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); row-gap: 48px; margin-top: 64px; }
+  .firstrun-pic { grid-column: 1 / 13; position: relative; min-height: 420px; overflow: hidden; background: var(--bg); }
+  .firstrun-pic .verb-video, .firstrun-pic .verb-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.55) saturate(0.6); }
+  .firstrun-pic .verb-poster { display: none; }
+  .firstrun-pic .report { position: absolute; right: 32px; bottom: 32px; width: min(420px, calc(100% - 64px)); }
+  [data-ui] .report-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 16px; font-size: 12px; }
+  [data-ui] .report-row b { font-weight: 500; }
+  [data-ui] .report-row:nth-child(5) b { color: #ffd156; }
+  .firstrun-grid ol { grid-column: 1 / 8; display: grid; gap: 18px; padding-left: 1.4em; max-width: 56ch; line-height: 1.55; }
+  .firstrun-grid ol b { font-weight: 500; }
+  .firstrun-aside { grid-column: 9 / 13; }
+  .firstrun-aside h3 { font-size: var(--step-lead); font-weight: 500; }
+  .firstrun-aside p { margin-top: 12px; color: var(--muted); max-width: 32ch; }
+
+  .dl-hero .dl-line, .dl-hero .dl-version, .dl-hero .dl-actions { position: relative; z-index: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    .js .dl-hero .dl-line, .js .dl-hero .dl-version, .js .dl-hero .dl-actions { opacity: 0; animation: fade-up 700ms var(--ease-out) 520ms forwards; }
+    .js .dl-hero .dl-version { animation-delay: 600ms; }
+    .js .dl-hero .dl-actions { animation-delay: 680ms; }
+  }
+  .end.end-short { height: 72svh; }
+  .end-short .end-pic { filter: brightness(0.3) contrast(1.15); }
+  .end-short .end-name text { font-size: 184px; }
+
+  @media (max-width: 59.99em) {
+    .dl-hero { padding: 100px 20px 32px; }
+    .dl-hero h1 { font-size: 19vw; }
+    .dl-line { font-size: 1.375rem; }
+    .install { padding-inline: 20px; }
+    .install-row ol { padding-left: 1.25em; }
+    pre { padding: 10px 12px; }
+    .install-row { display: block; }
+    .install-row + .install-row { margin-top: 56px; }
+    .install-row h2 { font-size: 1.75rem; }
+    .install-sub { max-width: none; }
+    .install-row ol { margin-top: 18px; max-width: none; }
+    .firstrun { padding-inline: 20px; }
+    .firstrun h2 { font-size: 1.75rem; }
+    .firstrun-grid { display: block; margin-top: 32px; }
+    .firstrun-pic { min-height: 0; aspect-ratio: 4 / 5; margin-bottom: 32px; }
+    .firstrun-pic .report { right: 12px; bottom: 12px; left: 12px; width: auto; }
+    .firstrun-grid ol { max-width: none; }
+    .firstrun-aside { margin-top: 40px; }
+    .firstrun-aside p { max-width: none; }
+  }
 </style>
 </head>
 <body>
-<div style="font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif; color: #e1e1e3; background: #01020f; min-height: 100vh; -webkit-font-smoothing: antialiased">
 
-  <header style="border-bottom: 1px solid rgba(255,255,255,0.08)">
-    <div class="wrap" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px">
-      <a href="https://track2mix.com" style="display: flex; align-items: center; gap: 10px; color: #e1e1e3; text-decoration: none; font-weight: 700; font-size: 18px">
-        <svg viewBox="0 0 48 48" width="28" height="28" fill="none" aria-hidden="true"><rect x="7" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"></rect><rect x="7" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"></rect><rect x="13" y="7.1" width="2.8" height="15.4" rx="1.4" fill="#7C7EE5"></rect><rect x="13" y="25.5" width="2.8" height="15.4" rx="1.4" fill="#F5B71C"></rect><rect x="19" y="12.7" width="2.8" height="9.8" rx="1.4" fill="#7C7EE5"></rect><rect x="19" y="25.5" width="2.8" height="9.8" rx="1.4" fill="#F5B71C"></rect><rect x="25" y="4.3" width="2.8" height="18.2" rx="1.4" fill="#7C7EE5"></rect><rect x="25" y="25.5" width="2.8" height="18.2" rx="1.4" fill="#F5B71C"></rect><rect x="31" y="9.9" width="2.8" height="12.6" rx="1.4" fill="#7C7EE5"></rect><rect x="31" y="25.5" width="2.8" height="12.6" rx="1.4" fill="#F5B71C"></rect><rect x="37" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"></rect><rect x="37" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"></rect><path d="M26.4 3V45" stroke="#E1E1E3" stroke-opacity="0.55" stroke-width="1.4" stroke-linecap="round"></path></svg>
-        Track2Mix
-      </a>
-      <nav class="topnav" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; font-size: 15px">
-        <a href="#install" style="color: #9ea4b2; text-decoration: none">Install</a>
-        <a href="#first-run" style="color: #9ea4b2; text-decoration: none">First run</a>
-        <a href="#verify" style="color: #9ea4b2; text-decoration: none">Verify</a>
-        <a href="https://github.com/astralisone/track2mix" style="color: #9ea4b2; text-decoration: none">GitHub</a>
-      </nav>
+<header class="top">
+  <a class="wordmark" href="https://track2mix.com">
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <rect x="7" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"/><rect x="7" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"/>
+      <rect x="13" y="7.1" width="2.8" height="15.4" rx="1.4" fill="#7C7EE5"/><rect x="13" y="25.5" width="2.8" height="15.4" rx="1.4" fill="#F5B71C"/>
+      <rect x="19" y="12.7" width="2.8" height="9.8" rx="1.4" fill="#7C7EE5"/><rect x="19" y="25.5" width="2.8" height="9.8" rx="1.4" fill="#F5B71C"/>
+      <rect x="25" y="4.3" width="2.8" height="18.2" rx="1.4" fill="#7C7EE5"/><rect x="25" y="25.5" width="2.8" height="18.2" rx="1.4" fill="#F5B71C"/>
+      <rect x="31" y="9.9" width="2.8" height="12.6" rx="1.4" fill="#7C7EE5"/><rect x="31" y="25.5" width="2.8" height="12.6" rx="1.4" fill="#F5B71C"/>
+      <rect x="37" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"/><rect x="37" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"/>
+      <path d="M26.4 3V45" stroke="#E1E1E3" stroke-opacity="0.55" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+    Track2Mix
+  </a>
+  <nav class="top-links" aria-label="Page">
+    <a href="#install" class="only-wide">Install</a>
+    <a href="#first-run" class="only-wide">First run</a>
+    <a href="#files">Files</a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="dl-hero">
+    <img class="hero-pic" src="/assets/pics/technics-sl-1200-original-1972.jpg" width="1920" height="1440" fetchpriority="high" decoding="async" alt="A 1972 Technics SL-1200 turntable on a shelf above a row of records, in low light">
+    <h1><span class="mask"><span class="rise">Download</span></span><span class="mask"><span class="rise">Track2Mix</span></span></h1>
+    <p class="dl-line">Free for Windows and Linux. It runs entirely on your machine and needs nothing but a Rekordbox 6 or 7 collection export.</p>
+    <p class="dl-version" id="release-line">Version 0.1.0, released 14 October 2026.</p>
+    <p class="dl-actions"><a class="button" data-asset="msi" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64_en-US.msi">Download for Windows</a> <a class="dl-alt" href="#files">or pick your system</a></p>
+  </section>
+
+  <section id="files" class="lineup" style="margin-top: 0">
+    <h2 class="lineup-day reveal">Windows</h2>
+    <a class="lineup-row row-link reveal reveal-row" data-asset="msi" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64_en-US.msi"><span>Windows 10 and later</span><span data-name>Track2Mix_0.1.0_x64_en-US.msi</span><span data-size>4.8 MB</span><span>Download</span></a>
+    <a class="lineup-row row-link reveal reveal-row" data-asset="exe" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64-setup.exe"><span>Setup, smaller</span><span data-name>Track2Mix_0.1.0_x64-setup.exe</span><span data-size>3.4 MB</span><span>Download</span></a>
+    <h2 class="lineup-day reveal">Linux</h2>
+    <a class="lineup-row row-link reveal reveal-row" data-asset="deb" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_amd64.deb"><span>Debian, Ubuntu</span><span data-name>Track2Mix_0.1.0_amd64.deb</span><span data-size>5.0 MB</span><span>Download</span></a>
+    <a class="lineup-row row-link reveal reveal-row" data-asset="rpm" data-optional hidden href="https://github.com/astralisone/track2mix/releases/latest"><span>Fedora</span><span data-name>.rpm</span><span data-size></span><span>Download</span></a>
+    <a class="lineup-row row-link reveal reveal-row" data-asset="appimage" data-optional hidden href="https://github.com/astralisone/track2mix/releases/latest"><span>Any other Linux</span><span data-name>AppImage</span><span data-size></span><span>Download</span></a>
+    <a class="lineup-row row-link reveal reveal-row" data-asset="arch" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/track2mix-0.1.0-1-x86_64.pkg.tar.zst"><span>Arch</span><span data-name>track2mix-0.1.0-1-x86_64.pkg.tar.zst</span><span data-size>6.4 MB</span><span>Download</span></a>
+    <a class="lineup-row row-link reveal reveal-row" data-asset="pkgbuild" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/PKGBUILD"><span>Arch, from source</span><span data-name>PKGBUILD</span><span data-size>makepkg</span><span>Download</span></a>
+    <h2 class="lineup-day reveal">macOS</h2>
+    <div class="lineup-row row-muted" id="macos-card"><span>Apple Silicon and Intel</span><span id="macos-note">universal build, in a later release</span><span></span><span><a id="macos-link" data-asset="dmg" href="https://github.com/astralisone/track2mix/releases">Watch releases</a></span></div>
+    <p class="lineup-note">The list follows the latest release on GitHub. No account, no upload, nothing leaves your machine, and your Rekordbox collection is never edited. Every release publishes a <a data-asset="sha256sums" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/SHA256SUMS">SHA256SUMS</a> file to verify the download, and a <a id="release-notes-link" href="https://github.com/astralisone/track2mix/releases/tag/v0.1.0">release note</a> for what changed.</p>
+  </section>
+
+  <section id="install" class="install">
+    <div class="install-row reveal">
+      <div class="install-head"><h2>Windows</h2><p class="install-sub">Windows 10 or later, 64-bit. The .msi is the standard installer; the setup .exe is the same app in a smaller wrapper.</p></div>
+      <ol>
+        <li>Double-click the downloaded .msi and follow the installer.</li>
+        <li>If SmartScreen says “Windows protected your PC”, click More info, then Run anyway. This build is not code-signed yet, so the warning is expected; it fades as the release builds reputation.</li>
+        <li>Open Track2Mix from the Start menu.</li>
+      </ol>
     </div>
-  </header>
-
-  <section style="padding: 88px 0 56px; background: radial-gradient(ellipse 70% 60% at 50% 0%, #0d0f28 0%, #01020f 70%)">
-    <div class="wrap" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px">
-      <p class="eyebrow" id="release-eyebrow">Version 0.1.0 · released 14 Oct 2026</p>
-      <h1 style="margin: 0; font-size: clamp(40px, 6vw, 68px); line-height: 1.04; font-weight: 700; letter-spacing: -0.02em; max-width: 820px">Download Track2Mix</h1>
-      <p style="margin: 0; max-width: 640px; font-size: 19px; line-height: 30px; color: #9ea4b2">Pick your system below. Every desktop build is free to download, runs entirely on your machine, and needs nothing but a Rekordbox 6 or 7 collection export.</p>
-      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 8px">
-        <a href="#windows" class="dl dl-secondary" style="min-height: 44px; padding: 8px 18px; font-weight: 600">Windows</a>
-        <a href="#debian" class="dl dl-secondary" style="min-height: 44px; padding: 8px 18px; font-weight: 600">Debian / Ubuntu</a>
-        <a href="#arch" class="dl dl-secondary" style="min-height: 44px; padding: 8px 18px; font-weight: 600">Arch Linux</a>
-      </div>
-      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; margin-top: 8px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea4b2">
-        <span>No account</span><span>No upload</span><span>Works offline</span><span>Never edits your Rekordbox collection</span>
-      </div>
+    <div class="install-row reveal">
+      <div class="install-head"><h2>Debian, Ubuntu</h2><p class="install-sub">64-bit. Needs WebKitGTK 4.1, which ships with Ubuntu 22.04 and Debian 12 or newer, Mint, Pop!_OS and their relatives.</p></div>
+      <ol>
+        <li>Open a terminal in the folder you downloaded to and install with apt, which fetches any missing libraries.<pre>sudo apt install ./Track2Mix_0.1.0_amd64.deb</pre></li>
+        <li>Launch Track2Mix from your applications menu.</li>
+      </ol>
+    </div>
+    <div class="install-row reveal">
+      <div class="install-head"><h2>Arch</h2><p class="install-sub">x86_64 package. Installs the desktop app and the track2mix command-line tool.</p></div>
+      <ol>
+        <li>Install with pacman, which pulls in WebKitGTK and the other dependencies.<pre>sudo pacman -U ./track2mix-0.1.0-1-x86_64.pkg.tar.zst</pre></li>
+        <li>Launch Track2Mix from your app launcher, or run track2mix-desktop.</li>
+        <li>Prefer to build from source? Put the PKGBUILD in an empty folder and run makepkg.<pre>makepkg -si</pre></li>
+      </ol>
+    </div>
+    <div class="install-row reveal">
+      <div class="install-head"><h2>Any other Linux</h2><p class="install-sub">The AppImage bundles its own audio stack, so it runs on a distro you can’t install packages into.</p></div>
+      <ol>
+        <li>Make the file executable and run it.<pre>chmod +x Track2Mix-*.AppImage
+./Track2Mix-*.AppImage</pre></li>
+      </ol>
+    </div>
+    <div class="install-row reveal">
+      <div class="install-head"><h2>Verify the file</h2><p class="install-sub">Check that what you downloaded is what we built.</p></div>
+      <ol>
+        <li>On Linux, with SHA256SUMS in the same folder:<pre>sha256sum -c SHA256SUMS --ignore-missing</pre></li>
+        <li>On Windows, in PowerShell, compare the hash to the matching line of SHA256SUMS:<pre id="verify-example">Get-FileHash .\Track2Mix_0.1.0_x64_en-US.msi</pre></li>
+      </ol>
     </div>
   </section>
 
-  <section id="install" style="padding: 24px 0 88px">
-    <div class="wrap" style="display: flex; flex-direction: column; gap: 24px">
-
-      <article id="windows" class="card plat" style="display: flex; flex-wrap: wrap; gap: 32px; padding: 32px">
-        <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
-          <div style="display: flex; align-items: center; gap: 14px">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ea0e7" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"></rect><rect x="13" y="3" width="8" height="8" rx="1"></rect><rect x="3" y="13" width="8" height="8" rx="1"></rect><rect x="13" y="13" width="8" height="8" rx="1"></rect></svg>
-            <h2 style="margin: 0; font-size: 28px; font-weight: 700">Windows</h2>
-          </div>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Windows 10 or later, 64-bit. Two installers, same app: the .msi is the standard choice; the setup .exe is a smaller wizard-style installer.</p>
-          <a class="dl dl-primary" data-asset="msi" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64_en-US.msi">
-            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download .msi</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #dedff7">Track2Mix_0.1.0_x64_en-US.msi</span></span>
-            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap">4.8 MB</span>
-          </a>
-          <a class="dl dl-secondary" data-asset="exe" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_x64-setup.exe">
-            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download setup .exe</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #9ea4b2">Track2Mix_0.1.0_x64-setup.exe</span></span>
-            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea4b2; white-space: nowrap">3.4 MB</span>
-          </a>
-        </div>
-        <div style="flex: 1 1 380px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
-          <p class="eyebrow">Install</p>
-          <ol class="steps">
-            <li>Double-click the downloaded <span class="ic">.msi</span> and follow the installer.</li>
-            <li>If SmartScreen says <b style="color: #e1e1e3">"Windows protected your PC"</b>, click <b style="color: #e1e1e3">More info</b>, then <b style="color: #e1e1e3">Run anyway</b>.</li>
-            <li>Open <b style="color: #e1e1e3">Track2Mix</b> from the Start menu.</li>
-          </ol>
-          <div style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: rgba(245,183,28,0.08); border: 1px solid rgba(245,183,28,0.25); font-size: 14px; line-height: 21px; color: #e9dcb8">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5b71c" stroke-width="1.8" style="flex: none; margin-top: 2px" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"></path><path d="M12 10v4"></path><path d="M12 17h.01"></path></svg>
-            <span>This build isn't code-signed yet, so the SmartScreen warning is expected. It goes away as the release builds reputation.</span>
-          </div>
-        </div>
-      </article>
-
-      <article id="debian" class="card plat" style="display: flex; flex-wrap: wrap; gap: 32px; padding: 32px">
-        <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
-          <div style="display: flex; align-items: center; gap: 14px">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ea0e7" stroke-width="1.6" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"></path><path d="M4 7.5 12 12l8-4.5"></path><path d="M12 12v9"></path></svg>
-            <h2 style="margin: 0; font-size: 28px; font-weight: 700">Debian / Ubuntu</h2>
-          </div>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">64-bit (amd64). Needs WebKitGTK 4.1, which ships with Ubuntu 22.04 and Debian 12 or newer, plus Mint, Pop!_OS and other derivatives. Other distributions: the AppImage runs anywhere and bundles GStreamer for the composer; Fedora and friends take the .rpm.</p>
-          <a class="dl dl-primary" data-asset="deb" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/Track2Mix_0.1.0_amd64.deb">
-            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download .deb</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #dedff7">Track2Mix_0.1.0_amd64.deb</span></span>
-            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap">5.0 MB</span>
-          </a>
-          <a class="dl dl-secondary" data-asset="appimage" data-optional hidden href="https://github.com/astralisone/track2mix/releases/latest">
-            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download AppImage</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #9ea4b2">Any 64-bit Linux · bundles GStreamer for the composer</span></span>
-            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea4b2; white-space: nowrap"></span>
-          </a>
-          <a class="dl dl-secondary" data-asset="rpm" data-optional hidden href="https://github.com/astralisone/track2mix/releases/latest">
-            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download .rpm</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #9ea4b2">Fedora and other RPM distributions</span></span>
-            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea4b2; white-space: nowrap"></span>
-          </a>
-        </div>
-        <div style="flex: 1 1 380px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
-          <p class="eyebrow">Install</p>
-          <ol class="steps">
-            <li>Open a terminal in the folder you downloaded to and install with apt. It fetches any missing libraries for you.
-              <code class="code" style="margin-top: 8px">sudo apt install ./Track2Mix_0.1.0_amd64.deb</code>
-            </li>
-            <li>Launch <b style="color: #e1e1e3">Track2Mix</b> from your applications menu.</li>
-          </ol>
-        </div>
-      </article>
-
-      <article id="arch" class="card plat" style="display: flex; flex-wrap: wrap; gap: 32px; padding: 32px">
-        <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
-          <div style="display: flex; align-items: center; gap: 14px">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ea0e7" stroke-width="1.6" aria-hidden="true"><path d="M12 3 3 21c3-1.6 6-2.4 9-2.4s6 .8 9 2.4L12 3z"></path></svg>
-            <h2 style="margin: 0; font-size: 28px; font-weight: 700">Arch Linux</h2>
-          </div>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">x86_64 pacman package. Installs the desktop app and the <span class="ic">track2mix</span> command-line tool. Works on Arch and its derivatives (EndeavourOS, Manjaro, Omarchy).</p>
-          <a class="dl dl-primary" data-asset="arch" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/track2mix-0.1.0-1-x86_64.pkg.tar.zst">
-            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Download .pkg.tar.zst</b><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #dedff7">track2mix-0.1.0-1-x86_64.pkg.tar.zst</span></span>
-            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap">6.4 MB</span>
-          </a>
-          <a class="dl dl-secondary" data-asset="pkgbuild" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/PKGBUILD">
-            <span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">PKGBUILD</b><span style="font-size: 13px; color: #9ea4b2">Build it yourself with makepkg</span></span>
-          </a>
-        </div>
-        <div style="flex: 1 1 380px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
-          <p class="eyebrow">Install</p>
-          <ol class="steps">
-            <li>Install the package with pacman, which pulls in WebKitGTK and the other dependencies.
-              <code class="code" style="margin-top: 8px">sudo pacman -U ./track2mix-0.1.0-1-x86_64.pkg.tar.zst</code>
-            </li>
-            <li>Launch <b style="color: #e1e1e3">Track2Mix</b> from your app launcher, or run <span class="ic">track2mix-desktop</span>.</li>
-            <li>Prefer to build from source? Put the PKGBUILD in an empty folder and run:
-              <code class="code" style="margin-top: 8px">makepkg -si</code>
-            </li>
-          </ol>
-        </div>
-      </article>
-
-      <div class="card" id="macos-card" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 20px 32px; background: transparent; border-style: dashed">
-        <b style="font-size: 16px">macOS</b>
-        <span id="macos-note" style="color: #9ea4b2; font-size: 15px; flex: 1 1 300px">A universal build for Apple Silicon and Intel is coming in a later release.</span>
-        <a id="macos-link" data-asset="dmg" href="https://github.com/astralisone/track2mix/releases" style="font-size: 15px; min-height: 44px; display: flex; align-items: center">Watch releases on GitHub</a>
-      </div>
-
-    </div>
-  </section>
-
-  <section id="first-run" style="padding: 88px 0; background: #00010a; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05)">
-    <div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
-      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 680px">
-        <p class="eyebrow">First run</p>
-        <h2 style="margin: 0; font-size: clamp(32px, 4vw, 44px); line-height: 1.1; font-weight: 700; letter-spacing: -0.01em">From Rekordbox to a ranked shortlist — and a rendered mix — in five steps</h2>
-        <p style="margin: 0; color: #9ea4b2; font-size: 17px; line-height: 27px">The same on every system. Track2Mix only reads the XML you export; your collection file and audio are never modified.</p>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
-        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
-          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">01</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Export your collection</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">In Rekordbox choose <b style="color: #e1e1e3">File → Export Collection in xml format</b> and save it somewhere easy to find.</p>
-        </div>
-        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
-          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">02</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Import it</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Open the app, click <b style="color: #e1e1e3">Import Rekordbox XML</b> and choose the file. The database is written next to it.</p>
-        </div>
-        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
-          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">03</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Watch the coverage</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">The import screen reports how many entries resolved to real files (moved drives and streaming stubs don't) and lists failures. For a check before decoding anything, the CLI has a dry run:</p>
-          <code class="code">track2mix analyze --xml ~/rekordbox.xml --dry-run</code>
-        </div>
-        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
-          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">04</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Let it finish</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">It uses every CPU core. Results land in a single SQLite file you own and can delete; leave <b style="color: #e1e1e3">skip analyzed</b> ticked so a re-import only decodes new tracks.</p>
-        </div>
-        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
-          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #f5b71c">05</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Dig, arrange, export</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Click any track to see its compatible neighbours, ranked; press play to audition. Tick the ones you want, open <b style="color: #e1e1e3">Playlist</b> to order them harmonically and export an M3U8 — Rekordbox imports it directly — or open <b style="color: #e1e1e3">Compose</b>, hit Auto-arrange, and export the blend as MP3.</p>
-        </div>
-        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px; background: #0d0f28">
-          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #9ea0e7">TIP</span>
-          <h3 style="margin: 0; font-size: 19px; font-weight: 600">Drive moved?</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Remap paths without re-tagging anything; only newly found tracks get decoded.</p>
-          <code class="code">track2mix analyze --xml ~/rekordbox.xml \
+  <section id="first-run" class="firstrun">
+    <h2>First run, in five steps</h2>
+    <div class="firstrun-grid">
+      <figure class="firstrun-pic">
+        <video class="verb-video" autoplay muted loop playsinline preload="metadata" poster="/assets/pics/beachfront-b-roll-record-background-free-to-poster.jpg" width="854" height="480" aria-hidden="true">
+          <source src="/assets/pics/beachfront-b-roll-record-background-free-to.webm" type="video/webm">
+        </video>
+        <img class="verb-poster" src="/assets/pics/beachfront-b-roll-record-background-free-to-poster.jpg" width="1280" height="720" loading="lazy" decoding="async" alt="A record turning on a turntable in low light">
+        <figcaption class="ui report" data-ui>
+          <p class="ui-label">Import report · rekordbox.xml</p>
+          <div class="report-row"><span>Entries in the export</span><b>8,412</b></div>
+          <div class="report-row"><span>Resolved to files on disk</span><b>8,201</b></div>
+          <div class="report-row"><span>Already analysed, skipped</span><b>7,930</b></div>
+          <div class="report-row"><span>To decode now</span><b>271</b></div>
+          <div class="report-row"><span>Streaming entries, no file</span><b>144</b></div>
+          <div class="report-row"><span>Missing files, moved drive?</span><b>67</b></div>
+          <div class="ui-foot"><span>8 cores · about 4 minutes</span><span>Analyse</span></div>
+        </figcaption>
+      </figure>
+      <ol>
+        <li><b>Export your collection.</b> In Rekordbox: File, then Export Collection in xml format. That file is the only thing Track2Mix needs.</li>
+        <li><b>Open Track2Mix and import the XML.</b> It resolves which entries are real files on disk and reports the rest before anything is decoded.</li>
+        <li><b>Let it listen.</b> Every core is used. Three 30-second stretches per track, four signals, one energy number. Results land in one library.db you own.</li>
+        <li><b>Leave skip analysed on.</b> The next import only decodes tracks it hasn’t seen, so a growing library costs minutes, not an evening.</li>
+        <li><b>Dig, build, blend.</b> Click any track for its ranked neighbours, press play to audition, tick the keepers, order them in Playlist and export the M3U8, or blend them in Compose.</li>
+      </ol>
+      <aside class="firstrun-aside">
+        <h3>Drive moved?</h3>
+        <p>Remap paths without re-tagging anything; only newly found tracks get decoded.</p>
+        <pre>track2mix analyze --xml ~/rekordbox.xml \
   --path-map '/old/music=/new/music' \
-  --skip-analyzed</code>
-        </div>
-      </div>
+  --skip-analyzed</pre>
+        <h3 style="margin-top: 40px">Many tracks failed?</h3>
+        <p>Usually a moved drive, streaming entries that were never local files, or DRM-protected M4A from iTunes. The import report names each one.</p>
+        <h3 style="margin-top: 40px">A track has no key?</h3>
+        <p>Keys come from Rekordbox’s own analysis so they match your CDJs. Analyse it there and re-export.</p>
+      </aside>
     </div>
   </section>
 
-  <section id="verify" style="padding: 88px 0">
-    <div class="wrap" style="display: flex; flex-wrap: wrap; gap: 48px">
-      <div style="flex: 1 1 400px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
-        <p class="eyebrow">Verify your download</p>
-        <h2 style="margin: 0; font-size: 32px; line-height: 1.15; font-weight: 700">Check it's the file we built</h2>
-        <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Every release publishes a<a data-asset="sha256sums" href="https://github.com/astralisone/track2mix/releases/download/v0.1.0/SHA256SUMS">SHA256SUMS</a> file. Put it next to your download and run:</p>
-        <p style="margin: 0; font-size: 14px; color: #9ea4b2">Linux</p>
-        <code class="code">sha256sum -c SHA256SUMS --ignore-missing</code>
-        <p style="margin: 0; font-size: 14px; color: #9ea4b2">Windows (PowerShell): compare the hash to the matching line</p>
-        <code class="code" id="verify-example">Get-FileHash .\Track2Mix_0.1.0_x64_en-US.msi</code>
-      </div>
-      <div style="flex: 1 1 400px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
-        <p class="eyebrow">Common questions</p>
-        <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 6px">
-          <h3 style="margin: 0; font-size: 16px; font-weight: 600">A lot of tracks failed to analyse</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Usually a moved drive (use <span class="ic">--path-map</span>), streaming entries that were never local files, or DRM-protected iTunes M4As.</p>
-        </div>
-        <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 6px">
-          <h3 style="margin: 0; font-size: 16px; font-weight: 600">A track has no key</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">Track2Mix uses Rekordbox's own key analysis, so results match your CDJs. Analyse the track in Rekordbox and re-export.</p>
-        </div>
-        <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 6px">
-          <h3 style="margin: 0; font-size: 16px; font-weight: 600">Does it change my Rekordbox library?</h3>
-          <p style="margin: 0; color: #9ea4b2; font-size: 15px; line-height: 23px">No. It reads the exported XML and writes only the playlists, project files and renders you export, plus its own database.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+</main>
 
-  <section style="padding: 0 0 88px">
-    <div class="wrap" style="display: flex; flex-direction: column; gap: 20px">
-      <p class="eyebrow">Resources</p>
-      <div style="display: flex; flex-wrap: wrap; gap: 16px">
-        <a class="card res" id="release-notes-link" href="https://github.com/astralisone/track2mix/releases/tag/v0.1.0"><b style="font-size: 16px">Release notes</b><span id="release-notes-note" style="color: #9ea4b2; font-size: 14px; line-height: 21px">What's in 0.1.0.</span></a>
-        <a class="card res" href="https://github.com/astralisone/track2mix/blob/main/docs/INSTALL.md"><b style="font-size: 16px">Full install guide</b><span style="color: #9ea4b2; font-size: 14px; line-height: 21px">Every step and troubleshooting tip.</span></a>
-        <a class="card res" href="https://github.com/astralisone/track2mix"><b style="font-size: 16px">Source code</b><span style="color: #9ea4b2; font-size: 14px; line-height: 21px">The analysis engine and desktop app.</span></a>
-        <a class="card res" href="https://github.com/astralisone/track2mix/issues/new"><b style="font-size: 16px">Report a problem</b><span style="color: #9ea4b2; font-size: 14px; line-height: 21px">Install trouble or a wrong score.</span></a>
-      </div>
-    </div>
-  </section>
-
-  <footer style="border-top: 1px solid rgba(255,255,255,0.08)">
-    <div class="wrap" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-top: 28px; padding-bottom: 28px; font-size: 14px; color: #9ea4b2">
+<footer class="end end-short">
+  <img class="end-pic" src="/assets/pics/hero-needle-groove.jpg" width="3840" height="1536" loading="lazy" decoding="async" alt="A turntable needle resting in the groove of a record, in the dark">
+  <div class="end-top">
+    <nav class="end-links" aria-label="Footer">
+      <a href="https://track2mix.com">track2mix.com</a>
+      <a href="https://github.com/astralisone/track2mix/blob/main/docs/INSTALL.md">Full install guide</a>
+      <a href="https://github.com/astralisone/track2mix/issues/new">Report a problem</a>
+    </nav>
+    <div class="end-contact">
+      <a href="https://github.com/astralisone/track2mix">github.com/astralisone/track2mix</a>
+      <a href="/privacy/">Privacy</a>
       <span id="footer-version">Track2Mix 0.1.0</span>
-      <a href="https://track2mix.com">Back to track2mix.com</a>
     </div>
-  </footer>
-</div>
+  </div>
+  <div class="end-bottom">
+    <svg class="end-name" viewBox="0 0 1000 150" role="img" aria-label="Track2Mix" preserveAspectRatio="none"><text x="0" y="128" textLength="1000" lengthAdjust="spacingAndGlyphs">Track2Mix</text></svg>
+    <p class="end-legal">Track2Mix by Astralis One llc. Pictures and footage: <a href="https://commons.wikimedia.org/wiki/File:Technics_SL-1200_Original_1972.jpg">“Technics SL-1200 Original 1972”</a> by BMRR, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Groove_and_needle_in_close_embrace_from_beginning_to_end.jpg">“Groove and needle in close embrace from beginning to end”</a> by Franz van Duns, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Beachfront_B-Roll-_Record_Background_(Free_to_Use_Stock_Footage).webm">“Record Background”</a> by Beachfront B-Roll, <a href="https://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>; all via Wikimedia Commons, shown darkened.</p>
+  </div>
+</footer>
 
 <script>
-/* The cards above are a snapshot of one release. This fills them from the
-   latest GitHub release instead, so a new tag shows up here without a site
-   edit: version, date, every asset's real file name and size, and the macOS
-   card once a .dmg exists. If the API is unreachable (rate limit, offline)
-   the static markup stands, and the console says why. */
+(() => {
+  const loop = document.querySelector(".verb-video");
+  if (!loop) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { loop.removeAttribute("autoplay"); loop.pause(); return; }
+  new IntersectionObserver((entries) => { for (const e of entries) { if (e.isIntersecting) loop.play().catch(() => {}); else loop.pause(); } }).observe(loop);
+})();
+/* The rows above are a snapshot of one release. This fills them from the latest GitHub release,
+   so a new tag shows up here without a site edit: version, date, every asset's real file name and
+   size, and the macOS row once a .dmg exists. If the API is unreachable, the snapshot stands. */
 (async () => {
   const API = "https://api.github.com/repos/astralisone/track2mix/releases/latest";
   const MATCH = {
@@ -298,35 +279,29 @@ a{color:#bec0ef}a:hover{color:#dedff7}
 
   const version = rel.tag_name.replace(/^v/, "");
   const published = rel.published_at
-    ? new Date(rel.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    ? new Date(rel.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
-  const eyebrow = document.getElementById("release-eyebrow");
-  if (eyebrow) eyebrow.textContent = `Version ${version}${published ? ` · released ${published}` : ""}${rel.prerelease ? " · pre-release" : ""}`;
+  const line = document.getElementById("release-line");
+  if (line) line.textContent = `Version ${version}${published ? `, released ${published}` : ""}${rel.prerelease ? ", pre-release" : ""}.`;
   const footer = document.getElementById("footer-version");
   if (footer) footer.textContent = `Track2Mix ${version}`;
   const notes = document.getElementById("release-notes-link");
   if (notes) notes.href = rel.html_url;
-  const notesNote = document.getElementById("release-notes-note");
-  if (notesNote) notesNote.textContent = `What's in ${version}.`;
 
   const missing = [];
   for (const el of document.querySelectorAll("[data-asset]")) {
     const kind = el.dataset.asset;
     const asset = rel.assets.find((a) => MATCH[kind] && MATCH[kind](a.name));
     if (!asset) {
-      // An optional slot (rpm, AppImage) just stays hidden; a slot the static
-      // page shows (msi, deb…) keeps its snapshot link, and the gap is logged
-      // so a release missing an installer gets noticed.
       if (!el.hasAttribute("data-optional") && kind !== "dmg") missing.push(kind);
       continue;
     }
     el.href = asset.browser_download_url;
     el.hidden = false;
-    // File name is the small mono line; size is the trailing mono span.
-    const nameEl = el.querySelector("span > span:last-child");
+    const nameEl = el.querySelector("[data-name]");
     if (nameEl && kind !== "pkgbuild") nameEl.textContent = asset.name;
-    const sizeEl = el.querySelector(":scope > span:last-child");
+    const sizeEl = el.querySelector("[data-size]");
     if (sizeEl && kind !== "pkgbuild") sizeEl.textContent = mb(asset.size);
     if (kind === "msi") {
       const ex = document.getElementById("verify-example");
@@ -335,13 +310,13 @@ a{color:#bec0ef}a:hover{color:#dedff7}
     if (kind === "dmg") {
       const note = document.getElementById("macos-note");
       const card = document.getElementById("macos-card");
-      if (note) note.textContent = `Universal build for Apple Silicon and Intel (${asset.name}, ${mb(asset.size)}). Open the .dmg and drag Track2Mix to Applications; right-click → Open the first time if Gatekeeper objects.`;
-      if (card) card.style.borderStyle = "solid";
-      el.textContent = "Download .dmg";
+      if (note) note.textContent = `${asset.name}, ${mb(asset.size)}`;
+      if (card) card.classList.remove("row-muted");
+      el.textContent = "Download";
     }
   }
   if (missing.length) {
-    console.warn(`downloads: release ${rel.tag_name} has no asset for: ${missing.join(", ")} — those cards still link to the previous snapshot.`);
+    console.warn(`downloads: release ${rel.tag_name} has no asset for: ${missing.join(", ")}; those rows still link to the previous snapshot.`);
   }
 })();
 </script>

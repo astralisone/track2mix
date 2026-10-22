@@ -42,3 +42,6 @@ src-tauri/gen/android/keystore.properties
 
 # Local wrangler state (dev server cache, temp bundles)
 .wrangler/
+
+# tasteskill working files (screenshots, inspector reports)
+.taste-skill/
