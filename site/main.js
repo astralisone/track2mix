@@ -34,7 +34,7 @@ const CONTACT_ENDPOINT = "/api/contact";
  *                   fits an open-source project.
  */
 const PAYMENTS = {
-  paypalMe: "",
+  paypalMe: "astralisboss",
   koFi: "",
   githubSponsors: "",
 };
