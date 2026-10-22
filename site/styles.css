@@ -1468,228 +1468,125 @@ footer {
   }
 }
 
-/* ---------- tablet apps: store section ---------- */
+/* ---------- compose: timeline mock ---------- */
 
-/* Store badges: one per platform, styled as cards so the price and the
-   platform read at a glance. A badge without a listing yet is unlinked and
-   marked "coming soon" by main.js; the notify form below covers that case. */
-.stores {
-  display: grid;
-  gap: 12px;
-  margin-top: 22px;
-}
-
-@media (min-width: 560px) {
-  .stores {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.store {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--hairline);
-  background: rgba(0, 1, 10, 0.45);
-  color: var(--fg);
-  text-decoration: none;
-  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
-}
-
-.store:hover {
-  border-color: rgba(87, 90, 208, 0.55);
-  background: rgba(87, 90, 208, 0.1);
-  color: var(--fg);
-  transform: translateY(-1px);
-}
-
-.store[aria-disabled="true"] {
-  cursor: default;
-  transform: none;
-  border-style: dashed;
-}
-
-.store[aria-disabled="true"]:hover {
-  border-color: var(--hairline);
-  background: rgba(0, 1, 10, 0.45);
-}
-
-.store-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--hairline);
-  color: var(--fg);
-}
-
-.store-icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.store-text {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.store-status {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
-.store-name {
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: -0.01em;
-}
-
-.store-price {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--gold-200);
-}
-
-/* Platform choice in the notify form: two chip-style radios. */
-.notify-platforms {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.notify-platforms label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--hairline);
-  background: rgba(255, 255, 255, 0.03);
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.notify-platforms label:has(input:checked) {
-  border-color: rgba(87, 90, 208, 0.6);
-  background: rgba(87, 90, 208, 0.14);
-}
-
-.notify-platforms input {
-  accent-color: var(--iris-400);
-}
-
-.notify-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.notify-row input[type="email"] {
-  flex: 1 1 220px;
-}
-
-/* Feature list under the tablet pitch: what the tablet build does from the
-   database alone, and what it needs the audio files for. */
-.tablet-scope {
-  display: grid;
-  gap: 12px;
-  margin-top: 22px;
-}
-
-.tablet-scope li {
-  display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 10px;
-  align-items: start;
-  font-size: 0.9375rem;
-  color: var(--fg-muted);
-  line-height: 1.55;
-}
-
-.tablet-scope li b {
-  color: var(--fg);
-}
-
-.tablet-scope svg {
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  color: var(--iris-300);
-}
-
-.tablet-scope svg.note {
-  color: var(--gold-300);
-}
-
-/* The iPad mock: a rounded slab with a landscape screen that reuses the hero
-   preview table so it is the same honest rendering of the real columns. */
-.tablet-frame {
+.compose-mock {
   position: relative;
-  padding: 18px;
-  border-radius: 28px;
-  background: linear-gradient(160deg, #15172f, #07081a);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
-.tablet-frame::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: 6px;
-  width: 4px;
-  height: 36px;
-  margin-top: -18px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.1);
+.compose-mock .ruler {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-left: 156px;
+  padding: 6px 0 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-faint);
+  border-bottom: 1px solid var(--hairline-soft);
 }
 
-.tablet-screen {
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--bg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.compose-mock .ruler span {
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  padding-left: 5px;
 }
 
-.tablet-screen .preview {
-  border-radius: 0;
-  border: 0;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: var(--bg);
+.lane {
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  border-bottom: 1px solid var(--hairline-soft);
 }
 
-.store-price {
-  white-space: nowrap;
+.lane-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-right: 1px solid var(--hairline-soft);
+  background: rgba(255, 255, 255, 0.015);
 }
 
-.notify-row input[type="email"] {
-  min-width: 0;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--hairline);
-  background: rgba(0, 1, 10, 0.6);
+.lane-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
   color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
 }
 
-.notify-row input[type="email"]::placeholder {
+.lane-ctl {
+  font-family: var(--font-mono);
+  font-size: 10px;
   color: var(--fg-faint);
 }
 
-.notify-row input[type="email"]:focus {
-  border-color: rgba(87, 90, 208, 0.6);
-  outline: none;
+.lane-ctl b {
+  color: var(--iris-300);
+  font-weight: 500;
+}
+
+.lane-track {
+  position: relative;
+  height: 54px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    transparent 1px calc(100% / 7)
+  );
+}
+
+.clip {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(124, 126, 229, 0.45);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(124, 126, 229, 0.55) 0 2px,
+      transparent 2px 5px
+    ),
+    rgba(87, 90, 208, 0.18);
+}
+
+.clip .fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28%;
+  pointer-events: none;
+}
+
+.clip .fade-in {
+  left: 0;
+  background: linear-gradient(90deg, rgba(1, 2, 15, 0.85), rgba(1, 2, 15, 0));
+}
+
+.clip .fade-out {
+  right: 0;
+  background: linear-gradient(90deg, rgba(1, 2, 15, 0), rgba(1, 2, 15, 0.85));
+}
+
+.playhead {
+  position: absolute;
+  top: 38px;
+  bottom: 38px;
+  width: 1px;
+  background: var(--gold-300);
+  box-shadow: 0 0 8px rgba(245, 183, 28, 0.6);
+}
+
+.compose-row {
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--fg);
 }

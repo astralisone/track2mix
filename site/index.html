@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Track2Mix — Which of your tracks actually mixes with this one?</title>
-<meta name="description" content="Track2Mix analyses your Rekordbox library on your own machine, tells you which tracks actually belong next to each other — harmonically, by BPM, and by energy — then helps you audition, arrange and blend them. Pay-what-you-want desktop app for Windows and Linux, and a tablet app for Android.">
+<meta name="description" content="Track2Mix analyses your Rekordbox library on your own machine, tells you which tracks actually belong next to each other — harmonically, by BPM, and by energy — then helps you audition, arrange and blend them. Pay-what-you-want desktop app for Windows and Linux.">
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -47,8 +47,8 @@
       <a href="#how">How it works</a>
       <a href="#analysis">The analysis</a>
       <a href="#features">Features</a>
+      <a href="#compose">Compose</a>
       <a href="#honest">What it does &amp; doesn't</a>
-      <a href="#tablet">Android tablets</a>
       <a href="#faq">FAQ</a>
       <a href="https://downloads.track2mix.com">Downloads</a>
     </nav>
@@ -64,7 +64,7 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <p class="eyebrow">Windows &amp; Linux · Android tablets · Runs offline</p>
+        <p class="eyebrow">Windows &amp; Linux · Runs offline</p>
         <h1>Your library already knows what to play next. <span class="accent">Rekordbox just won't tell you.</span></h1>
         <p class="lede">
           Rekordbox stores your keys and your BPMs. It has no idea which of your
@@ -596,120 +596,96 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
           <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
           <span><b>Does not pick the set for you.</b> It narrows eight thousand tracks to a handful worth auditioning and will order and beat-match the ones you choose — but the choosing is still yours.</span>
         </li>
-        <li>
-          <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          <span><b>Does not analyse on a tablet.</b> Rekordbox lives on your computer, so the analysis does too. The Android tablet app opens the library you analysed there.</span>
-        </li>
       </ul>
     </div>
   </section>
 
   <hr class="rule">
 
-  <!-- ================= TABLET ================= -->
-  <section id="tablet">
+
+  <!-- ================= COMPOSE ================= -->
+  <section id="compose">
     <div class="wrap two-col">
       <div>
-        <p class="eyebrow">Android tablets</p>
-        <h2>Your whole analysed library, on the tablet next to the decks.</h2>
+        <p class="eyebrow">Compose</p>
+        <h2>Hear the set before you play it.</h2>
         <p class="lede" style="margin-top:14px">
-          Track2Mix for Android tablets is the digging half of the app,
-          built for landscape and a finger: the same track table, filters, Camelot
-          wheel, compatibility matching and playlist builder, reading the library
-          you analysed on your computer. Sold once, in the store, no subscription.
+          Compose is a multi-lane timeline for the tracks you picked: one lane
+          per track, a mixer strip on each, and a transport that plays the whole
+          thing in real time. It's a sketchpad for a set, not a replacement for
+          your decks — the point is to find out whether a sequence works before
+          the floor is full.
         </p>
-
-        <div class="stores">
-          <a class="store" id="store-play" href="#tablet">
-            <span class="store-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.3c-.3.3-.5.8-.5 1.4v16.6c0 .6.2 1.1.5 1.4l.1.1 9.3-9.3v-.2L3.7 2.2l-.1.1z"/><path d="M16.1 15.6 13 12.5v-.2l3.1-3.1.1.1 3.7 2.1c1 .6 1 1.6 0 2.2l-3.7 2.1-.1-.1z" opacity=".85"/><path d="M16.2 15.5 13 12.3 3.6 21.7c.3.4.9.4 1.6 0l11-6.2" opacity=".7"/><path d="M16.2 9.1 5.2 2.9c-.7-.4-1.3-.3-1.6 0l9.4 9.4 3.2-3.2z" opacity=".55"/></svg>
-            </span>
-            <span class="store-text">
-              <span class="store-status">Coming soon</span>
-              <span class="store-name">Track2Mix for Android tablets</span>
-              <span class="store-price">from <span data-tablet-price>$19.99</span>, once</span>
-            </span>
-          </a>
-        </div>
-
-        <p id="tablet-notify-intro" style="margin-top:22px;color:var(--fg-muted);font-size:0.9375rem">
-          Not in the store yet? Leave an address and you'll get exactly one email
-          when the listing goes live.
-        </p>
-        <form id="tablet-notify-form" novalidate>
-          <input type="hidden" name="interest" value="android">
-          <div class="notify-row">
-            <input id="tablet-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required aria-label="Email address">
-            <button class="btn btn-ghost" type="submit" id="tablet-submit">Tell me when it's out</button>
-          </div>
-        </form>
-        <p class="form-msg" id="tablet-msg" role="status" aria-live="polite"></p>
+        <ul class="speclist">
+        <li>
+          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+          <span><b>A mixer strip on every lane.</b> Volume, three-band EQ with full kills, high- and low-pass filters, mute and solo. <em>Sync</em> pins a lane to the master BPM vinyl-style — pitch follows tempo — and folds to half or double time when that's the closer match.</span>
+        </li>
+        <li>
+          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+          <span><b>Clips you can actually handle.</b> Drag to move, pull the edges to trim, the corner handles to set fades, all snapping to the beat grid (hold <kbd>Alt</kbd> to bypass). <em>Auto-crossfade</em> blends every overlap unless you've drawn the fade yourself.</span>
+        </li>
+        <li>
+          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+          <span><b>Auto-arrange does the lining up.</b> It estimates each track's beat grid and downbeat, sets the master BPM, trims each clip to start on its downbeat, and brings every track in on an 8-bar phrase of the one before it, with a 4, 8, 16 or 32-bar blend. Order by harmonic flow, energy rise or lane order. A confidently detected tempo within 2% of the Rekordbox tag corrects the BPM.</span>
+        </li>
+        <li>
+          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+          <span><b>Three ways out.</b> <em>Record live</em> captures the master in real time, so fader and EQ moves are kept. <em>Bounce WAV</em> renders offline, faster than real time. <em>Export MP3</em> does the same at 320 kbps with ID3 tags — the encoder is built in, nothing to install.</span>
+        </li>
+        <li>
+          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+          <span><b>Projects that survive.</b> A <code>.t2m</code> file holds the master BPM, every lane's mixer, every clip and a snapshot of each track, so it reopens even after Rekordbox renumbers its ids. Unsaved changes show in the tab and the title bar, and the app asks before discarding them.</span>
+        </li>
+        </ul>
       </div>
 
       <div>
-        <div class="tablet-frame" role="img" aria-label="Track2Mix on a tablet in landscape, showing the compatible-tracks table">
-          <div class="tablet-screen">
-            <div class="glass preview">
-              <div class="preview-bar">
-                <span class="preview-title">Track2Mix — library.db · Library</span>
-              </div>
-              <div class="tbl tbl-head">
-                <span>Title</span><span class="cell-sub">Artist</span><span style="text-align:right">BPM</span><span>Key</span><span class="col-energy">Energy</span>
-              </div>
-              <div class="tbl tbl-row anchor">
-                <span class="cell-title">Anchor · selected track</span>
-                <span class="cell-sub">Your library</span>
-                <span class="cell-bpm">128</span>
-                <span><span class="keychip match">11A</span></span>
-                <span class="col-energy"><span class="meter"><span style="width:64%"></span></span></span>
-              </div>
-              <div class="tbl tbl-row">
-                <span class="cell-title">Compatible · same key</span>
-                <span class="cell-sub">—</span>
-                <span class="cell-bpm">127</span>
-                <span><span class="keychip match">11A</span></span>
-                <span class="col-energy"><span class="meter"><span style="width:70%"></span></span></span>
-              </div>
-              <div class="tbl tbl-row">
-                <span class="cell-title">Compatible · relative major</span>
-                <span class="cell-sub">—</span>
-                <span class="cell-bpm">128</span>
-                <span><span class="keychip">11B</span></span>
-                <span class="col-energy"><span class="meter"><span style="width:58%"></span></span></span>
-              </div>
-              <div class="tbl tbl-row">
-                <span class="cell-title">Compatible · +1 on the wheel</span>
-                <span class="cell-sub">—</span>
-                <span class="cell-bpm">130</span>
-                <span><span class="keychip">12A</span></span>
-                <span class="col-energy"><span class="meter"><span style="width:77%"></span></span></span>
-              </div>
-              <div class="preview-foot">
-                <span>4 of 6,210 tracks · ±3 BPM · harmonic</span>
-                <span>Build playlist →</span>
-              </div>
-            </div>
+        <div class="glass preview compose-mock" role="img" aria-label="The Compose timeline: three lanes, each clip starting on a phrase boundary of the previous one, with fades across the overlaps">
+          <div class="preview-bar">
+            <span class="preview-title">Compose — set.t2m · 128 BPM master</span>
+            <span class="pill pill-muted" style="margin-left:auto">Auto-arrange · harmonic flow</span>
+          </div>
+          <div class="ruler"><span>1</span><span>9</span><span>17</span><span>25</span><span>33</span><span>41</span><span>49</span></div>
+          <div class="lane">
+            <div class="lane-strip"><span class="lane-name"><span class="keychip match">11A</span> Lane 1</span><span class="lane-ctl">vol · eq · hpf · <b>sync</b></span></div>
+            <div class="lane-track"><div class="clip" style="left:0;width:46%"><i class="fade fade-out"></i></div></div>
+          </div>
+          <div class="lane">
+            <div class="lane-strip"><span class="lane-name"><span class="keychip match">11A</span> Lane 2</span><span class="lane-ctl">vol · eq · lpf · <b>sync</b></span></div>
+            <div class="lane-track"><div class="clip" style="left:34%;width:44%"><i class="fade fade-in"></i><i class="fade fade-out"></i></div></div>
+          </div>
+          <div class="lane">
+            <div class="lane-strip"><span class="lane-name"><span class="keychip">12A</span> Lane 3</span><span class="lane-ctl">vol · eq · <b>sync</b></span></div>
+            <div class="lane-track"><div class="clip" style="left:66%;width:34%"><i class="fade fade-in"></i></div></div>
+          </div>
+          <div class="playhead" style="left:calc(156px + 38%)"></div>
+          <div class="preview-foot">
+            <span>16-bar blends · snap on · auto-crossfade</span>
+            <span>Export MP3 →</span>
           </div>
         </div>
+        <p class="preview-note">Each track comes in on an 8-bar phrase boundary of the one before it, trimmed to its own downbeat, with the crossfade drawn across the overlap.</p>
+      </div>
+    </div>
 
-        <ul class="tablet-scope">
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-            <span><b>Works from the database alone.</b> Copy <code>library.db</code> from your computer — Files, Google Drive, USB — open it, and browse, filter, match and build playlists exactly as on the desktop.</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-            <span><b>Exports M3U8 to the tablet's files</b>, ready to move back to Rekordbox.</span>
-          </li>
-          <li>
-            <svg class="note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 8v5"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
-            <span><b>Previewing and composing need the audio files on the tablet.</b> If a track's file isn't there, the app says so for that track rather than failing quietly.</span>
-          </li>
-          <li>
-            <svg class="note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 8v5"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
-            <span><b>Tablets only.</b> Designed for Android 8+ tablets in landscape; it is not a phone app.</span>
-          </li>
-        </ul>
+    <div class="wrap">
+      <div class="grid compose-row">
+        <div class="card">
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg></div>
+          <h3>Preview player</h3>
+          <p>Native playback on every row: play, pause, previous, next, seek, +30 s, volume, mute. Play a selected row and the whole selection queues up, up to 500 tracks. A file that won't decode is skipped and named, never silently dropped.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h7"/><path d="m17 14 3 3-3 3"/></svg></div>
+          <h3>Playlist builder</h3>
+          <p>Opens already ordered as a harmonic flow from your anchor. Re-order as an energy ramp, by BPM or in selection order; drag rows or use <kbd>Alt+↑</kbd>/<kbd>Alt+↓</kbd>. Each transition gets a badge — Perfect, Relative, ±1, Boost, Drop, Clash — and a 0–100 score, with a set curve of energy and BPM underneath. <em>Suggest next</em> offers up to ten tracks not yet in the set; <em>Play set</em> auditions it end to end.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg></div>
+          <h3>Keyboard first</h3>
+          <p><kbd>Space</kbd> plays or pauses wherever you are. <kbd>Ctrl/Cmd+O</kbd>, <kbd>S</kbd> and <kbd>Shift+S</kbd> handle projects. In Compose, <kbd>Delete</kbd> removes a clip, <kbd>Alt</kbd> while dragging bypasses snap, <kbd>Ctrl/Cmd+wheel</kbd> zooms the timeline, and a double-click resets any knob.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -726,8 +702,7 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
           On Windows and Linux there is no paywall, no trial timer and no locked
           features. If Track2Mix earns you a better set, tip what it's worth. If
           money's tight, take it free and don't think twice — that's not a
-          loophole, it's the deal. (The <a href="#tablet">tablet apps</a> are sold
-          through their stores instead.)
+          loophole, it's the deal.
         </p>
       </div>
 
@@ -852,14 +827,6 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
           <p>No, and it isn't trying to. Compose is for hearing whether a sequence works: lay the tracks out, let <em>Auto-arrange</em> beat-match and blend them, tweak the EQ and fades, and render the result. Tempo sync is vinyl-style — pitch follows tempo, there's no key-lock yet — so it's a sketchpad for a set, not a performance tool. The export is a WAV or a 320 kbps MP3 you can listen back to or send to someone.</p>
         </details>
         <details>
-          <summary>Why is the desktop app pay-what-you-want but the tablet app has a price?</summary>
-          <p>Because the stores don't do pay-what-you-want. Google Play takes a fixed price, so the tablet app has one — a single purchase, no subscription, no in-app upgrades — and it's set so that a desktop user who tipped the typical amount isn't paying more for the tablet version than they chose to pay for the desktop one. The desktop builds stay free to download, with the tip jar, exactly as before.</p>
-        </details>
-        <details>
-          <summary>Can the tablet app analyse my library?</summary>
-          <p>No. Rekordbox runs on your computer, so the export and the analysis happen there. Copy the resulting <code>library.db</code> to the tablet with Files, Google Drive, a USB drive — whatever you already use — and open it. Browsing, filters, the Camelot wheel, compatibility matching, the playlist builder and M3U8 export all work from that one file. Preview and Compose need the audio files on the tablet too.</p>
-        </details>
-        <details>
           <summary>Is the desktop app really free? What's the catch?</summary>
           <p>No catch on the money. Track2Mix is pay-what-you-want: the full app downloads free with nothing held back, and you tip only if it earns it. If you genuinely can't afford to pay, use it free — that's the intended path, not an exploit. The one thing I do ask for is your name and email before the download, because during beta I need to be able to tell you when something is fixed or broken. That's the whole reason, and the list is used for nothing else.</p>
         </details>
@@ -879,11 +846,11 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
 
 <footer>
   <div class="wrap footer-inner">
-    <span>Track2Mix — DJ library intelligence for Rekordbox. Desktop: pay what you want. Android tablets: on Google Play.</span>
+    <span>Track2Mix — DJ library intelligence for Rekordbox. Pay what you want.</span>
     <nav class="footer-links">
       <a href="#how">How it works</a>
       <a href="#honest">Scope</a>
-      <a href="#tablet">Android tablets</a>
+      <a href="#compose">Compose</a>
       <a href="#faq">FAQ</a>
       <a href="https://downloads.track2mix.com">Downloads</a>
       <a href="https://github.com/astralisone/track2mix">GitHub</a>

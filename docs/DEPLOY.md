@@ -169,25 +169,13 @@ wrangler secret put LIST_AUTH_HEADER
 Put your PayPal.me handle into `PAYMENTS` at the top of `site/main.js` and push.
 Until at least one handle is set, the tip jar renders disabled and says so.
 
-## 5. Store link for the tablet app
+## 5. The site is desktop-only on purpose
 
-The Android tablet app is sold through Google Play, not downloaded from the
-site. Once the listing is live, paste its URL into `STORES` at the top of
-`site/main.js`:
-
-```js
-const STORES = {
-  googlePlay: "https://play.google.com/store/apps/details?id=com.track2mix.app",
-};
-```
-
-Until the URL is set, the badge renders as **Coming soon** without a link and
-the "tell me when it's out" form posts to the same `/api/contact` endpoint
-with `interest: "android"`, which writes a `store_interest` event (see
-[CONTACTS.md](CONTACTS.md)). With the URL set the form removes itself. The
-displayed price comes from `TABLET_PRICE` in the same file; change it there
-when the store price changes. Building and submitting the app is covered in
-[MOBILE.md](MOBILE.md).
+The site markets the pay-what-you-want desktop app and nothing else. The paid
+Android tablet app is marketed by its Google Play listing alone (decided
+22 Oct 2026), so there is no tablet section, store badge or "tell me when it's
+out" form here. The privacy policy still covers the tablet app because Play
+requires a policy URL that does.
 
 ## 6. Check it end to end
 
@@ -196,13 +184,10 @@ when the store price changes. Building and submitting the app is covered in
       `wrangler d1 execute contacts --remote --command "SELECT * FROM contacts"`.
 - [ ] Confirm the same address reached your mailing list.
 - [ ] Click a tip tier and confirm PayPal opens prefilled at the right amount.
-- [ ] On the Android tablets section, confirm the badge either opens the Play
-      listing or says "Coming soon", and that the notify form saves a row with
-      `event = 'store_interest'`.
 - [x] Open `https://downloads.track2mix.com` and confirm the cards show the
       latest GitHub release (the page fetches it; the static markup is the
       fallback when the API is unreachable).
-- [x] `https://track2mix.com/privacy/` loads — both stores require it.
+- [x] `https://track2mix.com/privacy/` loads — Google Play requires it.
 - [ ] Turn on **Cloudflare Web Analytics** (free, no cookie banner) so you can
       see which channel actually sends traffic.
 

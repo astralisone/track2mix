@@ -62,16 +62,12 @@ majority who arrive via the site, not as access control. Hardening it properly
 would mean serving the binary from R2 behind a signed, expiring URL that
 `/api/contact` issues — worth doing only if the leakage turns out to matter.
 
-## Wire up the store link (tablet app)
+## No tablet marketing here
 
-The Android tablet app is sold through Google Play. Set the listing URL in
-`STORES` at the top of `main.js` once it is live, and the price shown in
-`TABLET_PRICE`. An unset URL renders the badge as "Coming soon" and offers the
-notify form (it posts to `/api/contact` with `interest: "android"`). The
-tablet section
-deliberately says nothing about the tip jar or pay-what-you-want: those are
-the desktop deal, and the stores don't allow steering to outside payment.
-Build and submission steps are in [docs/MOBILE.md](../docs/MOBILE.md).
+The site sells the desktop app only. The paid Android tablet app is marketed
+by its Google Play listing, not here, so that the pay-what-you-want pitch and
+a priced product never share a page (decided 22 Oct 2026). The privacy policy
+keeps a paragraph covering the tablet app because Play requires it.
 
 ## Wire up payments (desktop tip jar)
 
@@ -89,11 +85,10 @@ in [docs/CONTACTS.md](../docs/CONTACTS.md#payments).
 - [x] Create the D1 database, apply the schema and bind it, then submit the
       form once and confirm the row lands in `contacts` and the person lands in
       your mailing list. See [docs/CONTACTS.md](../docs/CONTACTS.md).
-- [ ] Set at least one handle in `PAYMENTS` and click a tier to confirm it opens
-      prefilled at the right amount.
-- [ ] Set `STORES.googlePlay` once the Play listing is live, and check
-      `TABLET_PRICE` matches the store price.
-- [ ] Replace the hero preview and the tablet mock with **real screenshots**
+- [x] Set at least one handle in `PAYMENTS` (`astralisboss`, the Astralis One
+      business account; its PayPal.Me drops the amount, so the page says to
+      enter it on PayPal's side).
+- [ ] Replace the hero preview and the Compose mock with **real screenshots**
       of the app running on your own library. The markup in `index.html` under
       `<!-- Accurate rendering of the Track2Mix track view -->` is an honest
       rendering of the real columns with anonymised rows, but a genuine
