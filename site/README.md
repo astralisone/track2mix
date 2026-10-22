@@ -118,8 +118,8 @@ in [docs/CONTACTS.md](../docs/CONTACTS.md#payments).
       track is the single most persuasive image you can put here.
 - [ ] Add `assets/og.png` at 1200×630 for link previews — `index.html` already
       references it. Without it, shared links render without an image.
-- [ ] Point `DOWNLOAD_URL` in `wrangler.toml` at a real release once GitHub
-      Releases has a signed build.
+- [x] `DOWNLOAD_URL` in `wrangler.toml` points at downloads.track2mix.com, which
+      lists the latest GitHub release itself.
 - [ ] Update the GitHub URLs if the repo moves — they appear in `index.html`
       in the nav-adjacent CTA (`#gh-link`) and the footer.
 - [ ] Turn on **Cloudflare Web Analytics** (free, no cookie banner needed) so

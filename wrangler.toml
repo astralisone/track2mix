@@ -62,7 +62,7 @@ database_id = "dfd0eb85-430c-4f06-95b3-9468d94a00f9"
 APP_NAME = "track2mix"
 # Where the download link points. Returned by the API after a successful
 # capture, so it is not present in the page source beforehand.
-DOWNLOAD_URL = "https://github.com/astralisone/track2mix/releases/latest"
+DOWNLOAD_URL = "https://downloads.track2mix.com"
 
 # Secrets are NOT set here — they would end up in git. Set them with:
 #   wrangler secret put LIST_ENDPOINT
