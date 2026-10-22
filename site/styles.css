@@ -2,6 +2,28 @@
    and the app read as one product. Hand-written CSS: no build step, no CDN,
    deployable as static files to any host. */
 
+/* ---------- fonts (self-hosted, latin subset, variable weight) ---------- */
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("assets/fonts/DMSans-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("assets/fonts/JetBrainsMono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ---------- tokens ---------- */
+
 :root {
   --iris-100: #dedff7;
   --iris-200: #bec0ef;
@@ -19,10 +41,12 @@
   --bg-elevated: #0d0f28;
 
   --fg: #e1e1e3;
-  --fg-muted: #9ea4b2;
-  --fg-faint: #6b7280;
-  --hairline: rgba(255, 255, 255, 0.08);
-  --hairline-soft: rgba(255, 255, 255, 0.05);
+  --fg-muted: #a3a9b8;
+  /* Small captions and labels sit on near-black; this is the lightest grey
+     that still reads as secondary while clearing 4.5:1 on --bg. */
+  --fg-faint: #858d9e;
+  --hairline: rgba(255, 255, 255, 0.09);
+  --hairline-soft: rgba(255, 255, 255, 0.055);
 
   --radius-lg: 14px;
   --radius-md: 10px;
@@ -33,9 +57,8 @@
 
   --maxw: 1120px;
   --gutter: 16px;
+  --lane-strip: 156px;
 
-  /* Deliberately single-theme: this is a dark product surface, not a
-     light page inverted. Tell the UA so controls and scrollbars follow. */
   color-scheme: dark;
 }
 
@@ -45,15 +68,13 @@
   box-sizing: border-box;
 }
 
-/* Any element given an explicit display overrides the UA's
-   [hidden] { display: none }, so restate it with priority. Without this,
-   .download-ready { display: grid } renders while still marked hidden. */
 [hidden] {
   display: none !important;
 }
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 72px;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -66,12 +87,19 @@ body {
     radial-gradient(ellipse 60% 40% at 15% 0%, rgba(87, 90, 208, 0.18), transparent 60%),
     radial-gradient(ellipse 50% 40% at 95% 100%, rgba(48, 77, 109, 0.22), transparent 60%),
     linear-gradient(180deg, #01020f 0%, #00010a 100%);
-  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   line-height: 1.6;
   overflow-x: hidden;
+}
+
+/* A fixed backdrop is repainted on every scroll frame; keep it for pointer
+   devices with room to spare and let phones scroll a plain gradient. */
+@media (min-width: 900px) and (hover: hover) {
+  body {
+    background-attachment: fixed;
+  }
 }
 
 ::selection {
@@ -96,8 +124,24 @@ a:hover {
 
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px rgba(87, 90, 208, 0.7);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--iris-400);
   border-radius: var(--radius-sm);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  color: var(--iris-100);
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--fg);
 }
 
 /* ---------- layout primitives ---------- */
@@ -110,14 +154,20 @@ a:hover {
 }
 
 section {
-  padding-block: clamp(56px, 9vw, 104px);
+  padding-block: clamp(52px, 8vw, 92px);
   position: relative;
 }
 
-.rule {
-  border: 0;
+/* Alternate bands replace hairline rules between sections: the eye reads the
+   page as a rhythm of panels rather than one long column. */
+.band {
+  background: rgba(0, 1, 10, 0.55);
   border-top: 1px solid var(--hairline-soft);
-  margin: 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.band + .band {
+  border-top: 0;
 }
 
 .eyebrow {
@@ -139,12 +189,13 @@ h3 {
 }
 
 h1 {
-  font-size: clamp(2rem, 4.4vw, 3.15rem);
+  font-size: clamp(1.9rem, 4.6vw, 3.3rem);
   font-weight: 700;
+  line-height: 1.06;
 }
 
 h2 {
-  font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+  font-size: clamp(1.55rem, 3.4vw, 2.3rem);
   font-weight: 700;
 }
 
@@ -159,14 +210,18 @@ p {
 }
 
 .lede {
-  font-size: clamp(1rem, 1.8vw, 1.1875rem);
+  font-size: clamp(1rem, 1.7vw, 1.125rem);
   color: var(--fg-muted);
-  max-width: 62ch;
+  max-width: 60ch;
+}
+
+h2 + .lede {
+  margin-top: 14px;
 }
 
 .section-head {
-  margin-bottom: clamp(32px, 5vw, 52px);
-  max-width: 68ch;
+  margin-bottom: clamp(28px, 4.5vw, 48px);
+  max-width: 66ch;
 }
 
 .section-head p {
@@ -174,13 +229,28 @@ p {
   color: var(--fg-muted);
 }
 
+.section-head-center {
+  text-align: center;
+  margin-inline: auto;
+}
+
+.section-head-center p {
+  margin-inline: auto;
+}
+
+.aside {
+  margin-top: 24px;
+  font-size: 0.9375rem;
+  color: var(--fg-muted);
+}
+
 /* ---------- glass + pills ---------- */
 
 .glass {
-  background: rgba(13, 15, 40, 0.6);
-  backdrop-filter: blur(14px) saturate(130%);
-  -webkit-backdrop-filter: blur(14px) saturate(130%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(13, 15, 40, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   border-radius: var(--radius-lg);
 }
@@ -197,31 +267,18 @@ p {
   line-height: 1.4;
 }
 
-.pill-iris {
-  background: linear-gradient(135deg, rgba(87, 90, 208, 0.22), rgba(87, 90, 208, 0.08));
-  border: 1px solid rgba(87, 90, 208, 0.35);
-  color: #c9cafc;
-}
-
 .pill-gold {
   background: linear-gradient(135deg, rgba(245, 183, 28, 0.22), rgba(245, 183, 28, 0.08));
   border: 1px solid rgba(245, 183, 28, 0.4);
   color: var(--gold-200);
+  vertical-align: middle;
 }
 
 .pill-muted {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--hairline);
   color: var(--fg-muted);
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--gold-300);
-  box-shadow: 0 0 8px rgba(245, 183, 28, 0.8);
-  flex: none;
+  margin-inline-start: auto;
 }
 
 /* ---------- buttons ---------- */
@@ -231,7 +288,7 @@ p {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  padding: 12px 20px;
+  padding: 11px 18px;
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
   font-size: 0.9375rem;
@@ -242,6 +299,11 @@ p {
   transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease,
     transform 0.18s ease, color 0.18s ease;
   white-space: nowrap;
+}
+
+.btn-lg {
+  padding: 14px 22px;
+  font-size: 1rem;
 }
 
 .btn:active {
@@ -284,7 +346,7 @@ p {
   position: sticky;
   top: env(safe-area-inset-top, 0px);
   z-index: 50;
-  background: rgba(1, 2, 15, 0.72);
+  background: rgba(1, 2, 15, 0.78);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--hairline-soft);
@@ -333,28 +395,94 @@ p {
 }
 
 .nav-cta {
-  margin-inline-start: auto;
-}
-
-.nav-links + .nav-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-inline-start: 4px;
 }
 
-@media (max-width: 720px) {
+.nav-cta .btn {
+  padding: 9px 15px;
+  font-size: 0.875rem;
+}
+
+.nav-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--fg);
+  cursor: pointer;
+  place-items: center;
+}
+
+.nav-toggle[aria-expanded="true"] .bar-1 {
+  transform: translateY(5px) rotate(45deg);
+}
+
+.nav-toggle[aria-expanded="true"] .bar-2 {
+  opacity: 0;
+}
+
+.nav-toggle[aria-expanded="true"] .bar-3 {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
+.nav-toggle path {
+  transform-origin: center;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+@media (max-width: 760px) {
+  .nav-toggle {
+    display: grid;
+  }
+
+  .nav-cta {
+    margin-inline-start: auto;
+  }
+
   .nav-links {
     display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 8px var(--gutter) 12px;
+    background: rgba(1, 2, 15, 0.96);
+    border-bottom: 1px solid var(--hairline);
+    font-size: 1rem;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-links a {
+    padding: 12px 6px;
+    border-bottom: 1px solid var(--hairline-soft);
+  }
+
+  .nav-links a:last-child {
+    border-bottom: 0;
   }
 }
 
 /* ---------- hero ---------- */
 
 .hero {
-  padding-block: clamp(48px, 8vw, 88px) clamp(40px, 6vw, 72px);
+  padding-block: clamp(40px, 7vw, 84px) clamp(40px, 6vw, 72px);
 }
 
 .hero-grid {
   display: grid;
-  gap: clamp(36px, 5vw, 56px);
+  gap: clamp(32px, 5vw, 56px);
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
 }
@@ -366,29 +494,26 @@ p {
 }
 
 .hero h1 {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
+/* The one place gold is spent on type. Everywhere else it means energy. */
 .hero h1 .accent {
-  background: linear-gradient(135deg, var(--iris-300) 0%, var(--gold-300) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: var(--gold-300);
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 26px;
 }
 
-.hero-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 20px;
+.hero-fine {
+  margin-top: 14px;
+  font-size: 0.875rem;
+  color: var(--fg-faint);
+  max-width: 48ch;
 }
 
 /* ---------- app preview ---------- */
@@ -425,6 +550,10 @@ p {
   font-size: 11px;
   color: var(--fg-faint);
   margin-inline: auto;
+}
+
+.compose-mock .preview-title {
+  margin-inline: 0;
 }
 
 .tbl {
@@ -475,6 +604,11 @@ p {
   color: var(--fg);
 }
 
+.tbl-head .cell-bpm {
+  font-size: 10px;
+  color: var(--fg-faint);
+}
+
 .keychip {
   display: inline-block;
   padding: 2px 6px;
@@ -504,6 +638,7 @@ p {
   display: block;
   height: 100%;
   border-radius: 999px;
+  transform-origin: left center;
   background: linear-gradient(
     90deg,
     rgba(48, 77, 109, 0.85) 0%,
@@ -524,7 +659,7 @@ p {
   padding: 10px 14px;
   border-top: 1px solid var(--hairline-soft);
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fg-faint);
   background: rgba(255, 255, 255, 0.015);
   flex-wrap: wrap;
@@ -532,18 +667,21 @@ p {
 
 .preview-note {
   margin-top: 10px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 0.8125rem;
   color: var(--fg-faint);
   text-align: center;
 }
 
+/* On a phone the artist column goes; the energy column stays, because the
+   energy ranking is the thing the page is selling. */
 @media (max-width: 560px) {
   .tbl {
-    grid-template-columns: minmax(0, 2fr) 48px 44px;
+    grid-template-columns: minmax(0, 1fr) 40px 40px 60px;
+    gap: 8px;
+    padding-inline: 12px;
   }
-  .tbl .cell-sub,
-  .tbl .col-energy {
+
+  .tbl .cell-sub {
     display: none;
   }
 }
@@ -552,26 +690,30 @@ p {
 
 .grid {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 }
 
+.grid-features {
+  margin-top: clamp(32px, 5vw, 52px);
+}
+
 .card {
-  padding: 24px;
+  padding: 22px;
   border-radius: var(--radius-lg);
-  background: rgba(6, 7, 26, 0.55);
+  background: rgba(6, 7, 26, 0.6);
   border: 1px solid var(--hairline-soft);
   transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
 }
 
 .card:hover {
   border-color: rgba(87, 90, 208, 0.34);
-  background: rgba(13, 15, 40, 0.6);
+  background: rgba(13, 15, 40, 0.65);
   transform: translateY(-2px);
 }
 
 .card h3 {
-  margin-bottom: 9px;
+  margin-bottom: 8px;
 }
 
 .card p {
@@ -585,7 +727,7 @@ p {
   border-radius: var(--radius-md);
   display: grid;
   place-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   background: linear-gradient(135deg, rgba(87, 90, 208, 0.22), rgba(48, 77, 109, 0.14));
   border: 1px solid rgba(87, 90, 208, 0.3);
   color: var(--iris-200);
@@ -600,16 +742,16 @@ p {
 
 .steps {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   counter-reset: step;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
 }
 
 .step {
-  padding: 24px;
+  padding: 22px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--hairline-soft);
-  background: rgba(6, 7, 26, 0.45);
+  background: rgba(6, 7, 26, 0.5);
 }
 
 .step::before {
@@ -619,12 +761,12 @@ p {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: var(--gold-300);
-  margin-bottom: 14px;
+  color: var(--iris-300);
+  margin-bottom: 12px;
 }
 
 .step h3 {
-  margin-bottom: 9px;
+  margin-bottom: 8px;
 }
 
 .step p {
@@ -632,30 +774,7 @@ p {
   font-size: 0.9375rem;
 }
 
-/* ---------- code block ---------- */
-
-.code {
-  margin: 0;
-  padding: 18px 20px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-deep);
-  border: 1px solid var(--hairline-soft);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  line-height: 1.85;
-  color: var(--iris-100);
-  overflow-x: auto;
-}
-
-.code .c {
-  color: var(--fg-faint);
-}
-
-.code .p {
-  color: var(--gold-300);
-}
-
-/* ---------- honest / spec list ---------- */
+/* ---------- spec lists ---------- */
 
 .speclist {
   display: grid;
@@ -665,11 +784,16 @@ p {
   list-style: none;
 }
 
+h2 + .speclist,
+.lede + .speclist {
+  margin-top: 22px;
+}
+
 .speclist li {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr);
   gap: 12px;
-  padding: 14px 0;
+  padding: 13px 0;
   border-bottom: 1px solid var(--hairline-soft);
   font-size: 0.9375rem;
   color: var(--fg-muted);
@@ -709,54 +833,118 @@ p {
   .two-col {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
+
+  .two-col-wide {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  }
+
+  /* The funnel is wide and short, the ranking card narrow and tall: give the
+     funnel the larger column and centre it against the card. */
+  .two-col-proof {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: center;
+  }
 }
 
-/* ---------- signup ---------- */
+/* ---------- expandable detail ---------- */
 
-.signup {
-  padding: clamp(28px, 4vw, 44px);
-  text-align: center;
+.more {
+  margin-top: 18px;
 }
 
-.signup h2 {
+.more summary {
+  padding: 12px 16px;
+}
+
+.more ul {
+  margin: 0;
+  padding: 0 18px 16px 34px;
+  color: var(--fg-muted);
+  font-size: 0.9375rem;
+  display: grid;
+  gap: 8px;
+}
+
+/* ---------- fit sheet ---------- */
+
+.fit {
+  margin: 0;
+  padding: clamp(20px, 3vw, 28px);
+  display: grid;
+  gap: 0;
+}
+
+.fit > div {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.fit > div:first-child {
+  padding-top: 0;
+}
+
+.fit > div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.fit dt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--iris-300);
+  padding-top: 4px;
+}
+
+.fit dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--fg-muted);
+}
+
+/* ---------- panels (download + tip jar) ---------- */
+
+.panel {
+  padding: clamp(22px, 3.5vw, 34px);
+}
+
+.panel-title {
+  font-size: 1.25rem;
+  margin-bottom: 10px;
+}
+
+.panel-lede {
+  color: var(--fg-muted);
+  font-size: 0.9375rem;
   margin-bottom: 14px;
 }
 
-.signup .lede {
-  margin-inline: auto;
+.panel-link {
+  font-size: 0.9375rem;
+  margin-bottom: 20px;
 }
 
-.form {
-  display: flex;
-  gap: 10px;
-  margin: 26px auto 0;
-  max-width: 440px;
-  flex-wrap: wrap;
-}
-
-.form input {
-  flex: 1 1 220px;
-  min-width: 0;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--hairline);
-  background: rgba(0, 1, 10, 0.6);
-  color: var(--fg);
-  font-family: var(--font-sans);
+.panel-note {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline-soft);
+  color: var(--fg-muted);
   font-size: 0.9375rem;
 }
 
-.form input::placeholder {
-  color: var(--fg-faint);
+.panel-note b {
+  color: var(--fg);
 }
 
-.form input:focus {
-  border-color: rgba(87, 90, 208, 0.6);
+#get .two-col {
+  align-items: stretch;
 }
 
-.form .btn {
-  flex: 0 0 auto;
-}
+/* ---------- forms ---------- */
 
 .form-msg {
   margin-top: 14px;
@@ -773,9 +961,145 @@ p {
 }
 
 .fineprint {
-  margin-top: 12px;
+  margin-top: 16px;
   font-size: 0.8125rem;
   color: var(--fg-faint);
+}
+
+.stack-form {
+  display: grid;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--fg-muted);
+}
+
+.field input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: rgba(0, 1, 10, 0.6);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+}
+
+.field input::placeholder {
+  color: var(--fg-faint);
+}
+
+.field input:focus {
+  border-color: var(--iris-400);
+}
+
+.stack-form .btn {
+  width: 100%;
+  margin-top: 2px;
+}
+
+.download-ready {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  margin-top: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(245, 183, 28, 0.35);
+  background: rgba(245, 183, 28, 0.07);
+}
+
+.download-ready-head {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gold-200);
+}
+
+/* ---------- tiers ---------- */
+
+.tiers {
+  display: grid;
+  gap: 10px;
+}
+
+.tier {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: rgba(0, 1, 10, 0.4);
+  color: var(--fg);
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.tier:hover {
+  border-color: rgba(87, 90, 208, 0.5);
+  background: rgba(87, 90, 208, 0.1);
+  color: var(--fg);
+  transform: translateY(-1px);
+}
+
+.tier-featured {
+  border-color: rgba(245, 183, 28, 0.35);
+  background: rgba(245, 183, 28, 0.06);
+}
+
+.tier-featured:hover {
+  border-color: rgba(245, 183, 28, 0.6);
+  background: rgba(245, 183, 28, 0.12);
+}
+
+.tier-amt {
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 500;
+}
+
+.tier-label {
+  font-size: 0.875rem;
+  color: var(--fg-muted);
+  line-height: 1.5;
+}
+
+.tier[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.alt-pay {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 14px;
+  font-size: 0.875rem;
+}
+
+.alt-pay-label {
+  color: var(--fg-faint);
+}
+
+.alt-pay-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--iris-300);
+}
+
+.alt-pay-link:hover {
+  color: var(--iris-200);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ---------- faq ---------- */
@@ -789,7 +1113,7 @@ p {
 details {
   border: 1px solid var(--hairline-soft);
   border-radius: var(--radius-md);
-  background: rgba(6, 7, 26, 0.45);
+  background: rgba(6, 7, 26, 0.5);
   overflow: hidden;
 }
 
@@ -852,7 +1176,7 @@ footer {
 
 .footer-links {
   display: flex;
-  gap: 20px;
+  gap: 18px;
   flex-wrap: wrap;
 }
 
@@ -860,166 +1184,7 @@ footer {
   color: var(--fg-muted);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
-}
-
-/* ---------- pay-what-you-want tiers ---------- */
-
-.tiers {
-  display: grid;
-  gap: 10px;
-}
-
-.tier {
-  display: grid;
-  gap: 4px;
-  padding: 15px 17px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--hairline);
-  background: rgba(0, 1, 10, 0.4);
-  color: var(--fg);
-  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
-}
-
-.tier:hover {
-  border-color: rgba(87, 90, 208, 0.5);
-  background: rgba(87, 90, 208, 0.1);
-  color: var(--fg);
-  transform: translateY(-1px);
-}
-
-.tier-featured {
-  border-color: rgba(245, 183, 28, 0.35);
-  background: rgba(245, 183, 28, 0.06);
-}
-
-.tier-featured:hover {
-  border-color: rgba(245, 183, 28, 0.6);
-  background: rgba(245, 183, 28, 0.12);
-}
-
-.tier-amt {
-  font-family: var(--font-mono);
-  font-size: 1.0625rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-.tier-label {
-  font-size: 0.875rem;
-  color: var(--fg-muted);
-  line-height: 1.5;
-}
-
-.tier[aria-disabled="true"] {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Download and tip cards sit side by side — match their heights. */
-#get .two-col {
-  align-items: stretch;
-}
-
-/* ---------- gated download form ---------- */
-
-.stack-form {
-  display: grid;
-  gap: 14px;
-}
-
-.field {
-  display: grid;
-  gap: 6px;
-}
-
-.field label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--fg-muted);
-  letter-spacing: -0.005em;
-}
-
-.field input {
-  width: 100%;
-  min-width: 0;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--hairline);
-  background: rgba(0, 1, 10, 0.6);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
-}
-
-.field input::placeholder {
-  color: var(--fg-faint);
-}
-
-.field input:focus {
-  border-color: rgba(87, 90, 208, 0.6);
-}
-
-.stack-form .btn {
-  width: 100%;
-  margin-top: 2px;
-}
-
-.download-ready {
-  display: grid;
-  gap: 12px;
-  padding: 18px;
-  margin-top: 4px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(245, 183, 28, 0.35);
-  background: rgba(245, 183, 28, 0.07);
-}
-
-.download-ready-head {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--gold-200);
-}
-
-/* ---------- alternative payment methods ---------- */
-
-.alt-pay {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 14px;
-  margin-top: 14px;
-  font-size: 0.875rem;
-}
-
-.alt-pay-label {
-  color: var(--fg-faint);
-}
-
-.alt-pay-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--iris-300);
-}
-
-.alt-pay-link:hover {
-  color: var(--iris-200);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-/* ---------- analysis section ---------- */
+/* ---------- analysis ---------- */
 
 .analysis-note {
   margin-top: 20px;
@@ -1049,7 +1214,6 @@ footer {
 
 .signal-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
   gap: 7px;
 }
 
@@ -1093,16 +1257,13 @@ footer {
 }
 
 /* ==========================================================================
-   Animated figures
-   --------------------------------------------------------------------------
-   Every animation here runs FROM a start state TO the element's natural
-   resting state, and only once .in-view is set by main.js. With JS disabled,
-   or with prefers-reduced-motion, nothing is left mid-flight: the page renders
-   in its finished state, which is what a thumbnail or a screen reader gets.
+   Figures. Every animation runs FROM a start state TO the element's natural
+   resting state, and only once .in-view is set by main.js, so a visitor with
+   JS off, a thumbnail, or reduced motion gets the finished picture.
    ========================================================================== */
 
 .fig {
-  margin: 28px 0 0;
+  margin: 0;
 }
 
 .fig svg {
@@ -1124,7 +1285,11 @@ footer {
   font-weight: 600;
 }
 
-/* ---------- narrowing funnel ---------- */
+.fig-funnel {
+  padding-top: 8px;
+}
+
+/* funnel */
 
 .fbar {
   fill: rgba(87, 90, 208, 0.55);
@@ -1138,7 +1303,7 @@ footer {
 .fig-cap,
 .fig-step {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   fill: var(--fg-faint);
@@ -1147,15 +1312,13 @@ footer {
 .fig-step {
   letter-spacing: 0.04em;
   text-transform: none;
-  font-size: 11px;
+  font-size: 12.5px;
 }
 
 .fig-n {
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: 17px;
   fill: var(--fg);
-  /* Sits to the RIGHT of each bar. Anchoring at the end pulls the number back
-     over the bar it is labelling. */
   text-anchor: start;
 }
 
@@ -1164,7 +1327,7 @@ footer {
 }
 
 .fig-sub {
-  font-size: 12.5px;
+  font-size: 14px;
   fill: var(--fg-muted);
 }
 
@@ -1187,7 +1350,7 @@ footer {
   to   { transform: scaleX(1);           opacity: 1; }
 }
 
-/* ---------- Camelot wheel ---------- */
+/* Camelot wheel */
 
 .fig-wheel {
   margin-top: 22px;
@@ -1225,46 +1388,38 @@ footer {
   fill: #fff;
 }
 
-/* The anchor lands first, then the three keys it opens up. */
-[data-animate="wheel"].in-view .seg-anchor {
-  animation: seg-land 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
+[data-animate="wheel"].in-view .seg-anchor,
 [data-animate="wheel"].in-view .seg-ok {
   animation: seg-land 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* nth-of-type counts paths, not .seg-ok paths, so the stagger is carried
-   per-element as --d instead. */
-[data-animate="wheel"].in-view .seg-ok { animation-delay: var(--d, 0ms); }
+[data-animate="wheel"].in-view .seg-ok {
+  animation-delay: var(--d, 0ms);
+}
 
 @keyframes seg-land {
   from { fill: rgba(255, 255, 255, 0.045); stroke: rgba(255, 255, 255, 0.07); }
 }
 
-/* ---------- energy ranking demo ---------- */
+/* energy ranking demo */
 
 .ranking-demo {
   display: grid;
-  gap: clamp(24px, 4vw, 44px);
-  grid-template-columns: minmax(0, 1fr);
-  align-items: center;
-  margin-bottom: clamp(32px, 5vw, 52px);
-  padding: clamp(24px, 3.5vw, 34px);
+  gap: 18px;
+  align-content: start;
+  padding: clamp(20px, 3vw, 28px);
   border-radius: var(--radius-lg);
   border: 1px solid var(--hairline-soft);
-  background: rgba(6, 7, 26, 0.45);
+  background: rgba(6, 7, 26, 0.6);
 }
 
-@media (min-width: 900px) {
-  .ranking-demo {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  }
+.ranking-head .eyebrow {
+  margin-bottom: 10px;
 }
 
 .ranking-head h3 {
-  font-size: clamp(1.125rem, 2vw, 1.4rem);
-  margin: 12px 0 10px;
+  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  margin-bottom: 8px;
 }
 
 .ranking-head p {
@@ -1273,8 +1428,8 @@ footer {
 }
 
 .rank-replay {
-  margin-top: 18px;
-  padding: 9px 15px;
+  justify-self: start;
+  padding: 8px 14px;
   font-size: 0.875rem;
 }
 
@@ -1284,7 +1439,7 @@ footer {
   padding: 0;
   display: grid;
   gap: 6px;
-  --row-h: 44px;
+  --row-h: 42px;
 }
 
 .rank-row {
@@ -1292,11 +1447,14 @@ footer {
   grid-template-columns: 20px minmax(0, 1fr) 90px 26px;
   align-items: center;
   gap: 12px;
-  height: 38px;
+  height: 36px;
   padding-inline: 12px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.045);
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 780ms cubic-bezier(0.22, 1, 0.36, 1), opacity 420ms ease-out;
 }
 
 .rank-pos {
@@ -1324,19 +1482,6 @@ footer {
   color: var(--gold-200);
 }
 
-/* Each row flies in from where alphabetical order would have put it.
-   Driven by a transition rather than a filled animation: JS sets .rank-from,
-   forces a reflow, then removes it, so the rows travel TO their resting
-   state. If transitions never run the rows simply appear finished — they can
-   never be left stranded off-screen or at zero opacity, which is the failure
-   mode a filled animation would have. */
-.rank-row {
-  transform: translateY(0);
-  opacity: 1;
-  transition: transform 780ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 420ms ease-out;
-}
-
 .ranking-demo.rank-from .rank-row {
   transform: translateY(calc(var(--shift) * var(--row-h)));
   opacity: 0;
@@ -1358,12 +1503,6 @@ footer {
   to   { transform: scaleX(1); }
 }
 
-.meter > span {
-  transform-origin: left center;
-}
-
-/* ---------- signal card ---------- */
-
 [data-animate="signals"].in-view .meter > span {
   animation: meter-fill 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -1372,101 +1511,6 @@ footer {
 [data-animate="signals"].in-view .signal-row:nth-child(2) .meter > span { animation-delay: 110ms; }
 [data-animate="signals"].in-view .signal-row:nth-child(3) .meter > span { animation-delay: 220ms; }
 [data-animate="signals"].in-view .signal-row:nth-child(4) .meter > span { animation-delay: 330ms; }
-
-@media (prefers-reduced-motion: reduce) {
-  /* Snap straight to the finished state rather than racing through it. */
-  .rank-row,
-  .rank-meter > span {
-    transition: none !important;
-  }
-
-  [data-animate].in-view .fbar,
-  [data-animate].in-view .seg,
-  [data-animate].in-view .meter > span {
-    animation: none !important;
-    transform: none !important;
-    opacity: 1 !important;
-  }
-}
-
-/* ==========================================================================
-   Scroll-driven construct / deconstruct
-   --------------------------------------------------------------------------
-   Blocks assemble as they enter the viewport and settle back as they leave,
-   driven by each element's own view() timeline. No library, no scroll
-   listener, no main-thread work — the compositor runs it.
-
-   @supports keeps it strictly additive: Firefox, where this is still behind a
-   flag, keeps the finished static page. Each element carries its own timeline,
-   which is what produces the stagger — items further along a row cross the
-   viewport edge later, so no per-child delays are needed.
-
-   ONE animation across `cover`, not a build plus a separate shed. Two
-   animations touching the same properties both fill, and the later one wins
-   even outside its own range, which pins everything and nothing moves.
-
-   Measured in Chromium by scrolling the page and reading computed style at
-   each position, rather than inferred: a card reads opacity 0.50 at 0% of
-   cover with translateY +23.6px, reaches exactly opacity 1 / translateY 0 at
-   26%, holds it through 50%, and lands on 0.45 / -16px / scale 0.99 at 100%.
-   The curve below is what actually runs.
-
-   Opacity floors at 0.45 rather than 0 by choice, not caution: text that
-   vanishes completely at the viewport edges is harder to read on the way past
-   than text that merely dims. Dropping the floor is a one-number change if a
-   stronger fade is ever wanted.
-   ========================================================================== */
-
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .card,
-    .step,
-    .fig,
-    .ranking-demo,
-    .signal-card,
-    #analysis .speclist li,
-    #get .glass,
-    #faq details,
-    #problem .section-head,
-    #how .section-head,
-    #analysis .section-head,
-    #features .section-head,
-    #honest .two-col > *,
-    #get .section-head {
-      animation: sd-pass linear both;
-      animation-timeline: view();
-      animation-range: cover;
-    }
-
-    @keyframes sd-pass {
-      0% {
-        opacity: 0.45;
-        transform: translateY(26px) scale(0.985);
-      }
-      /* Fully built well before it reaches the middle of the screen. */
-      26% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-      /* Held steady for the whole time it is comfortably readable. */
-      74% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-      100% {
-        opacity: 0.45;
-        transform: translateY(-16px) scale(0.99);
-      }
-    }
-
-    /* The hero is above the fold at load: it has no entry to travel through,
-       and animating it would leave it mid-build in a thumbnail. */
-    .hero,
-    .hero * {
-      animation: none;
-    }
-  }
-}
 
 /* ---------- compose: timeline mock ---------- */
 
@@ -1477,7 +1521,7 @@ footer {
 .compose-mock .ruler {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-left: 156px;
+  margin-left: var(--lane-strip);
   padding: 6px 0 4px;
   font-family: var(--font-mono);
   font-size: 10px;
@@ -1492,7 +1536,7 @@ footer {
 
 .lane {
   display: grid;
-  grid-template-columns: 156px minmax(0, 1fr);
+  grid-template-columns: var(--lane-strip) minmax(0, 1fr);
   border-bottom: 1px solid var(--hairline-soft);
 }
 
@@ -1500,7 +1544,7 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 12px;
+  padding: 12px;
   border-right: 1px solid var(--hairline-soft);
   background: rgba(255, 255, 255, 0.015);
 }
@@ -1526,7 +1570,7 @@ footer {
 
 .lane-track {
   position: relative;
-  height: 54px;
+  height: 62px;
   background-image: repeating-linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.05) 0 1px,
@@ -1536,17 +1580,13 @@ footer {
 
 .clip {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
+  top: 9px;
+  bottom: 9px;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid rgba(124, 126, 229, 0.45);
   background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(124, 126, 229, 0.55) 0 2px,
-      transparent 2px 5px
-    ),
+    repeating-linear-gradient(90deg, rgba(124, 126, 229, 0.55) 0 2px, transparent 2px 5px),
     rgba(87, 90, 208, 0.18);
 }
 
@@ -1570,23 +1610,109 @@ footer {
 
 .playhead {
   position: absolute;
-  top: 38px;
-  bottom: 38px;
+  top: 40px;
+  bottom: 40px;
+  left: calc(var(--lane-strip) + 38% - 0.38 * var(--lane-strip));
   width: 1px;
   background: var(--gold-300);
   box-shadow: 0 0 8px rgba(245, 183, 28, 0.6);
 }
 
-.compose-row {
-  margin-top: clamp(28px, 4vw, 44px);
+@media (max-width: 560px) {
+  :root {
+    --lane-strip: 116px;
+  }
+
+  .lane-ctl {
+    display: none;
+  }
 }
 
-kbd {
-  font-family: var(--font-mono);
-  font-size: 0.8em;
-  padding: 1px 6px;
-  border-radius: 5px;
-  border: 1px solid var(--hairline);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--fg);
+/* ==========================================================================
+   Entrance motion. Blocks rise into place as they enter the viewport and then
+   stay put: no dimming on the way out, so nothing is ever harder to read
+   because of where it sits on screen. Compositor-driven; additive only.
+   ========================================================================== */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .card,
+    .step,
+    .fig,
+    .ranking-demo,
+    .signal-card,
+    .fit,
+    .panel,
+    #faq details,
+    .section-head {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0.4;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero,
+    .hero * {
+      animation: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+
+  .rank-row,
+  .rank-meter > span {
+    transition: none !important;
+  }
+
+  [data-animate].in-view .fbar,
+  [data-animate].in-view .seg,
+  [data-animate].in-view .meter > span {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ---------- phone-size figures ---------- */
+
+/* The funnel SVG scales to the column, so at 390px its labels would land
+   near 6px. Scale the type up in viewBox units instead. */
+@media (max-width: 560px) {
+  .fig-cap,
+  .fig-step {
+    font-size: 17px;
+  }
+
+  .fig-n {
+    font-size: 24px;
+  }
+
+  .fig-sub {
+    font-size: 19px;
+  }
+
+  .compose-mock .pill {
+    display: none;
+  }
 }

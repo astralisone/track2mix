@@ -3,22 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Track2Mix — Which of your tracks actually mixes with this one?</title>
-<meta name="description" content="Track2Mix analyses your Rekordbox library on your own machine, tells you which tracks actually belong next to each other — harmonically, by BPM, and by energy — then helps you audition, arrange and blend them. Pay-what-you-want desktop app for Windows and Linux.">
+<title>Track2Mix — Find the next track in your Rekordbox library</title>
+<meta name="description" content="Track2Mix analyses your Rekordbox library on your own machine, scores every track for energy, and ranks the ones that mix with the record you're playing by key, BPM and how hard they hit. Free, pay-what-you-want desktop app for Windows and Linux.">
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/app-icon-256.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Track2Mix — Which of your tracks actually mixes with this one?">
+<meta property="og:title" content="Track2Mix — Find the next track in your Rekordbox library">
 <meta property="og:description" content="Rekordbox knows your keys and BPMs. It doesn't know which of your 8,000 tracks belong next to each other. Track2Mix does.">
 <meta property="og:image" content="https://track2mix.com/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="assets/fonts/DMSans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/JetBrainsMono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -43,17 +42,19 @@
       </svg>
       Track2Mix
     </a>
-    <nav class="nav-links">
+    <nav class="nav-links" id="nav-links" aria-label="Sections">
       <a href="#how">How it works</a>
-      <a href="#analysis">The analysis</a>
-      <a href="#features">Features</a>
+      <a href="#measures">What it measures</a>
       <a href="#compose">Compose</a>
-      <a href="#honest">What it does &amp; doesn't</a>
+      <a href="#scope">Scope</a>
       <a href="#faq">FAQ</a>
       <a href="https://downloads.track2mix.com">Downloads</a>
     </nav>
     <div class="nav-cta">
-      <a class="btn btn-primary" href="#get">Get it free</a>
+      <a class="btn btn-primary" href="#get">Download free</a>
+      <button class="nav-toggle" type="button" aria-controls="nav-links" aria-expanded="false" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path class="bar-1" d="M4 7h16"/><path class="bar-2" d="M4 12h16"/><path class="bar-3" d="M4 17h16"/></svg>
+      </button>
     </div>
   </div>
 </header>
@@ -64,72 +65,63 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <p class="eyebrow">Windows &amp; Linux · Runs offline</p>
-        <h1>Your library already knows what to play next. <span class="accent">Rekordbox just won't tell you.</span></h1>
+        <p class="eyebrow">Free desktop app · Windows &amp; Linux · Offline</p>
+        <h1>Find the <span class="accent">next track</span> in your Rekordbox library.</h1>
         <p class="lede">
-          Rekordbox stores your keys and your BPMs. It has no idea which of your
-          eight thousand tracks actually belong next to each other. Track2Mix reads
-          your collection, listens to every file on your own machine, and scores
-          each track for energy — then hands you the shortlist that mixes, lets you
-          audition it, arranges it into a set, and blends it on a timeline you can
-          render to MP3.
+          Track2Mix listens to every file on your own machine, scores each
+          track for energy, and ranks the ones that mix with the record you're
+          playing — by key, by BPM, and by how hard they hit. Audition the
+          shortlist, build the set, and blend it on a timeline.
         </p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#get">
+          <a class="btn btn-primary btn-lg" href="#get">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
             Download free
           </a>
-          <a class="btn btn-ghost" href="#how">See how it works</a>
+          <a class="btn btn-ghost btn-lg" href="#how">See how it works</a>
         </div>
-        <div class="hero-meta">
-          <span class="pill pill-iris">Harmonic + BPM matching</span>
-          <span class="pill pill-iris">Energy scoring</span>
-          <span class="pill pill-iris">Playlist builder + composer</span>
-          <span class="pill pill-gold"><span class="dot"></span>Nothing leaves your machine</span>
-        </div>
+        <p class="hero-fine">Pay what you want, or nothing. We ask for a name and email to send the link. No account, no upload.</p>
       </div>
 
       <div>
-        <!-- Accurate rendering of the Track2Mix track view. Replace with real
-             screenshots before launch — see site/README.md. -->
         <div class="glass preview" role="img" aria-label="Track2Mix showing tracks compatible with a selected anchor track, with key, BPM and energy columns">
           <div class="preview-bar">
             <span class="tl"><i></i><i></i><i></i></span>
             <span class="preview-title">Track2Mix — library.db</span>
           </div>
           <div class="tbl tbl-head">
-            <span>Title</span><span class="cell-sub">Artist</span><span style="text-align:right">BPM</span><span>Key</span><span class="col-energy">Energy</span>
+            <span>Title</span><span class="cell-sub">Artist</span><span class="cell-bpm">BPM</span><span>Key</span><span class="col-energy">Energy</span>
           </div>
           <div class="tbl tbl-row anchor">
-            <span class="cell-title">Anchor · selected track</span>
+            <span class="cell-title">Anchor · the track you're on</span>
             <span class="cell-sub">Your library</span>
             <span class="cell-bpm">174</span>
             <span><span class="keychip match">8A</span></span>
             <span class="col-energy"><span class="meter"><span style="width:78%"></span></span></span>
           </div>
           <div class="tbl tbl-row">
-            <span class="cell-title">Compatible · same key</span>
+            <span class="cell-title">Same key, harder</span>
             <span class="cell-sub">—</span>
             <span class="cell-bpm">174</span>
             <span><span class="keychip match">8A</span></span>
             <span class="col-energy"><span class="meter"><span style="width:81%"></span></span></span>
           </div>
           <div class="tbl tbl-row">
-            <span class="cell-title">Compatible · relative major</span>
+            <span class="cell-title">Relative major</span>
             <span class="cell-sub">—</span>
             <span class="cell-bpm">173</span>
             <span><span class="keychip">8B</span></span>
             <span class="col-energy"><span class="meter"><span style="width:72%"></span></span></span>
           </div>
           <div class="tbl tbl-row">
-            <span class="cell-title">Compatible · +1 on the wheel</span>
+            <span class="cell-title">One step up the wheel</span>
             <span class="cell-sub">—</span>
             <span class="cell-bpm">176</span>
             <span><span class="keychip">9A</span></span>
             <span class="col-energy"><span class="meter"><span style="width:88%"></span></span></span>
           </div>
           <div class="tbl tbl-row">
-            <span class="cell-title">Compatible · energy drop</span>
+            <span class="cell-title">Energy drop</span>
             <span class="cell-sub">—</span>
             <span class="cell-bpm">172</span>
             <span><span class="keychip">7A</span></span>
@@ -140,90 +132,84 @@
             <span>Export M3U8 →</span>
           </div>
         </div>
-        <p class="preview-note">Anonymised sample view — structure and columns are the real app.</p>
+        <p class="preview-note">Illustrative rows. The columns, the key matching and the energy ranking are the real app's.</p>
       </div>
     </div>
   </section>
 
-  <hr class="rule">
-
-  <!-- ================= PROBLEM ================= -->
-  <section id="problem">
+  <!-- ================= PROOF ================= -->
+  <section id="proof" class="band">
     <div class="wrap">
       <div class="section-head">
         <p class="eyebrow">The problem</p>
         <h2>You didn't buy 8,000 tracks so you could play the same 60.</h2>
         <p>
-          Every DJ with a large library has the same failure mode. You know the
-          top of your collection cold and the rest of it not at all. Rekordbox's
-          own tools don't fix that: sorting by key gives you hundreds of
-          technically-valid options with no sense of which ones hit the same,
-          and sorting by BPM ignores key entirely. So you fall back on memory,
-          and memory only holds the tracks you already played last month.
+          Sorting by key gives you hundreds of technically valid options with no
+          sense of which ones hit the same. Sorting by BPM ignores key. So you
+          fall back on memory, and memory only holds the tracks you played last
+          month.
         </p>
       </div>
-      <div class="grid">
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20"/><path d="M2 12h20"/></svg></div>
-          <h3>Key alone is too coarse</h3>
-          <p>Six hundred tracks in 8A is not a shortlist. Harmonic compatibility tells you what <em>can</em> work, never what <em>should</em>.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17l5-6 4 4 3-4 6 8"/></svg></div>
-          <h3>Energy isn't a number you have</h3>
-          <p>Rekordbox has no honest measure of how hard a track hits. So the set you build on paper collapses the moment you play it.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.35-4.35"/></svg></div>
-          <h3>Your back catalogue is dead weight</h3>
-          <p>Tracks you bought, tagged, and never opened again. The whole point of a library is that you can reach all of it.</p>
+
+      <div class="two-col two-col-proof">
+        <figure class="fig fig-funnel" data-animate="funnel">
+          <svg viewBox="0 0 640 268" role="img" aria-label="A library of 8,412 tracks narrowed by harmonic compatibility to 1,402, then by BPM tolerance to 118, then ranked by energy to a shortlist of 5.">
+            <defs>
+              <marker id="fa" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+              </marker>
+            </defs>
+            <text class="fig-cap" x="0" y="14">YOUR LIBRARY</text>
+            <rect class="fbar" style="--from:1" x="0" y="24" width="320" height="26" rx="5"/>
+            <text class="fig-n" x="332" y="42">8,412</text>
+            <text class="fig-sub" x="392" y="42">tracks</text>
+            <line class="fline" x1="10" y1="58" x2="10" y2="80" marker-end="url(#fa)"/>
+            <text class="fig-step" x="24" y="76">same key, one step on the wheel, or the relative major</text>
+            <rect class="fbar" style="--from:1.245" x="0" y="88" width="257" height="26" rx="5"/>
+            <text class="fig-n" x="269" y="106">1,402</text>
+            <text class="fig-sub" x="329" y="106">harmonically compatible</text>
+            <line class="fline" x1="10" y1="122" x2="10" y2="144" marker-end="url(#fa)"/>
+            <text class="fig-step" x="24" y="140">inside your BPM tolerance</text>
+            <rect class="fbar" style="--from:1.521" x="0" y="152" width="169" height="26" rx="5"/>
+            <text class="fig-n" x="181" y="170">118</text>
+            <text class="fig-sub" x="223" y="170">also tempo-compatible</text>
+            <line class="fline" x1="10" y1="186" x2="10" y2="208" marker-end="url(#fa)"/>
+            <text class="fig-step" x="24" y="204">ranked by energy</text>
+            <rect class="fbar fbar-hot" style="--from:2.965" x="0" y="216" width="57" height="26" rx="5"/>
+            <text class="fig-n fig-n-hot" x="69" y="234">5</text>
+            <text class="fig-sub" x="95" y="234">worth auditioning</text>
+          </svg>
+          <figcaption>
+            Rekordbox can do the first two cuts. It has no way to do the last
+            one, which is why its version of this list is still hundreds long.
+            Bars are log-scaled; the counts are illustrative.
+          </figcaption>
+        </figure>
+
+        <div class="ranking-demo" data-animate="ranking">
+          <div class="ranking-head">
+            <p class="eyebrow">Sort by energy</p>
+            <h3>The same eight tracks, reordered by how hard they hit.</h3>
+            <p>Alphabetical order tells you nothing about a set. Energy order tells you where each record belongs in one.</p>
+          </div>
+          <ol class="rank-list">
+            <li class="rank-row" style="--shift:4;--e:10"><span class="rank-pos">1</span><span class="rank-name">Peak-time neuro</span><span class="meter rank-meter"><span style="width:100%"></span></span><span class="rank-val">10</span></li>
+            <li class="rank-row" style="--shift:6;--e:9"><span class="rank-pos">2</span><span class="rank-name">Warehouse banger</span><span class="meter rank-meter"><span style="width:90%"></span></span><span class="rank-val">9</span></li>
+            <li class="rank-row" style="--shift:3;--e:7"><span class="rank-pos">3</span><span class="rank-name">Rolling drums</span><span class="meter rank-meter"><span style="width:70%"></span></span><span class="rank-val">7</span></li>
+            <li class="rank-row" style="--shift:3;--e:6"><span class="rank-pos">4</span><span class="rank-name">Tech house groove</span><span class="meter rank-meter"><span style="width:60%"></span></span><span class="rank-val">6</span></li>
+            <li class="rank-row" style="--shift:-1;--e:5"><span class="rank-pos">5</span><span class="rank-name">Liquid stepper</span><span class="meter rank-meter"><span style="width:50%"></span></span><span class="rank-val">5</span></li>
+            <li class="rank-row" style="--shift:-4;--e:3"><span class="rank-pos">6</span><span class="rank-name">Deep roller</span><span class="meter rank-meter"><span style="width:30%"></span></span><span class="rank-val">3</span></li>
+            <li class="rank-row" style="--shift:-4;--e:2"><span class="rank-pos">7</span><span class="rank-name">Dubby breakdown</span><span class="meter rank-meter"><span style="width:20%"></span></span><span class="rank-val">2</span></li>
+            <li class="rank-row" style="--shift:-7;--e:1"><span class="rank-pos">8</span><span class="rank-name">Ambient opener</span><span class="meter rank-meter"><span style="width:10%"></span></span><span class="rank-val">1</span></li>
+          </ol>
+          <button class="btn btn-ghost rank-replay" type="button">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            Replay
+          </button>
         </div>
       </div>
-
-      <figure class="fig" data-animate="funnel">
-        <svg viewBox="0 0 640 268" role="img" aria-label="A library of 8,412 tracks narrowed by harmonic compatibility to 1,402, then by BPM tolerance to 118, then ranked by energy to a shortlist of 5.">
-          <defs>
-            <marker id="fa" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto">
-              <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
-            </marker>
-          </defs>
-
-          <text class="fig-cap" x="0" y="14">YOUR LIBRARY</text>
-          <rect class="fbar" style="--from:1"     x="0" y="24" width="320" height="26" rx="5"/>
-          <text class="fig-n"   x="332" y="42">8,412</text>
-          <text class="fig-sub" x="392" y="42">tracks</text>
-
-          <line class="fline" x1="10" y1="58" x2="10" y2="80" marker-end="url(#fa)"/>
-          <text class="fig-step" x="24" y="76">same key, ±1 on the wheel, or the relative major</text>
-
-          <rect class="fbar" style="--from:1.245" x="0" y="88" width="257" height="26" rx="5"/>
-          <text class="fig-n"   x="269" y="106">1,402</text>
-          <text class="fig-sub" x="329" y="106">harmonically compatible</text>
-
-          <line class="fline" x1="10" y1="122" x2="10" y2="144" marker-end="url(#fa)"/>
-          <text class="fig-step" x="24" y="140">inside your BPM tolerance</text>
-
-          <rect class="fbar" style="--from:1.521" x="0" y="152" width="169" height="26" rx="5"/>
-          <text class="fig-n"   x="181" y="170">118</text>
-          <text class="fig-sub" x="223" y="170">also tempo-compatible</text>
-
-          <line class="fline" x1="10" y1="186" x2="10" y2="208" marker-end="url(#fa)"/>
-          <text class="fig-step" x="24" y="204">ranked by energy</text>
-
-          <rect class="fbar fbar-hot" style="--from:2.965" x="0" y="216" width="57" height="26" rx="5"/>
-          <text class="fig-n fig-n-hot" x="69" y="234">5</text>
-          <text class="fig-sub" x="95" y="234">worth auditioning</text>
-        </svg>
-        <figcaption>
-          Rekordbox can do the first cut. It has no way to do the last one — which is
-          why its version of this list is still hundreds long. Bars are log-scaled so
-          the shortlist stays visible; the counts are illustrative.
-        </figcaption>
-      </figure>
     </div>
   </section>
-
-  <hr class="rule">
 
   <!-- ================= HOW ================= -->
   <section id="how">
@@ -232,10 +218,9 @@
         <p class="eyebrow">How it works</p>
         <h2>Three steps, and you never leave your own hard drive.</h2>
         <p>
-          Track2Mix doesn't ask you to upload your collection, sign in, or move
-          your files. It reads the XML that Rekordbox already exports, decodes
-          the audio sitting on your disk, and writes its findings to a single
-          SQLite file next to it.
+          No upload, no sign-in, no moving files. Track2Mix reads the XML that
+          Rekordbox already exports, decodes the audio on your disk, and writes
+          what it finds to one database file next to it.
         </p>
       </div>
       <div class="steps">
@@ -245,36 +230,32 @@
         </div>
         <div class="step">
           <h3>Let it listen</h3>
-          <p>Track2Mix decodes every track — MP3, FLAC, WAV, AIFF, M4A — and measures loudness, dynamics, brightness, spectral movement and rhythmic density, in parallel, across all your cores.</p>
+          <p>Every track is decoded — MP3, FLAC, WAV, AIFF, M4A — and measured for loudness, dynamics, brightness, movement and rhythmic density, in parallel across all your cores. A big library takes minutes, not an evening.</p>
         </div>
         <div class="step">
-          <h3>Dig, arrange, export</h3>
-          <p>Click any track to get its harmonically and rhythmically compatible neighbours, ranked. Audition them, tick the ones you want, let the playlist builder order them into a harmonic flow, and export an M3U8 that Rekordbox imports directly — or lay them on the composer's timeline and render the blend.</p>
+          <h3>Dig, build, blend</h3>
+          <p>Click any track for its ranked, compatible neighbours. Audition them, tick the keepers, let the playlist builder order them, and export an M3U8 that Rekordbox imports directly — or blend them on the Compose timeline.</p>
         </div>
       </div>
-
-      <div style="margin-top:28px">
-        <pre class="code"><span class="c"># Prefer the shell? The analyzer is a standalone CLI.</span>
-track2mix analyze <span class="p">--xml</span> ~/rekordbox.xml <span class="p">--skip-analyzed</span>
-track2mix top <span class="p">--by</span> energy <span class="p">--genre</span> liquid <span class="p">--limit</span> 20
-track2mix compat <span class="p">"the track you're opening with"</span> <span class="p">--bpm-tol</span> 3</pre>
-      </div>
+      <p class="aside">
+        Prefer the shell? The analyser is also a command-line tool that reads and
+        writes the same database.
+        <a href="https://github.com/astralisone/track2mix#the-cli">CLI reference →</a>
+      </p>
     </div>
   </section>
 
-  <hr class="rule">
-
-  <!-- ================= ANALYSIS ================= -->
-  <section id="analysis">
+  <!-- ================= MEASURES ================= -->
+  <section id="measures" class="band">
     <div class="wrap">
       <div class="section-head">
-        <p class="eyebrow">Under the hood</p>
-        <h2>It listens to the record, not the metadata.</h2>
+        <p class="eyebrow">What it measures</p>
+        <h2>Key and BPM find the candidates. Energy puts them in order.</h2>
         <p>
           Genre tags and star ratings describe what you thought about a track
-          the day you filed it. Track2Mix ignores all of that and decodes the
-          actual audio, because the only thing that reliably predicts whether
-          two records sit together is what's in the waveform.
+          the day you filed it. Track2Mix decodes the audio instead, because the
+          only thing that reliably predicts whether two records sit together is
+          what's in the waveform.
         </p>
       </div>
 
@@ -283,27 +264,27 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
           <ul class="speclist">
             <li>
               <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 18V6M9 21V3M14 18V6M19 15V9"/></svg>
-              <span><b>Loudness and dynamic range.</b> How hard it hits, and how much it breathes. A compressed roller and a track that swings between silence and full weight can average out the same — telling them apart is most of the job.</span>
+              <span><b>Loudness and dynamic range.</b> How hard it hits, and how much it breathes. A compressed roller and a track that swings from silence to full weight can average out the same; telling them apart is most of the job.</span>
             </li>
             <li>
               <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
-              <span><b>Spectral brightness.</b> Where the weight of the sound actually sits. This is what separates something dark and sub-heavy from something crisp and forward, long before you'd call it a genre.</span>
+              <span><b>Brightness.</b> Where the weight of the sound sits. It separates dark and sub-heavy from crisp and forward long before you'd call it a genre.</span>
             </li>
             <li>
               <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 17c3-6 6-6 9 0s6 6 9 0"/></svg>
-              <span><b>Spectral movement.</b> How much the sound changes moment to moment. A track that evolves and a track that loops can share every other number and feel nothing alike in a mix.</span>
+              <span><b>Movement.</b> How much the sound changes moment to moment. A track that evolves and a track that loops can share every other number and feel nothing alike in a mix.</span>
             </li>
             <li>
               <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h2l2-5 3 10 2-5h5"/></svg>
-              <span><b>Rhythmic density.</b> How busy the percussion is, independent of tempo. Two tracks at the same BPM can be miles apart on this, and it's usually what makes a transition feel rushed or flat.</span>
+              <span><b>Rhythmic density.</b> How busy the percussion is, independent of tempo. Two tracks at the same BPM can be miles apart here, and it's usually what makes a transition feel rushed or flat.</span>
             </li>
           </ul>
-
           <p class="analysis-note">
-            Those signals are combined into one energy value per track, weighted
-            so the result matches how a set actually feels rather than what a
-            meter says. Getting that balance right is the part I've spent the
-            most time on, and it's what the beta is for.
+            Those four combine into one energy score from 0 to 10, weighted so
+            the result matches how a set feels rather than what a meter says.
+            Every score is visible and sortable, so you can check it against
+            tracks you know cold. Keys come from Rekordbox's own analysis, the
+            ones already on your CDJs.
           </p>
         </div>
 
@@ -311,22 +292,10 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
           <div class="glass signal-card" data-animate="signals">
             <p class="signal-title">One track, four signals, one number</p>
             <div class="signal-rows">
-              <div class="signal-row">
-                <span class="signal-label">Loudness &amp; dynamics</span>
-                <span class="meter"><span style="width:74%"></span></span>
-              </div>
-              <div class="signal-row">
-                <span class="signal-label">Brightness</span>
-                <span class="meter"><span style="width:52%"></span></span>
-              </div>
-              <div class="signal-row">
-                <span class="signal-label">Movement</span>
-                <span class="meter"><span style="width:81%"></span></span>
-              </div>
-              <div class="signal-row">
-                <span class="signal-label">Rhythmic density</span>
-                <span class="meter"><span style="width:66%"></span></span>
-              </div>
+              <div class="signal-row"><span class="signal-label">Loudness &amp; dynamics</span><span class="meter"><span style="width:74%"></span></span></div>
+              <div class="signal-row"><span class="signal-label">Brightness</span><span class="meter"><span style="width:52%"></span></span></div>
+              <div class="signal-row"><span class="signal-label">Movement</span><span class="meter"><span style="width:81%"></span></span></div>
+              <div class="signal-row"><span class="signal-label">Rhythmic density</span><span class="meter"><span style="width:66%"></span></span></div>
             </div>
             <div class="signal-out">
               <span class="signal-out-label">Energy</span>
@@ -394,257 +363,84 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
         </div>
       </div>
 
-      <div class="grid" style="margin-top:28px">
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></div>
-          <h3>It doesn't grind through whole files</h3>
-          <p>Decoding every second of every track would make a big library an overnight job. Track2Mix samples a handful of representative stretches across each record instead — enough to characterise it, at a fraction of the cost, across every core you have.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg></div>
-          <h3>Energy is the tiebreaker, not the whole answer</h3>
-          <p>Harmonic and tempo compatibility decide which tracks are eligible. Energy decides the order. That's the part Rekordbox can't do for you — turning six hundred technically-valid options into five worth auditioning.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18"/><path d="m5 10 7-7 7 7"/></svg></div>
-          <h3>Built to be corrected</h3>
-          <p>The weighting is tuned by ear on real libraries, which means it can be wrong on yours. Every score is visible and sortable, so you can check it against tracks you know cold — and tell me where it's off.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <hr class="rule">
-
-  <!-- ================= FEATURES ================= -->
-  <section id="features">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">What you get</p>
-        <h2>Built for people with more tracks than they can remember.</h2>
-      </div>
-      <div class="ranking-demo" data-animate="ranking">
-        <div class="ranking-head">
-          <p class="eyebrow" style="margin:0">Sort by energy</p>
-          <h3>The same eight tracks, reordered by how hard they hit.</h3>
-          <p>
-            Alphabetical order tells you nothing about a set. Energy order tells you
-            where each record belongs in one — and it is the same click either way.
-          </p>
-          <button class="btn btn-ghost rank-replay" type="button">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-            Replay
-          </button>
-        </div>
-        <ol class="rank-list">
-            <li class="rank-row" style="--shift:4;--e:10">
-              <span class="rank-pos">1</span>
-              <span class="rank-name">Peak-time neuro</span>
-              <span class="meter rank-meter"><span style="width:100%"></span></span>
-              <span class="rank-val">10</span>
-            </li>
-            <li class="rank-row" style="--shift:6;--e:9">
-              <span class="rank-pos">2</span>
-              <span class="rank-name">Warehouse banger</span>
-              <span class="meter rank-meter"><span style="width:90%"></span></span>
-              <span class="rank-val">9</span>
-            </li>
-            <li class="rank-row" style="--shift:3;--e:7">
-              <span class="rank-pos">3</span>
-              <span class="rank-name">Rolling drums</span>
-              <span class="meter rank-meter"><span style="width:70%"></span></span>
-              <span class="rank-val">7</span>
-            </li>
-            <li class="rank-row" style="--shift:3;--e:6">
-              <span class="rank-pos">4</span>
-              <span class="rank-name">Tech house groove</span>
-              <span class="meter rank-meter"><span style="width:60%"></span></span>
-              <span class="rank-val">6</span>
-            </li>
-            <li class="rank-row" style="--shift:-1;--e:5">
-              <span class="rank-pos">5</span>
-              <span class="rank-name">Liquid stepper</span>
-              <span class="meter rank-meter"><span style="width:50%"></span></span>
-              <span class="rank-val">5</span>
-            </li>
-            <li class="rank-row" style="--shift:-4;--e:3">
-              <span class="rank-pos">6</span>
-              <span class="rank-name">Deep roller</span>
-              <span class="meter rank-meter"><span style="width:30%"></span></span>
-              <span class="rank-val">3</span>
-            </li>
-            <li class="rank-row" style="--shift:-4;--e:2">
-              <span class="rank-pos">7</span>
-              <span class="rank-name">Dubby breakdown</span>
-              <span class="meter rank-meter"><span style="width:20%"></span></span>
-              <span class="rank-val">2</span>
-            </li>
-            <li class="rank-row" style="--shift:-7;--e:1">
-              <span class="rank-pos">8</span>
-              <span class="rank-name">Ambient opener</span>
-              <span class="meter rank-meter"><span style="width:10%"></span></span>
-              <span class="rank-val">1</span>
-            </li>
-        </ol>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18V6M9 21V3M14 18V6M19 15V9"/></svg></div>
-          <h3>A real energy score</h3>
-          <p>Every track gets a 0–10 energy value derived from its actual waveform — loudness, dynamic range, brightness, spectral movement and rhythmic density. Sort by it and your hardest tracks rise to the top.</p>
-        </div>
+      <div class="grid grid-features">
         <div class="card">
           <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg></div>
           <h3>Camelot-aware neighbours</h3>
-          <p>Pick an anchor and Track2Mix returns same-key, ±1-on-the-wheel and relative major/minor matches inside your BPM tolerance — half- and double-time included, so a 174 track still finds its 87s. It reads Camelot, classical and open-key notation from your existing tags.</p>
+          <p>Pick an anchor and get same-key, one-step and relative major/minor matches inside your BPM tolerance, half and double time included, so a 174 still finds its 87s. Camelot, classical and open-key tags all read.</p>
         </div>
         <div class="card">
           <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></div>
           <h3>Filters that count as you go</h3>
-          <p>Free-text search, Genre and Sub-genre chips, BPM and energy sliders drawn over histograms of your own library, and a clickable Camelot wheel with <em>Match anchor</em>. Every control shows how many tracks are left before you commit to it.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-          <h3>Offline by construction</h3>
-          <p>No account, no upload, no telemetry. Your library never touches a server, because there is no server. Everything lives in one SQLite file you own and can delete.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></div>
-          <h3>Fast enough to actually run</h3>
-          <p>Written in Rust and parallelised across every core, and it samples representative stretches of each record rather than grinding through whole files — enough to characterise a track at a fraction of the cost.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15V8a2 2 0 0 0-2-2h-7L9 3H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2Z"/></svg></div>
-          <h3>Round-trips into Rekordbox</h3>
-          <p>Exports standard M3U8 playlists that Rekordbox imports without complaint (plain M3U and text tracklists too). Track2Mix is a lens on your library, not a replacement for it — nothing to migrate, nothing to lose.</p>
+          <p>Search, genre and sub-genre chips, BPM and energy sliders drawn over histograms of your own library, and a clickable Camelot wheel. Every control shows how many tracks are left before you commit to it.</p>
         </div>
         <div class="card">
           <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg></div>
           <h3>Audition before you commit</h3>
-          <p>A built-in player on every row. Queue a whole selection, scrub, skip ahead 30 seconds, and hear whether the energy jump you're about to program is the one you meant.</p>
+          <p>A built-in player on every row. Queue a whole selection, scrub, skip ahead 30 seconds, and hear whether the energy jump you're about to program is the one you meant. Files that won't decode are named, never silently dropped.</p>
         </div>
         <div class="card">
           <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h7"/><path d="m17 14 3 3-3 3"/></svg></div>
           <h3>A playlist builder that knows the wheel</h3>
-          <p>Your picks are ordered into a harmonic flow, an energy ramp or by BPM. Every transition gets a badge — perfect, relative, ±1, boost, drop, clash — and a score, and <em>Suggest next</em> keeps the set going.</p>
+          <p>Your picks open already ordered as a harmonic flow. Switch to an energy ramp or BPM order, drag rows, and read each transition's badge — Perfect, Relative, ±1, Boost, Drop, Clash — and its score. <em>Suggest next</em> keeps the set going.</p>
         </div>
         <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h7v4H3z"/><path d="M9 14h9v4H9z"/><path d="M14 6h7v4h-7z"/></svg></div>
-          <h3>A composer that beat-matches for you</h3>
-          <p>Lay tracks on a timeline, one lane each, with EQ, filters and tempo sync. <em>Auto-arrange</em> finds each track's downbeat, lines phrases up and blends them over 4–32 bars. Record live, bounce to WAV, or export a 320 kbps MP3.</p>
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15V8a2 2 0 0 0-2-2h-7L9 3H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2Z"/></svg></div>
+          <h3>Round-trips into Rekordbox</h3>
+          <p>Exports standard M3U8 playlists that Rekordbox imports without complaint, plus plain M3U and text tracklists. Track2Mix is a lens on your library, not a replacement for it: nothing to migrate, nothing to lose.</p>
         </div>
         <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m8 9 3 3-3 3"/><path d="M13 15h3"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg></div>
-          <h3>GUI and CLI, same engine</h3>
-          <p>A desktop app for digging, arranging and composing, and a scriptable command-line analyzer for everything else. Both read the same database, so you can automate the boring parts.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></div>
-          <h3>Projects you can come back to</h3>
-          <p>A mix in progress saves as a <code>.t2m</code> project file — lanes, clips, fades, EQ and all — with <kbd>Ctrl/Cmd+S</kbd>, <kbd>Ctrl/Cmd+O</kbd> and the usual shortcuts, and the app warns before it lets unsaved work go.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
-          <h3>Native on Windows and Linux</h3>
-          <p>A Windows installer, and for Linux a <code>.deb</code>, an <code>.rpm</code>, an Arch package and an AppImage with its audio stack bundled, so it runs on a distro you can't install packages into.</p>
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+          <h3>Fast, and offline by construction</h3>
+          <p>Rust, every core, and a few representative stretches of each record instead of whole files. No account, no upload, no telemetry: your library never touches a server because there isn't one.</p>
         </div>
       </div>
     </div>
   </section>
-
-  <hr class="rule">
-
-  <!-- ================= HONEST ================= -->
-  <section id="honest">
-    <div class="wrap two-col">
-      <div>
-        <p class="eyebrow">No overclaiming</p>
-        <h2>What Track2Mix does, and what it deliberately doesn't.</h2>
-        <p class="lede" style="margin-top:14px">
-          Plenty of tools in this space promise AI that builds your set for you.
-          Track2Mix doesn't, because that isn't a solved problem and pretending
-          otherwise wastes your time. Here is the actual scope, so you can
-          decide in thirty seconds whether it's useful to you.
-        </p>
-        <div class="hero-actions">
-          <a class="btn btn-ghost" href="#get">Try it on your own library — free</a>
-        </div>
-      </div>
-      <ul class="speclist">
-        <li>
-          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-          <span><b>Measures energy from the audio itself.</b> Not from genre tags or guesswork — from loudness, dynamics, brightness, spectral flux and onset rate.</span>
-        </li>
-        <li>
-          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-          <span><b>Reads the keys you already trust.</b> Track2Mix uses Rekordbox's own key analysis rather than second-guessing it, so your results match what's on your CDJs.</span>
-        </li>
-        <li>
-          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-          <span><b>Handles real, messy libraries.</b> Moved drives can be remapped with a path map; Beatport streaming stubs and dead entries are reported instead of silently dropped.</span>
-        </li>
-        <li>
-          <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          <span><b>Does not detect key itself.</b> If a track has no key in Rekordbox, Track2Mix has none either. Analyse in Rekordbox first.</span>
-        </li>
-        <li>
-          <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          <span><b>Does not write back to your Rekordbox collection.</b> It exports playlists. Your collection file is never modified.</span>
-        </li>
-        <li>
-          <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          <span><b>Does not pick the set for you.</b> It narrows eight thousand tracks to a handful worth auditioning and will order and beat-match the ones you choose — but the choosing is still yours.</span>
-        </li>
-      </ul>
-    </div>
-  </section>
-
-  <hr class="rule">
-
 
   <!-- ================= COMPOSE ================= -->
   <section id="compose">
-    <div class="wrap two-col">
+    <div class="wrap two-col two-col-wide">
       <div>
         <p class="eyebrow">Compose</p>
         <h2>Hear the set before you play it.</h2>
-        <p class="lede" style="margin-top:14px">
-          Compose is a multi-lane timeline for the tracks you picked: one lane
-          per track, a mixer strip on each, and a transport that plays the whole
-          thing in real time. It's a sketchpad for a set, not a replacement for
-          your decks — the point is to find out whether a sequence works before
-          the floor is full.
+        <p class="lede">
+          A multi-lane timeline for the tracks you picked: one lane per track, a
+          mixer strip on each, and a transport that plays the whole thing in real
+          time. It's a sketchpad for a set, not a replacement for your decks.
         </p>
         <ul class="speclist">
-        <li>
-          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-          <span><b>A mixer strip on every lane.</b> Volume, three-band EQ with full kills, high- and low-pass filters, mute and solo. <em>Sync</em> pins a lane to the master BPM vinyl-style — pitch follows tempo — and folds to half or double time when that's the closer match.</span>
-        </li>
-        <li>
-          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-          <span><b>Clips you can actually handle.</b> Drag to move, pull the edges to trim, the corner handles to set fades, all snapping to the beat grid (hold <kbd>Alt</kbd> to bypass). <em>Auto-crossfade</em> blends every overlap unless you've drawn the fade yourself.</span>
-        </li>
-        <li>
-          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-          <span><b>Auto-arrange does the lining up.</b> It estimates each track's beat grid and downbeat, sets the master BPM, trims each clip to start on its downbeat, and brings every track in on an 8-bar phrase of the one before it, with a 4, 8, 16 or 32-bar blend. Order by harmonic flow, energy rise or lane order. A confidently detected tempo within 2% of the Rekordbox tag corrects the BPM.</span>
-        </li>
-        <li>
-          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-          <span><b>Three ways out.</b> <em>Record live</em> captures the master in real time, so fader and EQ moves are kept. <em>Bounce WAV</em> renders offline, faster than real time. <em>Export MP3</em> does the same at 320 kbps with ID3 tags — the encoder is built in, nothing to install.</span>
-        </li>
-        <li>
-          <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-          <span><b>Projects that survive.</b> A <code>.t2m</code> file holds the master BPM, every lane's mixer, every clip and a snapshot of each track, so it reopens even after Rekordbox renumbers its ids. Unsaved changes show in the tab and the title bar, and the app asks before discarding them.</span>
-        </li>
+          <li>
+            <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+            <span><b>Auto-arrange lines it up.</b> It finds each track's beat grid and downbeat, trims every clip to start on one, and brings each track in on an 8-bar phrase of the one before it, with a 4 to 32-bar blend. You drag, trim and fade from there.</span>
+          </li>
+          <li>
+            <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+            <span><b>A real mixer on every lane.</b> Volume, three-band EQ with full kills, high- and low-pass filters, mute, solo, and vinyl-style tempo sync to the master BPM.</span>
+          </li>
+          <li>
+            <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+            <span><b>Three ways out, and a way back.</b> Record live, bounce to WAV, or export a 320 kbps MP3 with the encoder built in. Save it all as a <code>.t2m</code> project and pick it up tomorrow.</span>
+          </li>
         </ul>
+        <details class="more">
+          <summary>Everything in the mixer and on the timeline</summary>
+          <ul>
+            <li>Clips snap to the beat grid; hold <kbd>Alt</kbd> to bypass. Drag to move, pull the edges to trim, the corner handles to set fades. <em>Auto-crossfade</em> blends every overlap unless you've drawn the fade yourself.</li>
+            <li>Sync folds a lane to half or double time when that's the closer match. Pitch follows tempo; there is no key-lock yet.</li>
+            <li>Auto-arrange orders by harmonic flow, energy rise or lane order, and corrects a track's BPM when its detected tempo is confident and within 2% of the Rekordbox tag.</li>
+            <li>Record live keeps your fader and EQ moves. Bounce and MP3 export render offline, faster than real time, with ID3 tags on the MP3.</li>
+            <li>A <code>.t2m</code> project holds the master BPM, every lane's mixer, every clip and a snapshot of each track, so it reopens even after Rekordbox renumbers its ids. Unsaved changes are flagged and the app asks before discarding them.</li>
+            <li><kbd>Space</kbd> plays or pauses anywhere. <kbd>Ctrl/Cmd+O</kbd>, <kbd>S</kbd> and <kbd>Shift+S</kbd> handle projects. <kbd>Delete</kbd> removes a clip, <kbd>Ctrl/Cmd+wheel</kbd> zooms, and a double-click resets any knob.</li>
+          </ul>
+        </details>
       </div>
 
       <div>
         <div class="glass preview compose-mock" role="img" aria-label="The Compose timeline: three lanes, each clip starting on a phrase boundary of the previous one, with fades across the overlaps">
           <div class="preview-bar">
             <span class="preview-title">Compose — set.t2m · 128 BPM master</span>
-            <span class="pill pill-muted" style="margin-left:auto">Auto-arrange · harmonic flow</span>
+            <span class="pill pill-muted">Auto-arrange · harmonic flow</span>
           </div>
           <div class="ruler"><span>1</span><span>9</span><span>17</span><span>25</span><span>33</span><span>41</span><span>49</span></div>
           <div class="lane">
@@ -659,7 +455,7 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
             <div class="lane-strip"><span class="lane-name"><span class="keychip">12A</span> Lane 3</span><span class="lane-ctl">vol · eq · <b>sync</b></span></div>
             <div class="lane-track"><div class="clip" style="left:66%;width:34%"><i class="fade fade-in"></i></div></div>
           </div>
-          <div class="playhead" style="left:calc(156px + 38%)"></div>
+          <div class="playhead"></div>
           <div class="preview-foot">
             <span>16-bar blends · snap on · auto-crossfade</span>
             <span>Export MP3 →</span>
@@ -668,53 +464,78 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
         <p class="preview-note">Each track comes in on an 8-bar phrase boundary of the one before it, trimmed to its own downbeat, with the crossfade drawn across the overlap.</p>
       </div>
     </div>
-
-    <div class="wrap">
-      <div class="grid compose-row">
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg></div>
-          <h3>Preview player</h3>
-          <p>Native playback on every row: play, pause, previous, next, seek, +30 s, volume, mute. Play a selected row and the whole selection queues up, up to 500 tracks. A file that won't decode is skipped and named, never silently dropped.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h7"/><path d="m17 14 3 3-3 3"/></svg></div>
-          <h3>Playlist builder</h3>
-          <p>Opens already ordered as a harmonic flow from your anchor. Re-order as an energy ramp, by BPM or in selection order; drag rows or use <kbd>Alt+↑</kbd>/<kbd>Alt+↓</kbd>. Each transition gets a badge — Perfect, Relative, ±1, Boost, Drop, Clash — and a 0–100 score, with a set curve of energy and BPM underneath. <em>Suggest next</em> offers up to ten tracks not yet in the set; <em>Play set</em> auditions it end to end.</p>
-        </div>
-        <div class="card">
-          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg></div>
-          <h3>Keyboard first</h3>
-          <p><kbd>Space</kbd> plays or pauses wherever you are. <kbd>Ctrl/Cmd+O</kbd>, <kbd>S</kbd> and <kbd>Shift+S</kbd> handle projects. In Compose, <kbd>Delete</kbd> removes a clip, <kbd>Alt</kbd> while dragging bypasses snap, <kbd>Ctrl/Cmd+wheel</kbd> zooms the timeline, and a double-click resets any knob.</p>
-        </div>
-      </div>
-    </div>
   </section>
 
-  <hr class="rule">
+  <!-- ================= SCOPE ================= -->
+  <section id="scope" class="band">
+    <div class="wrap two-col two-col-wide">
+      <div>
+        <p class="eyebrow">Scope</p>
+        <h2>What it does, what it doesn't, and what it runs on.</h2>
+        <p class="lede">
+          Plenty of tools promise AI that builds your set. Track2Mix doesn't,
+          because that isn't a solved problem. Here is the actual scope, so you
+          can decide in thirty seconds whether it's useful to you.
+        </p>
+        <ul class="speclist">
+          <li>
+            <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+            <span><b>Measures energy from the audio itself</b>, not from genre tags or guesswork.</span>
+          </li>
+          <li>
+            <svg class="yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+            <span><b>Handles real, messy libraries.</b> Moved drives can be remapped with a path map; streaming stubs and dead entries are reported instead of silently dropped.</span>
+          </li>
+          <li>
+            <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <span><b>Does not detect key itself.</b> It uses Rekordbox's keys. A track unanalysed there has no key here either.</span>
+          </li>
+          <li>
+            <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <span><b>Does not write back to your collection.</b> It exports playlists. Your collection file and your audio are never modified.</span>
+          </li>
+          <li>
+            <svg class="no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <span><b>Does not pick the set for you.</b> It narrows eight thousand tracks to a handful worth auditioning and will order and beat-match the ones you choose. The choosing is still yours.</span>
+          </li>
+        </ul>
+      </div>
+
+      <dl class="fit glass">
+        <div><dt>Runs on</dt><dd>Windows 10+. Debian and Ubuntu (.deb), Fedora (.rpm), Arch, and any other Linux via an AppImage with its audio stack bundled. macOS is coming.</dd></div>
+        <div><dt>Reads</dt><dd>A Rekordbox 6 or 7 collection export (XML). Serato, Traktor and Engine DJ are not supported yet; the engine is library-agnostic, so they are parsers away.</dd></div>
+        <div><dt>Decodes</dt><dd>MP3, FLAC, WAV, AIFF and M4A, from wherever they sit on your drives.</dd></div>
+        <div><dt>Writes</dt><dd>Its own SQLite database, the playlists you export, <code>.t2m</code> projects, and the WAV or MP3 you render. All to locations you choose.</dd></div>
+        <div><dt>Sends</dt><dd>Nothing. There is no server. The only thing that ever leaves your machine is the name and email you type on this page to get the link.</dd></div>
+        <div><dt>Costs</dt><dd>Nothing up front. Pay what it's worth to you after it has earned it, or never.</dd></div>
+      </dl>
+    </div>
+  </section>
 
   <!-- ================= GET ================= -->
   <section id="get">
     <div class="wrap">
-      <div class="section-head" style="text-align:center;margin-inline:auto">
+      <div class="section-head section-head-center">
         <p class="eyebrow">Get Track2Mix</p>
-        <h2>Download the desktop app free. Pay what it's worth to you — or nothing at all.</h2>
-        <p style="margin-inline:auto">
-          On Windows and Linux there is no paywall, no trial timer and no locked
-          features. If Track2Mix earns you a better set, tip what it's worth. If
-          money's tight, take it free and don't think twice — that's not a
-          loophole, it's the deal.
+        <h2>Download it free. Pay what it's worth to you, or nothing at all.</h2>
+        <p>
+          No paywall, no trial timer, no locked features. If it earns you a
+          better set, tip what it's worth. If money's tight, take it free and
+          don't think twice. During beta I ask for a name and email so I can tell
+          you when something is fixed or broken; the list is used for nothing
+          else.
         </p>
       </div>
 
       <div class="two-col">
-        <div class="glass" style="padding:clamp(24px,3.5vw,36px)">
-          <h3 style="font-size:1.25rem;margin-bottom:10px">Get the build</h3>
-          <p style="color:var(--fg-muted);font-size:0.9375rem;margin-bottom:20px">
-            Windows 10+, Debian/Ubuntu, Arch and other Linux (macOS coming soon).
-            Requires Rekordbox 6 or 7 for the collection export. Tell me who you
-            are and the download link appears right here, and lands in your inbox.
+        <div class="glass panel">
+          <h3 class="panel-title">Get the build</h3>
+          <p class="panel-lede">
+            Windows 10+, Debian/Ubuntu, Fedora, Arch and other Linux. Needs a
+            Rekordbox 6 or 7 collection export. The download link appears right
+            here and lands in your inbox.
           </p>
-          <p style="font-size:0.9375rem;margin:-8px 0 20px">
+          <p class="panel-link">
             <a href="https://downloads.track2mix.com">Or go straight to all downloads and install steps →</a>
           </p>
 
@@ -742,20 +563,18 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
             </a>
           </div>
 
-          <p class="fineprint" style="margin-top:16px;text-align:left">
-            I'll email you the link and a note when a new version lands. Nothing
-            else, never passed on, one click to leave. Track2Mix itself still
-            runs entirely offline once installed.
+          <p class="fineprint">
+            The link, and a note when a new version lands. Nothing else, never
+            passed on, one click to leave. The app itself runs entirely offline.
           </p>
         </div>
 
-        <div class="glass" style="padding:clamp(24px,3.5vw,36px)">
-          <h3 style="font-size:1.25rem;margin-bottom:10px">Tip jar</h3>
-          <p style="color:var(--fg-muted);font-size:0.9375rem;margin-bottom:20px">
-            Track2Mix has no investors and no ads. Tips are what decide whether
-            Serato support, key detection and key-lock time-stretching get built.
-            Pay by PayPal in two taps — no account needed on my side, none created
-            on yours.
+        <div class="glass panel">
+          <h3 class="panel-title">Tip jar</h3>
+          <p class="panel-lede">
+            No investors, no ads. Tips decide whether Serato support, key
+            detection and key-lock time-stretching get built next. PayPal, two
+            taps, no account created on either side.
           </p>
 
           <div class="tiers" id="tip-tiers">
@@ -764,8 +583,8 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
               <span class="tier-label">Covers a coffee and says thanks.</span>
             </a>
             <a class="tier tier-featured" data-amount="15" href="#get">
-              <span class="tier-amt">$15 <span class="pill pill-gold" style="vertical-align:middle">most common</span></span>
-              <span class="tier-label">About what the app is worth if it saves you one night of digging.</span>
+              <span class="tier-amt">$15 <span class="pill pill-gold">most common</span></span>
+              <span class="tier-label">About what it's worth if it saves you one night of digging.</span>
             </a>
             <a class="tier" data-amount="30" href="#get">
               <span class="tier-amt">$30</span>
@@ -786,20 +605,18 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
             </a>
           </div>
 
-          <p style="margin-top:18px;padding-top:18px;border-top:1px solid var(--hairline-soft);color:var(--fg-muted);font-size:0.9375rem">
-            <b style="color:var(--fg)">Can't afford it right now?</b> Then don't pay.
-            Download it, use it for as long as you like, and tip later or never.
-            Nothing is withheld and nobody gets chased.
+          <p class="panel-note">
+            <b>Can't afford it right now?</b> Then don't pay. Download it, use it
+            for as long as you like, and tip later or never. Nothing is withheld
+            and nobody gets chased.
           </p>
         </div>
       </div>
     </div>
   </section>
 
-  <hr class="rule">
-
   <!-- ================= FAQ ================= -->
-  <section id="faq">
+  <section id="faq" class="band">
     <div class="wrap">
       <div class="section-head">
         <p class="eyebrow">Questions</p>
@@ -808,35 +625,31 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
       <div class="faq">
         <details>
           <summary>Does this touch my Rekordbox collection?</summary>
-          <p>No. Track2Mix only reads the XML file you export. It writes the playlists you export (M3U8, M3U or a text tracklist), its own SQLite database, composer project files, and any WAV or MP3 you render. Your collection file and your audio files are never modified.</p>
+          <p>No. Track2Mix only reads the XML file you export. It writes the playlists you export, its own SQLite database, Compose project files, and any WAV or MP3 you render. Your collection file and your audio files are never modified.</p>
         </details>
         <details>
           <summary>How long does analysis take?</summary>
-          <p>It depends on your machine and your library, and it's parallelised across all your cores. Because Track2Mix samples three 30-second stretches of each track rather than decoding whole files, it's dramatically cheaper than a full Rekordbox re-analysis. The import screen reports how many entries resolved to files on disk; the CLI's <code>--dry-run</code> tells you the same before a single file is decoded.</p>
+          <p>It depends on your machine and your library, and it runs on every core you have. Because Track2Mix samples three 30-second stretches of each track rather than decoding whole files, it is far cheaper than a full Rekordbox re-analysis. The import screen reports how many entries resolved to files on disk before a single file is decoded.</p>
         </details>
         <details>
-          <summary>Why does it need keys from Rekordbox instead of detecting its own?</summary>
-          <p>Because you already trust Rekordbox's keys and they're what show up on your CDJs. Adding a second, disagreeing key detector would create confusion rather than value. If a track is unanalysed in Rekordbox, analyse it there first.</p>
+          <summary>Why does it use Rekordbox's keys instead of detecting its own?</summary>
+          <p>Because you already trust Rekordbox's keys and they are what show up on your CDJs. A second, disagreeing key detector would create confusion rather than value. If a track is unanalysed in Rekordbox, analyse it there first.</p>
         </details>
         <details>
           <summary>Serato, Traktor, Engine DJ?</summary>
-          <p>Not yet — Track2Mix reads the Rekordbox XML format today. The analysis engine is library-agnostic, so other sources are a matter of adding parsers. If you want one, say so in the signup form and it moves up the list.</p>
+          <p>Not yet. Track2Mix reads the Rekordbox XML format today. The analysis engine is library-agnostic, so other sources are a matter of adding parsers. If you want one, say so when you sign up and it moves up the list.</p>
         </details>
         <details>
-          <summary>Does the composer replace my DJ software?</summary>
-          <p>No, and it isn't trying to. Compose is for hearing whether a sequence works: lay the tracks out, let <em>Auto-arrange</em> beat-match and blend them, tweak the EQ and fades, and render the result. Tempo sync is vinyl-style — pitch follows tempo, there's no key-lock yet — so it's a sketchpad for a set, not a performance tool. The export is a WAV or a 320 kbps MP3 you can listen back to or send to someone.</p>
+          <summary>Does Compose replace my DJ software?</summary>
+          <p>No, and it isn't trying to. Compose is for hearing whether a sequence works: lay the tracks out, let <em>Auto-arrange</em> beat-match and blend them, adjust the EQ and fades, and render the result. Tempo sync is vinyl-style, so pitch follows tempo and there is no key-lock yet. It is a sketchpad for a set, not a performance tool.</p>
         </details>
         <details>
-          <summary>Is the desktop app really free? What's the catch?</summary>
-          <p>No catch on the money. Track2Mix is pay-what-you-want: the full app downloads free with nothing held back, and you tip only if it earns it. If you genuinely can't afford to pay, use it free — that's the intended path, not an exploit. The one thing I do ask for is your name and email before the download, because during beta I need to be able to tell you when something is fixed or broken. That's the whole reason, and the list is used for nothing else.</p>
-        </details>
-        <details>
-          <summary>Why pay-what-you-want on the desktop instead of a price?</summary>
-          <p>Because I don't yet know what this is worth to you, and guessing wrong in either direction is expensive. A fixed price on an unproven tool filters out exactly the DJs whose feedback I need most. Tips tell me what people actually value, and they fund what gets built next. What's free on the desktop today stays free.</p>
+          <summary>Is it really free? What's the catch?</summary>
+          <p>No catch on the money. The full app downloads free with nothing held back, and you tip only if it earns it. A fixed price on an unproven tool would filter out exactly the DJs whose feedback matters most; tips say what people actually value and fund what gets built next. What's free today stays free.</p>
         </details>
         <details>
           <summary>Does my music or data get uploaded anywhere?</summary>
-          <p>No. There is no backend. Analysis runs locally, results are stored locally, and the app makes no network calls to run. The only things that reach me are the name and email you enter to get the download — they go to my mailing list and nowhere else, and you can leave in one click. Your library, your tracks and your analysis results never leave your machine.</p>
+          <p>No. There is no backend. Analysis runs locally, results are stored locally, and the app makes no network calls. The only things that reach me are the name and email you enter to get the download. They go to my mailing list and nowhere else, and you can leave in one click.</p>
         </details>
       </div>
     </div>
@@ -846,13 +659,15 @@ track2mix compat <span class="p">"the track you're opening with"</span> <span cl
 
 <footer>
   <div class="wrap footer-inner">
-    <span>Track2Mix — DJ library intelligence for Rekordbox. Pay what you want.</span>
+    <span>Track2Mix — DJ library intelligence for Rekordbox. Free, pay what you want.</span>
     <nav class="footer-links">
       <a href="#how">How it works</a>
-      <a href="#honest">Scope</a>
+      <a href="#measures">What it measures</a>
       <a href="#compose">Compose</a>
+      <a href="#scope">Scope</a>
       <a href="#faq">FAQ</a>
       <a href="https://downloads.track2mix.com">Downloads</a>
+      <a href="privacy/">Privacy</a>
       <a href="https://github.com/astralisone/track2mix">GitHub</a>
     </nav>
   </div>

@@ -212,6 +212,29 @@ if (PAYMENTS.paypalMe) {
   );
 }
 
+/* ------------------------------------------------------------ mobile nav */
+
+const navToggle = document.querySelector(".nav-toggle");
+const navLinks = document.getElementById("nav-links");
+
+if (navToggle && navLinks) {
+  const setOpen = (open) => {
+    navLinks.classList.toggle("open", open);
+    navToggle.setAttribute("aria-expanded", String(open));
+    navToggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  };
+  navToggle.addEventListener("click", () => {
+    setOpen(navToggle.getAttribute("aria-expanded") !== "true");
+  });
+  // A tap on a section link should land on the section, not on the menu.
+  navLinks.addEventListener("click", (event) => {
+    if (event.target.closest("a")) setOpen(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setOpen(false);
+  });
+}
+
 /* ------------------------------------------------------- animated figures */
 
 /**
