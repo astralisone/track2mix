@@ -193,8 +193,10 @@ const haveSponsors = wireAlt("pay-sponsors", sponsorsUrl);
 if (altPayments && !haveKoFi && !haveSponsors) altPayments.hidden = true;
 
 if (PAYMENTS.paypalMe) {
-  // PayPal is the only provider that takes a prefilled amount, so the tiers
-  // point at it.
+  // The tiers deep-link to PayPal.Me with the amount in the path. A personal
+  // PayPal.Me page prefills it; a business account's PayPal.Me redirects to
+  // its business profile and drops the amount, so the payer taps Pay and
+  // types it. The hint below keeps that from looking like a broken link.
   for (const tier of tiers) {
     const amount = tier.dataset.amount;
     if (!amount) {
@@ -205,6 +207,7 @@ if (PAYMENTS.paypalMe) {
     tier.target = "_blank";
     tier.rel = "noopener noreferrer";
   }
+  setMsg(tipMsg, "", "Opens PayPal — tap Pay there and enter the amount you picked.");
 } else if (haveKoFi || haveSponsors) {
   // No PayPal handle, but another method exists: send the tiers there. The
   // amount can't be prefilled, so say so rather than letting it look broken.

@@ -171,6 +171,14 @@ https://paypal.me/yourhandle?amount=15 ❌ ignored, blank amount field
 `paypalUrlFor()` builds the correct shape. Change `TIP_CURRENCY` if you don't
 want USD.
 
+**Business accounts drop the amount.** The tip jar pays the Astralis One llc
+business account (`paypal.me/astralisboss`). PayPal redirects a business
+account's PayPal.Me link to its business profile (`/biz/profile/<handle>`)
+and the amount does not survive the redirect, so the payer taps **Pay** on
+that page and types the amount. The site says so under the tiers. The
+hosted-checkout URL (`cgi-bin/webscr?cmd=_xclick&business=<merchant id>`)
+was tried on 22 Oct 2026 and did not show the item or amount either.
+
 ### Recommended combination
 
 PayPal as the default (every DJ already has one), Ko-fi alongside it for cards
