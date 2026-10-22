@@ -1,4 +1,4 @@
-import { onRequestPost } from "./contact.js";
+import { onRequestPost, listAuthHeader } from "./contact.js";
 
 // Minimal D1 stub: records the SQL it was given and returns plausible results.
 function makeDb({ failOn = null } = {}) {
@@ -42,6 +42,13 @@ const check = (label, cond, extra = "") => {
 };
 
 const realFetch = globalThis.fetch;
+
+// 0. list auth header: a bare key gets the Token scheme, a full value is kept
+check("bare key gets Token scheme", listAuthHeader("abc123") === "Token abc123", listAuthHeader("abc123"));
+check("full header kept as is", listAuthHeader("Token abc123") === "Token abc123");
+check("Bearer header kept as is", listAuthHeader("Bearer zzz") === "Bearer zzz");
+check("whitespace trimmed", listAuthHeader("  abc  ") === "Token abc", listAuthHeader("  abc  "));
+check("empty stays empty", listAuthHeader("") === "" && listAuthHeader(undefined) === "");
 
 // 1. happy path, list configured and succeeding
 globalThis.fetch = async () => new Response("{}", { status: 200 });

@@ -21,7 +21,7 @@
  *   APP_NAME          attribution string    (required)
  *   DOWNLOAD_URL      link handed back      (required)
  *   LIST_ENDPOINT     mailing-list API URL  (secret, optional)
- *   LIST_AUTH_HEADER  e.g. "Token abc123"   (secret, optional)
+ *   LIST_AUTH_HEADER  "Token abc123", or just the key (secret, optional)
  *
  * The optional `interest` field says what the person is after:
  *   "desktop" (default)  the free desktop download — the response carries
@@ -58,6 +58,17 @@ function looksLikeEmail(value) {
  * Returns { ok: true } or { ok: false, reason } — it never throws, because a
  * list failure must not fail the request.
  */
+/**
+ * The Authorization value for the list API. Buttondown wants "Token <key>";
+ * a bare key pasted into the secret is the easy mistake and answers 401 with
+ * no hint, so a value with no scheme in front gets the Token scheme added.
+ */
+export function listAuthHeader(value) {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return "";
+  return trimmed.includes(" ") ? trimmed : `Token ${trimmed}`;
+}
+
 async function subscribeToList(env, { name, email }) {
   if (!env.LIST_ENDPOINT) {
     return { ok: false, reason: "LIST_ENDPOINT is not configured" };
@@ -65,7 +76,8 @@ async function subscribeToList(env, { name, email }) {
 
   try {
     const headers = { "Content-Type": "application/json" };
-    if (env.LIST_AUTH_HEADER) headers.Authorization = env.LIST_AUTH_HEADER;
+    const auth = listAuthHeader(env.LIST_AUTH_HEADER);
+    if (auth) headers.Authorization = auth;
 
     const response = await fetch(env.LIST_ENDPOINT, {
       method: "POST",
