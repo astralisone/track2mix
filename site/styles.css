@@ -455,8 +455,9 @@ h2 + .lede {
     align-items: stretch;
     gap: 0;
     padding: 8px var(--gutter) 12px;
-    background: rgba(1, 2, 15, 0.96);
+    background: var(--bg-deep);
     border-bottom: 1px solid var(--hairline);
+    box-shadow: 0 24px 40px rgba(0, 0, 0, 0.5);
     font-size: 1rem;
   }
 
