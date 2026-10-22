@@ -50,6 +50,23 @@ check("Bearer header kept as is", listAuthHeader("Bearer zzz") === "Bearer zzz")
 check("whitespace trimmed", listAuthHeader("  abc  ") === "Token abc", listAuthHeader("  abc  "));
 check("empty stays empty", listAuthHeader("") === "" && listAuthHeader(undefined) === "");
 
+// 0b. the visitor's IP is forwarded to the list for its firewall scoring
+{
+  let sent = null;
+  globalThis.fetch = async (_url, init) => { sent = JSON.parse(init.body); return new Response("{}", { status: 200 }); };
+  const db = makeDb();
+  const request = new Request("https://t/api/contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "CF-Connecting-IP": "203.0.113.9" },
+    body: JSON.stringify({ name: "Sam", email: "sam@example.com" }),
+  });
+  await onRequestPost({ request, env: baseEnv(db, { LIST_ENDPOINT: "https://list.test/sub", LIST_AUTH_HEADER: "k" }) });
+  check("list payload carries the visitor ip", sent?.ip_address === "203.0.113.9", JSON.stringify(sent));
+  const db2 = makeDb();
+  await onRequestPost({ request: req({ name: "Sam", email: "sam@example.com" }), env: baseEnv(db2, { LIST_ENDPOINT: "https://list.test/sub" }) });
+  check("no ip header, no ip_address field", sent && !("ip_address" in sent), JSON.stringify(sent));
+}
+
 // 1. happy path, list configured and succeeding
 globalThis.fetch = async () => new Response("{}", { status: 200 });
 {

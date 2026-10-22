@@ -69,7 +69,7 @@ export function listAuthHeader(value) {
   return trimmed.includes(" ") ? trimmed : `Token ${trimmed}`;
 }
 
-async function subscribeToList(env, { name, email }) {
+async function subscribeToList(env, { name, email, ip }) {
   if (!env.LIST_ENDPOINT) {
     return { ok: false, reason: "LIST_ENDPOINT is not configured" };
   }
@@ -86,6 +86,10 @@ async function subscribeToList(env, { name, email }) {
         email_address: email,
         metadata: { name },
         tags: [env.APP_NAME],
+        // The visitor's own IP, so Buttondown's firewall scores the person
+        // rather than Cloudflare's egress addresses. Without it every signup
+        // looks like one busy IP and gets blocked as suspicious.
+        ...(ip ? { ip_address: ip } : {}),
       }),
     });
 
@@ -166,7 +170,11 @@ export async function onRequestPost({ request, env }) {
 
     if (!contact?.id) throw new Error("contacts upsert returned no id");
 
-    const list = await subscribeToList(env, { name, email });
+    const list = await subscribeToList(env, {
+      name,
+      email,
+      ip: request.headers.get("CF-Connecting-IP") || "",
+    });
     if (!list.ok) {
       warnings.push(`mailing list: ${list.reason}`);
       console.error(`/api/contact list subscribe failed for ${email}: ${list.reason}`);
