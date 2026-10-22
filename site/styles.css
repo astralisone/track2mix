@@ -154,7 +154,8 @@ p { text-wrap: pretty; }
 
 .hero {
   position: relative;
-  min-height: 100svh;
+  /* Tall enough that the sentence and the button never meet the second line on a short window. */
+  min-height: max(100svh, 680px);
   overflow: hidden;
   background: var(--bg);
 }
