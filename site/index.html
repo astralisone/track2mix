@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Track2Mix: the next track in your Rekordbox library</title>
+<title>Track2Mix: one track in, five tracks out</title>
 <meta name="description" content="Track2Mix is a free desktop app for DJs. It analyses your Rekordbox library on your own machine, scores every track for energy from the audio, and ranks the tracks that mix with the one playing by key, BPM and energy.">
 <meta name="theme-color" content="#01020f">
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
@@ -11,109 +11,163 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/app-icon-256.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Track2Mix: the next track in your Rekordbox library">
+<meta property="og:title" content="Track2Mix: one track in, five tracks out">
 <meta property="og:description" content="Rekordbox knows your keys and BPMs. It doesn't know which of your 8,000 tracks belong next to each other. Track2Mix does.">
 <meta property="og:image" content="https://track2mix.com/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/DMSans-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/pics/hero-needle-groove.jpg" as="image" fetchpriority="high">
 <script>document.documentElement.classList.add("js")</script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <header class="top">
-  <a class="wordmark" href="#top">
-    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <rect x="7" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"/><rect x="7" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"/>
-      <rect x="13" y="7.1" width="2.8" height="15.4" rx="1.4" fill="#7C7EE5"/><rect x="13" y="25.5" width="2.8" height="15.4" rx="1.4" fill="#F5B71C"/>
-      <rect x="19" y="12.7" width="2.8" height="9.8" rx="1.4" fill="#7C7EE5"/><rect x="19" y="25.5" width="2.8" height="9.8" rx="1.4" fill="#F5B71C"/>
-      <rect x="25" y="4.3" width="2.8" height="18.2" rx="1.4" fill="#7C7EE5"/><rect x="25" y="25.5" width="2.8" height="18.2" rx="1.4" fill="#F5B71C"/>
-      <rect x="31" y="9.9" width="2.8" height="12.6" rx="1.4" fill="#7C7EE5"/><rect x="31" y="25.5" width="2.8" height="12.6" rx="1.4" fill="#F5B71C"/>
-      <rect x="37" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"/><rect x="37" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"/>
-      <path d="M26.4 3V45" stroke="#E1E1E3" stroke-opacity="0.55" stroke-width="1.4" stroke-linecap="round"/>
-    </svg>
-    Track2Mix
-  </a>
-  <nav class="top-links" aria-label="Page">
-    <a href="#how" class="only-wide">How it works</a>
-    <a href="#faq" class="only-wide">Questions</a>
-    <a href="https://downloads.track2mix.com">Download free</a>
-  </nav>
+  <div class="wrap top-inner">
+    <a class="wordmark" href="#top">
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <rect x="7" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"/><rect x="7" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"/>
+        <rect x="13" y="7.1" width="2.8" height="15.4" rx="1.4" fill="#7C7EE5"/><rect x="13" y="25.5" width="2.8" height="15.4" rx="1.4" fill="#F5B71C"/>
+        <rect x="19" y="12.7" width="2.8" height="9.8" rx="1.4" fill="#7C7EE5"/><rect x="19" y="25.5" width="2.8" height="9.8" rx="1.4" fill="#F5B71C"/>
+        <rect x="25" y="4.3" width="2.8" height="18.2" rx="1.4" fill="#7C7EE5"/><rect x="25" y="25.5" width="2.8" height="18.2" rx="1.4" fill="#F5B71C"/>
+        <rect x="31" y="9.9" width="2.8" height="12.6" rx="1.4" fill="#7C7EE5"/><rect x="31" y="25.5" width="2.8" height="12.6" rx="1.4" fill="#F5B71C"/>
+        <rect x="37" y="15.5" width="2.8" height="7" rx="1.4" fill="#7C7EE5"/><rect x="37" y="25.5" width="2.8" height="7" rx="1.4" fill="#F5B71C"/>
+        <path d="M26.4 3V45" stroke="#E1E1E3" stroke-opacity="0.55" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      Track2Mix
+    </a>
+    <nav class="top-links" aria-label="Page">
+      <a href="#rings" class="only-wide">How it narrows</a>
+      <a href="#compose" class="only-wide">Compose</a>
+      <a href="#questions" class="only-wide">Questions</a>
+      <a class="button button-small" href="https://downloads.track2mix.com">Download free</a>
+    </nav>
+  </div>
 </header>
 
 <main id="top">
 
-  <section class="hero" aria-label="Track2Mix">
-    <img class="hero-pic" src="assets/pics/hero-needle-groove.jpg" width="3840" height="1536" fetchpriority="high" decoding="async"
-         alt="A turntable needle resting in the groove of a record, lit from one side in a dark room">
-    <h1 class="hero-title">
-      <span class="hero-l1"><span class="mask"><span class="rise">Track</span></span></span>
-      <span class="hero-l2"><span class="mask"><span class="rise">2Mix</span></span></span>
-    </h1>
-    <div class="hero-mid">
-      <p class="hero-line">A free desktop app that finds which of your Rekordbox tracks mix with the one playing, by key, BPM and energy.</p>
-      <a class="button" href="https://downloads.track2mix.com">Download free</a>
+  <section class="event">
+    <div class="wrap event-grid">
+      <div class="event-copy">
+        <h1>One track in.<br>Five tracks out.</h1>
+        <p class="lede">Track2Mix listens to every file in your Rekordbox library, scores it for energy, and draws what mixes with the track you’re on: by key, by tempo, by how hard it hits.</p>
+        <div class="actions">
+          <a class="button" href="https://downloads.track2mix.com">Download free</a>
+          <span class="actions-note">Windows and Linux. Pay what you want.</span>
+        </div>
+      </div>
+
+      <figure class="display" id="display">
+        <svg viewBox="-520 -520 1040 1040" role="group" aria-label="Event display: the anchor track at the centre, candidate tracks curving outward through the key, tempo and energy rings to the calorimeter at the rim. Hover, focus or tap a track to isolate it.">
+          <g class="rings" aria-hidden="true">
+            <circle class="ring" r="120"/><circle class="ring" r="230"/><circle class="ring" r="340"/><circle class="ring" r="440"/>
+            <g class="ticks"></g><g class="barrel"></g>
+          </g>
+          <g class="tracks">
+            <g class="hit" data-id="t1" tabindex="0" role="button" aria-label="Same key, harder: 8A, 174 BPM, energy 8.1">
+              <path class="track gold" d="M0 0 C 164 -35, 323 -116, 395 -193"/>
+              <g class="cal" transform="rotate(-26)" aria-hidden="true"><rect x="456" y="-8" width="5" height="16"/><rect x="463" y="-8" width="5" height="16"/><rect x="470" y="-8" width="5" height="16"/><rect x="477" y="-8" width="5" height="16"/><rect x="484" y="-8" width="5" height="16"/><rect x="491" y="-8" width="5" height="16"/><rect x="498" y="-8" width="5" height="16"/><rect x="505" y="-8" width="5" height="16"/></g>
+              <line class="lead" x1="395" y1="-193" x2="395" y2="-126"/>
+              <g class="lbl gold right" transform="translate(253 -126)"><rect width="161" height="52" rx="3"/><text x="149" y="21">8A · 174 · 8.1</text><text class="sub" x="149" y="41">Same key, harder</text></g>
+            </g>
+            <g class="hit" data-id="t2" tabindex="0" role="button" aria-label="Relative major: 8B, 173 BPM, energy 7.2">
+              <path class="track cyan" d="M0 0 C 167 6, 339 51, 427 106"/>
+              <g class="cal" transform="rotate(14)" aria-hidden="true"><rect x="456" y="-8" width="5" height="16"/><rect x="463" y="-8" width="5" height="16"/><rect x="470" y="-8" width="5" height="16"/><rect x="477" y="-8" width="5" height="16"/><rect x="484" y="-8" width="5" height="16"/><rect x="491" y="-8" width="5" height="16"/><rect x="498" y="-8" width="5" height="16"/></g>
+              <line class="lead" x1="427" y1="106" x2="419" y2="55"/>
+              <g class="lbl cyan right" transform="translate(275 3)"><rect width="144" height="52" rx="3"/><text x="132" y="21">8B · 173 · 7.2</text><text class="sub" x="132" y="41">Relative major</text></g>
+            </g>
+            <g class="hit" data-id="t3" tabindex="0" role="button" aria-label="One step up the wheel: 9A, 176 BPM, energy 8.8">
+              <path class="track iris" d="M0 0 C 32 164, 116 323, 200 392"/>
+              <g class="cal" transform="rotate(63)" aria-hidden="true"><rect x="456" y="-8" width="5" height="16"/><rect x="463" y="-8" width="5" height="16"/><rect x="470" y="-8" width="5" height="16"/><rect x="477" y="-8" width="5" height="16"/><rect x="484" y="-8" width="5" height="16"/><rect x="491" y="-8" width="5" height="16"/><rect x="498" y="-8" width="5" height="16"/><rect x="505" y="-8" width="5" height="16"/><rect x="512" y="-8" width="5" height="16"/></g>
+              <line class="lead" x1="200" y1="392" x2="200" y2="357"/>
+              <g class="lbl iris right" transform="translate(4 305)"><rect width="204" height="52" rx="3"/><text x="192" y="21">9A · 176 · 8.8</text><text class="sub" x="192" y="41">One step up the wheel</text></g>
+            </g>
+            <g class="hit" data-id="t4" tabindex="0" role="button" aria-label="Energy drop: 7A, 172 BPM, energy 4.1">
+              <path class="track iris" d="M0 0 C -153 -68, -292 -180, -347 -271"/>
+              <g class="cal" transform="rotate(-142)" aria-hidden="true"><rect x="456" y="-8" width="5" height="16"/><rect x="463" y="-8" width="5" height="16"/><rect x="470" y="-8" width="5" height="16"/><rect x="477" y="-8" width="5" height="16"/></g>
+              <line class="lead" x1="-347" y1="-271" x2="-347" y2="-193"/>
+              <g class="lbl iris left" transform="translate(-377 -193)"><rect width="144" height="52" rx="3"/><text x="12" y="21">7A · 172 · 4.1</text><text class="sub" x="12" y="41">Energy drop</text></g>
+            </g>
+            <g class="hit" data-id="t5" tabindex="0" role="button" aria-label="Half time: 8A, 87 BPM, energy 3.5">
+              <path class="track gold" d="M0 0 C -167 6, -339 51, -427 106"/>
+              <g class="cal" transform="rotate(166)" aria-hidden="true"><rect x="456" y="-8" width="5" height="16"/><rect x="463" y="-8" width="5" height="16"/><rect x="470" y="-8" width="5" height="16"/><rect x="477" y="-8" width="5" height="16"/></g>
+              <line class="lead" x1="-427" y1="106" x2="-414" y2="55"/>
+              <g class="lbl gold left" transform="translate(-414 3)"><rect width="135" height="52" rx="3"/><text x="12" y="21">8A · 87 · 3.5</text><text class="sub" x="12" y="41">Half time</text></g>
+            </g>
+            <g class="hit rejected" data-id="t6" tabindex="0" role="button" aria-label="Rejected by tempo: 8A, 128 BPM">
+              <path class="track dim" d="M0 0 C 5 87, -8 179, -28 228"/>
+              <line class="lead" x1="-28" y1="228" x2="-25" y2="174"/>
+              <g class="lbl dim right" transform="translate(-25 122)"><rect width="127" height="52" rx="3"/><text x="115" y="21">8A · 128</text><text class="sub" x="115" y="41">Out of tempo</text></g>
+            </g>
+            <g class="hit rejected" data-id="t7" tabindex="0" role="button" aria-label="Rejected by tempo: 9A, 140 BPM">
+              <path class="track dim" d="M0 0 C -69 54, -130 123, -154 171"/>
+              <line class="lead" x1="-154" y1="171" x2="-154" y2="95"/>
+              <g class="lbl dim left" transform="translate(-201 43)"><rect width="127" height="52" rx="3"/><text x="12" y="21">9A · 140</text><text class="sub" x="12" y="41">Out of tempo</text></g>
+            </g>
+            <g class="hit rejected" data-id="t8" tabindex="0" role="button" aria-label="Rejected by key: 3B, 174 BPM">
+              <path class="track dim" d="M0 0 C 2 -46, -8 -93, -21 -118"/>
+              <line class="lead" x1="-21" y1="-118" x2="-21" y2="-173"/>
+              <g class="lbl dim left" transform="translate(-33 -225)"><rect width="110" height="52" rx="3"/><text x="12" y="21">3B · 174</text><text class="sub" x="12" y="41">Out of key</text></g>
+            </g>
+          </g>
+          <line class="lead core-lead" x1="0" y1="0" x2="22" y2="-26"/>
+          <circle class="core" r="7"/>
+          <g class="corelbl" transform="translate(22 -78)"><rect width="184" height="52" rx="3"/><text x="12" y="21">8A · 174 · 7.8</text><text class="sub" x="12" y="41">The track you’re on</text></g>
+          <text class="ringlbl" x="-118" y="-30">key</text>
+          <text class="ringlbl" x="-228" y="-30">tempo</text>
+          <text class="ringlbl" x="-338" y="-30">energy</text>
+        </svg>
+        <figcaption class="display-legend">
+          <span class="legend-keys">
+            <span><i class="sw gold"></i>same key</span>
+            <span><i class="sw iris"></i>one step on the wheel</span>
+            <span><i class="sw cyan"></i>relative major or minor</span>
+            <span><i class="sw dim"></i>rejected</span>
+          </span>
+          <span class="legend-note">Illustrative event. The rings, colours and figures are the app’s own.</span>
+        </figcaption>
+      </figure>
+      <dl class="readout" aria-label="This event">
+        <div><dt>Anchor</dt><dd>8A · 174 BPM · energy 7.8</dd></div>
+        <div><dt>Candidates</dt><dd>1,402 in key · 118 in tempo</dd></div>
+        <div><dt>Through</dt><dd id="readout-through">5 worth auditioning</dd></div>
+      </dl>
     </div>
   </section>
 
-  <section id="lights" class="band-section">
-    <h2 class="band-head">Four things it lights</h2>
-    <div class="band">
-      <figure class="panel" style="--grow:5">
-        <div class="panel-title">
-          <p>Five of 8,412 tracks, ranked for the one you’re on.</p>
-        </div>
-        <div class="ui shortlist" data-ui>
-          <div class="ui-bar"><span class="tl"><i></i><i></i><i></i></span><span class="ui-title">Track2Mix · library.db</span></div>
-          <div class="tbl tbl-head"><span>Title</span><span class="cell-sub">Artist</span><span class="cell-bpm">BPM</span><span>Key</span><span class="col-energy">Energy</span></div>
-          <div class="tbl tbl-row anchor"><span class="cell-title">Anchor · the track you’re on</span><span class="cell-sub">Your library</span><span class="cell-bpm">174</span><span><span class="keychip match">8A</span></span><span class="col-energy"><span class="meter"><span style="width:78%"></span></span></span></div>
-          <div class="tbl tbl-row"><span class="cell-title">Same key, harder</span><span class="cell-sub">·</span><span class="cell-bpm">174</span><span><span class="keychip match">8A</span></span><span class="col-energy"><span class="meter"><span style="width:81%"></span></span></span></div>
-          <div class="tbl tbl-row"><span class="cell-title">Relative major</span><span class="cell-sub">·</span><span class="cell-bpm">173</span><span><span class="keychip">8B</span></span><span class="col-energy"><span class="meter"><span style="width:72%"></span></span></span></div>
-          <div class="tbl tbl-row"><span class="cell-title">One step up the wheel</span><span class="cell-sub">·</span><span class="cell-bpm">176</span><span><span class="keychip">9A</span></span><span class="col-energy"><span class="meter"><span style="width:88%"></span></span></span></div>
-          <div class="tbl tbl-row"><span class="cell-title">Energy drop</span><span class="cell-sub">·</span><span class="cell-bpm">172</span><span><span class="keychip">7A</span></span><span class="col-energy"><span class="meter"><span style="width:41%"></span></span></span></div>
-          <div class="tbl tbl-row"><span class="cell-title">One step down</span><span class="cell-sub">·</span><span class="cell-bpm">175</span><span><span class="keychip">7A</span></span><span class="col-energy"><span class="meter"><span style="width:63%"></span></span></span></div>
-          <div class="tbl tbl-row"><span class="cell-title">Half time</span><span class="cell-sub">·</span><span class="cell-bpm">87</span><span><span class="keychip match">8A</span></span><span class="col-energy"><span class="meter"><span style="width:35%"></span></span></span></div>
-          <div class="ui-foot"><span id="shortlist-foot">7 of 8,412 tracks · ±3 BPM · harmonic with 8A</span><span>Export M3U8</span></div>
-        </div>
+  <section id="rings" class="narrow">
+    <div class="wrap narrow-grid">
+      <div class="narrow-copy">
+        <h2>Three rings, read from the inside out.</h2>
+        <p>Rekordbox can draw the first two. Key narrows eight thousand tracks to the ones that can sit next to the anchor; tempo keeps the ones that can be played with it. The third ring is the one Rekordbox has no reading for.</p>
+        <ol class="ringlist">
+          <li><b>Key.</b> Same slot on the Camelot wheel, one step either way, or the relative major or minor. Four of twenty-four. <span class="count">8,412 to 1,402</span></li>
+          <li><b>Tempo.</b> Inside your BPM tolerance, with half and double time counted, so a 174 still finds its 87s. <span class="count">1,402 to 118</span></li>
+          <li><b>Energy.</b> Measured from the audio: loudness and dynamics, brightness, movement, rhythmic density. It decides the order, and the five worth auditioning. <span class="count">118 to 5</span></li>
+        </ol>
+      </div>
+      <figure class="rings-fig">
+        <svg viewBox="-260 -260 520 520" role="img" aria-label="Three concentric rings labelled with the counts at each stage: 8,412 tracks, 1,402 in key, 118 in tempo, 5 by energy.">
+          <circle class="r4" r="250"/><circle class="r3" r="186"/><circle class="r2" r="122"/><circle class="r1" r="58"/>
+          <text class="n" x="0" y="-222">8,412 tracks</text>
+          <text class="n" x="0" y="-158">1,402 in key</text>
+          <text class="n" x="0" y="-94">118 in tempo</text>
+          <text class="n hot" x="0" y="10">5</text>
+        </svg>
       </figure>
+    </div>
+  </section>
 
-      <figure class="panel panel-wheel" style="--grow:2">
-        <div class="ui wheel-ui" data-ui>
-          <p class="ui-label" id="wheel-label">Anchor 8A · four of twenty-four slots mix</p>
-          <svg class="wheel" id="wheel" viewBox="0 0 232 232" role="group" aria-label="Camelot wheel. Choose a key to see the four slots that mix with it.">
-            <g data-key="1B"><path class="seg" d="M90.4 13.1A106 106 0 0 1 141.6 13.1L134.9 40.3A78 78 0 0 0 97.1 40.3Z"/><text class="wl" x="116" y="27.5">1B</text></g>
-            <g data-key="1A"><path class="seg" d="M98.1 44.2A74 74 0 0 1 133.9 44.2L127.1 71.4A46 46 0 0 0 104.9 71.4Z"/><text class="wl" x="116" y="59.5">1A</text></g>
-            <g data-key="2B"><path class="seg" d="M145.2 14.1A106 106 0 0 1 189.6 39.7L170.2 59.9A78 78 0 0 0 137.5 41.0Z"/><text class="wl" x="162" y="39.8">2B</text></g>
-            <g data-key="2A"><path class="seg" d="M136.4 44.9A74 74 0 0 1 167.4 62.8L148.0 82.9A46 46 0 0 0 128.7 71.8Z"/><text class="wl" x="146" y="67.5">2A</text></g>
-            <g data-key="3B"><path class="seg" d="M192.3 42.4A106 106 0 0 1 217.9 86.8L191.0 94.5A78 78 0 0 0 172.1 61.8Z"/><text class="wl" x="195.7" y="73.5">3B</text></g>
-            <g data-key="3A"><path class="seg" d="M169.2 64.6A74 74 0 0 1 187.1 95.6L160.2 103.3A46 46 0 0 0 149.1 84.0Z"/><text class="wl" x="168" y="89.5">3A</text></g>
-            <g data-key="4B"><path class="seg" d="M218.9 90.4A106 106 0 0 1 218.9 141.6L191.7 134.9A78 78 0 0 0 191.7 97.1Z"/><text class="wl" x="208" y="119.5">4B</text></g>
-            <g data-key="4A"><path class="seg" d="M187.8 98.1A74 74 0 0 1 187.8 133.9L160.6 127.1A46 46 0 0 0 160.6 104.9Z"/><text class="wl" x="176" y="119.5">4A</text></g>
-            <g data-key="5B"><path class="seg" d="M217.9 145.2A106 106 0 0 1 192.3 189.6L172.1 170.2A78 78 0 0 0 191.0 137.5Z"/><text class="wl" x="195.7" y="165.5">5B</text></g>
-            <g data-key="5A"><path class="seg" d="M187.1 136.4A74 74 0 0 1 169.2 167.4L149.1 148.0A46 46 0 0 0 160.2 128.7Z"/><text class="wl" x="168" y="149.5">5A</text></g>
-            <g data-key="6B"><path class="seg" d="M189.6 192.3A106 106 0 0 1 145.2 217.9L137.5 191.0A78 78 0 0 0 170.2 172.1Z"/><text class="wl" x="162" y="199.2">6B</text></g>
-            <g data-key="6A"><path class="seg" d="M167.4 169.2A74 74 0 0 1 136.4 187.1L128.7 160.2A46 46 0 0 0 148.0 149.1Z"/><text class="wl" x="146" y="171.5">6A</text></g>
-            <g data-key="7B"><path class="seg" d="M141.6 218.9A106 106 0 0 1 90.4 218.9L97.1 191.7A78 78 0 0 0 134.9 191.7Z"/><text class="wl" x="116" y="211.5">7B</text></g>
-            <g data-key="7A"><path class="seg" d="M133.9 187.8A74 74 0 0 1 98.1 187.8L104.9 160.6A46 46 0 0 0 127.1 160.6Z"/><text class="wl" x="116" y="179.5">7A</text></g>
-            <g data-key="8B"><path class="seg" d="M86.8 217.9A106 106 0 0 1 42.4 192.3L61.8 172.1A78 78 0 0 0 94.5 191.0Z"/><text class="wl" x="70" y="199.2">8B</text></g>
-            <g data-key="8A"><path class="seg" d="M95.6 187.1A74 74 0 0 1 64.6 169.2L84.0 149.1A46 46 0 0 0 103.3 160.2Z"/><text class="wl" x="86" y="171.5">8A</text></g>
-            <g data-key="9B"><path class="seg" d="M39.7 189.6A106 106 0 0 1 14.1 145.2L41.0 137.5A78 78 0 0 0 59.9 170.2Z"/><text class="wl" x="36.3" y="165.5">9B</text></g>
-            <g data-key="9A"><path class="seg" d="M62.8 167.4A74 74 0 0 1 44.9 136.4L71.8 128.7A46 46 0 0 0 82.9 148.0Z"/><text class="wl" x="64" y="149.5">9A</text></g>
-            <g data-key="10B"><path class="seg" d="M13.1 141.6A106 106 0 0 1 13.1 90.4L40.3 97.1A78 78 0 0 0 40.3 134.9Z"/><text class="wl" x="24" y="119.5">10B</text></g>
-            <g data-key="10A"><path class="seg" d="M44.2 133.9A74 74 0 0 1 44.2 98.1L71.4 104.9A46 46 0 0 0 71.4 127.1Z"/><text class="wl" x="56" y="119.5">10A</text></g>
-            <g data-key="11B"><path class="seg" d="M14.1 86.8A106 106 0 0 1 39.7 42.4L59.9 61.8A78 78 0 0 0 41.0 94.5Z"/><text class="wl" x="36.3" y="73.5">11B</text></g>
-            <g data-key="11A"><path class="seg" d="M44.9 95.6A74 74 0 0 1 62.8 64.6L82.9 84.0A46 46 0 0 0 71.8 103.3Z"/><text class="wl" x="64" y="89.5">11A</text></g>
-            <g data-key="12B"><path class="seg" d="M42.4 39.7A106 106 0 0 1 86.8 14.1L94.5 41.0A78 78 0 0 0 61.8 59.9Z"/><text class="wl" x="70" y="39.8">12B</text></g>
-            <g data-key="12A"><path class="seg" d="M64.6 62.8A74 74 0 0 1 95.6 44.9L103.3 71.8A46 46 0 0 0 84.0 82.9Z"/><text class="wl" x="86" y="67.5">12A</text></g>
-          </svg>
-          <p class="ui-note">Tap any key.</p>
+  <section id="readouts" class="readouts">
+    <div class="wrap">
+      <h2>What the detector reads.</h2>
+      <div class="readouts-grid">
+        <div class="readout-copy">
+          <p>Genre tags and star ratings describe what you thought about a track the day you filed it. Track2Mix decodes the audio instead. Four signals, three 30-second stretches per track, one energy number from 0 to 10 that you can sort by and check against the tracks you know cold.</p>
+          <p>Keys stay Rekordbox’s own. The app reads them from the export so the results match what is on your CDJs, and it never writes anything back.</p>
         </div>
-      </figure>
-
-      <figure class="panel" style="--grow:3">
         <div class="ui signals" data-ui>
           <p class="ui-label">One track · four signals · one number</p>
           <div class="sig"><span>Loudness and dynamics</span><span class="meter"><span style="width:74%"></span></span></div>
@@ -121,244 +175,170 @@
           <div class="sig"><span>Movement</span><span class="meter"><span style="width:81%"></span></span></div>
           <div class="sig"><span>Rhythmic density</span><span class="meter"><span style="width:66%"></span></span></div>
           <div class="sig-out"><span>Energy</span><b>7.4</b></div>
-          <ol class="rank">
-            <li><span>1</span><span>Peak-time neuro</span><span class="meter"><span style="width:100%"></span></span><b>10</b></li>
-            <li><span>2</span><span>Warehouse banger</span><span class="meter"><span style="width:90%"></span></span><b>9</b></li>
-            <li><span>3</span><span>Rolling drums</span><span class="meter"><span style="width:70%"></span></span><b>7</b></li>
-            <li><span>4</span><span>Tech house groove</span><span class="meter"><span style="width:60%"></span></span><b>6</b></li>
-            <li><span>5</span><span>Liquid stepper</span><span class="meter"><span style="width:50%"></span></span><b>5</b></li>
-            <li><span>6</span><span>Deep roller</span><span class="meter"><span style="width:30%"></span></span><b>3</b></li>
-            <li><span>7</span><span>Ambient opener</span><span class="meter"><span style="width:10%"></span></span><b>1</b></li>
-          </ol>
         </div>
-      </figure>
-
-      <figure class="panel" style="--grow:2">
-        <div class="ui lanes" data-ui>
-          <div class="ui-bar"><span class="ui-title">Compose · set.t2m · 128 BPM</span></div>
-          <div class="lane"><div class="lane-strip"><span class="keychip match">11A</span> Lane 1 <em>vol · eq · hpf · sync</em></div><div class="lane-track"><div class="clip" style="left:0;width:56%"><i class="fade fade-out"></i></div></div></div>
-          <div class="lane"><div class="lane-strip"><span class="keychip match">11A</span> Lane 2 <em>vol · eq · lpf · sync</em></div><div class="lane-track"><div class="clip" style="left:40%;width:48%"><i class="fade fade-in"></i><i class="fade fade-out"></i></div></div></div>
-          <div class="lane"><div class="lane-strip"><span class="keychip">12A</span> Lane 3 <em>vol · eq · sync</em></div><div class="lane-track"><div class="clip" style="left:74%;width:26%"><i class="fade fade-in"></i></div></div></div>
-          <div class="lane"><div class="lane-strip"><span class="keychip">12B</span> Lane 4 <em>vol · eq · sync</em></div><div class="lane-track"><div class="clip" style="left:88%;width:12%"><i class="fade fade-in"></i></div></div></div>
-          <div class="playhead"></div>
-          <div class="ui-foot"><span>16-bar blends · snap on</span><span>Export MP3</span></div>
+        <div class="ui shortlist" data-ui>
+          <div class="ui-bar"><span class="ui-title">Track2Mix · library.db · compatible with 8A</span></div>
+          <div class="tbl tbl-head"><span>Title</span><span class="cell-sub">Artist</span><span class="cell-bpm">BPM</span><span>Key</span><span class="col-energy">Energy</span></div>
+          <div class="tbl tbl-row anchor"><span class="cell-title">Anchor · the track you’re on</span><span class="cell-sub">Your library</span><span class="cell-bpm">174</span><span><span class="keychip match">8A</span></span><span class="col-energy"><span class="meter"><span style="width:78%"></span></span></span></div>
+          <div class="tbl tbl-row"><span class="cell-title">Same key, harder</span><span class="cell-sub">·</span><span class="cell-bpm">174</span><span><span class="keychip match">8A</span></span><span class="col-energy"><span class="meter"><span style="width:81%"></span></span></span></div>
+          <div class="tbl tbl-row"><span class="cell-title">Relative major</span><span class="cell-sub">·</span><span class="cell-bpm">173</span><span><span class="keychip">8B</span></span><span class="col-energy"><span class="meter"><span style="width:72%"></span></span></span></div>
+          <div class="tbl tbl-row"><span class="cell-title">One step up the wheel</span><span class="cell-sub">·</span><span class="cell-bpm">176</span><span><span class="keychip">9A</span></span><span class="col-energy"><span class="meter"><span style="width:88%"></span></span></span></div>
+          <div class="tbl tbl-row"><span class="cell-title">Energy drop</span><span class="cell-sub">·</span><span class="cell-bpm">172</span><span><span class="keychip">7A</span></span><span class="col-energy"><span class="meter"><span style="width:41%"></span></span></span></div>
+          <div class="tbl tbl-row"><span class="cell-title">Half time</span><span class="cell-sub">·</span><span class="cell-bpm">87</span><span><span class="keychip match">8A</span></span><span class="col-energy"><span class="meter"><span style="width:35%"></span></span></span></div>
+          <div class="ui-foot"><span>5 of 8,412 · ±3 BPM · harmonic</span><span>Export M3U8</span></div>
         </div>
-      </figure>
+      </div>
+      <p class="fragment-note">Interface fragments rebuilt from the real views with illustrative rows; screenshots of the app replace them when the beta is public.</p>
     </div>
-    <p class="band-caption">Key, tempo, energy, the blend. Tap a key on the wheel and the shortlist re-ranks from a sample library. Windows and Linux, offline.</p>
   </section>
 
-  <div id="how" class="verbs">
-    <section class="verb-panel">
-      <img src="assets/pics/lp-record-groove-close-up-5248017196.jpg" width="1844" height="1676" loading="lazy" decoding="async" alt="The grooves of a vinyl record, close up, lit blue">
-      <div class="verb-hold"><h2 class="verb">Export</h2></div>
-      <p class="verb-line">In Rekordbox: File, then Export Collection in xml format. That one file is all Track2Mix needs to find your library.</p>
-    </section>
-    <section class="verb-panel">
-      <video class="verb-video" autoplay muted loop playsinline preload="metadata" poster="assets/pics/beachfront-b-roll-record-background-free-to-poster.jpg" width="854" height="480" aria-hidden="true">
-        <source src="assets/pics/beachfront-b-roll-record-background-free-to.webm" type="video/webm">
-      </video>
-      <img class="verb-poster" src="assets/pics/beachfront-b-roll-record-background-free-to-poster.jpg" width="1280" height="720" loading="lazy" decoding="async" alt="A record turning on a turntable in low light">
-      <div class="verb-hold"><h2 class="verb">Listen</h2></div>
-      <p class="verb-line">Every track is decoded on your own machine. Three 30-second stretches, four signals, one energy number. Nothing is uploaded.</p>
-    </section>
-    <section class="verb-panel">
-      <img src="assets/pics/technics-sl-1200-original-1972.jpg" width="1920" height="1440" loading="lazy" decoding="async" alt="A 1972 Technics SL-1200 turntable on a shelf above a row of records">
-      <div class="verb-hold"><h2 class="verb">Dig</h2></div>
-      <p class="verb-line">Click the track you’re on. Its compatible neighbours come back ranked. Audition them, build the set, export the M3U8 or blend it in Compose.</p>
-    </section>
-  </div>
+  <section id="how" class="beam">
+    <div class="wrap">
+      <h2>From a Rekordbox export to the shortlist.</h2>
+      <ol class="stations">
+        <li>
+          <h3>Export</h3>
+          <p>In Rekordbox: File, then Export Collection in xml format. That one file is all Track2Mix needs to find your library.</p>
+        </li>
+        <li>
+          <h3>Listen</h3>
+          <p>Every track is decoded on your own machine, MP3, FLAC, WAV, AIFF or M4A, on every core you have. Minutes for a big library, not an evening. Nothing is uploaded; there is no server.</p>
+        </li>
+        <li>
+          <h3>Dig</h3>
+          <p>Click the track you’re on. Its compatible neighbours come back ranked. Audition them, tick the keepers, order them in Playlist and export an M3U8 that Rekordbox imports directly.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
 
-  <section id="does" class="names">
-    <h2 class="names-head">Everything it does</h2>
-    <div class="names-grid">
-      <div class="names-col">
-        <p class="names-group">Library</p>
-        <ul class="names-list">
-          <li><button type="button" data-d="Reads the collection export, resolves which entries are real files on disk, and reports the rest.">Import Rekordbox XML</button></li>
-          <li><button type="button" data-d="Opens any library.db, including one analysed on another machine.">Open any library.db</button></li>
-          <li><button type="button" data-d="One number per track, from loudness and dynamics, brightness, movement and rhythmic density.">Energy score, 0 to 10</button></li>
-          <li><button type="button" data-d="Click a key and the table narrows to the four slots that mix with it.">Camelot wheel filter</button></li>
-          <li><button type="button" data-d="Each chip shows how many tracks are left before you tap it.">Genre and sub-genre chips</button></li>
-          <li><button type="button" data-d="Range sliders drawn over histograms of your own library.">BPM and energy histograms</button></li>
-          <li><button type="button" data-d="Click any row to make it the anchor; its matches come back ranked.">Compatibility panel</button></li>
-          <li><button type="button" data-d="A 174 still finds its 87s, and a 90 its 180s.">Half and double time</button></li>
-          <li><button type="button" data-d="Play, pause, seek, skip 30 seconds, queue a selection of up to 500 tracks.">Preview player</button></li>
-          <li><button type="button" data-d="Moved your music to a new drive? Remap the paths without re-tagging anything.">Path map for moved drives</button></li>
+  <section id="compose" class="compose">
+    <div class="wrap compose-grid">
+      <div class="compose-copy">
+        <h2>Then hear the set before you play it.</h2>
+        <p>Compose is a multi-lane timeline for the tracks you picked: one lane per track, a mixer strip on each, and a transport that plays the whole thing in real time. It is a sketchpad for a set, not a replacement for your decks.</p>
+        <ul class="plain">
+          <li><b>Auto-arrange</b> finds each track’s beat grid and downbeat and brings it in on an 8-bar phrase of the one before, with a 4 to 32-bar blend.</li>
+          <li><b>A real mixer on every lane:</b> volume, three-band EQ with full kills, high- and low-pass, mute, solo, vinyl-style sync.</li>
+          <li><b>Record live, bounce to WAV, or export a 320 kbps MP3.</b> Save it all as a .t2m project and pick it up tomorrow.</li>
         </ul>
-        <p class="names-sum">The analysed library: filters with live counts, a Camelot wheel, a compatibility panel and a player on every row.</p>
       </div>
-      <div class="names-col">
-        <p class="names-group">Playlist</p>
-        <ul class="names-list">
-          <li><button type="button" data-d="Your picks open already ordered by key relation, then BPM, then a gentle rise in energy.">Harmonic flow</button></li>
-          <li><button type="button" data-d="Low to high, so the set climbs.">Energy ramp</button></li>
-          <li><button type="button" data-d="Slowest to fastest, or the order you picked them in.">BPM order</button></li>
-          <li><button type="button" data-d="Perfect, Relative, one step, Boost, Drop or Clash, with a 0 to 100 score for each transition.">Transition badges</button></li>
-          <li><button type="button" data-d="Energy and BPM drawn across the whole set, so you can see the shape before you hear it.">Set curve</button></li>
-          <li><button type="button" data-d="Runs the compatibility search on the last track and offers up to ten that aren’t in the set yet.">Suggest next</button></li>
-          <li><button type="button" data-d="Auditions the whole set in order, end to end.">Play set</button></li>
-          <li><button type="button" data-d="M3U8 that Rekordbox imports directly, plain M3U, or a numbered text tracklist.">Export M3U8, M3U, TXT</button></li>
-        </ul>
-        <p class="names-sum">A set in the right order, every transition scored, and an M3U8 that Rekordbox imports directly.</p>
-      </div>
-      <div class="names-col">
-        <p class="names-group">Compose</p>
-        <ul class="names-list">
-          <li><button type="button" data-d="One lane per track; the first lane sets the master BPM.">A lane per track</button></li>
-          <li><button type="button" data-d="Low shelf at 200 Hz, mid at 1.2 kHz, high shelf at 5 kHz, from a full kill to +12 dB.">Three-band EQ with kills</button></li>
-          <li><button type="button" data-d="High-pass and low-pass per lane, plus mute and solo.">Filters, mute, solo</button></li>
-          <li><button type="button" data-d="Pins a lane to the master BPM vinyl-style and folds to half or double time when that’s closer.">Sync to the master</button></li>
-          <li><button type="button" data-d="Clips snap to the beat grid; hold Alt to bypass. Drag to move, pull the edges to trim, corner handles for fades.">Snap, trim, fade</button></li>
-          <li><button type="button" data-d="Fades every overlap for you unless you drew the fade yourself.">Auto-crossfade</button></li>
-          <li><button type="button" data-d="Finds each track’s downbeat and brings it in on an 8-bar phrase of the one before, with a 4 to 32-bar blend.">Auto-arrange</button></li>
-          <li><button type="button" data-d="Captures the master output in real time, fader and EQ moves included.">Record live</button></li>
-          <li><button type="button" data-d="Renders offline, faster than real time, to WAV or a 320 kbps MP3 with tags. The encoder is built in.">Bounce WAV, export MP3</button></li>
-          <li><button type="button" data-d="Master BPM, every lane’s mixer, every clip and a snapshot of each track, so it reopens after Rekordbox renumbers its ids.">.t2m projects</button></li>
-        </ul>
-        <p class="names-sum">A timeline that beat-matches and blends the set, records or renders it, and saves it as a project.</p>
-      </div>
-      <p class="names-desc" id="names-desc" aria-live="polite">Hover or focus a name.</p>
-    </div>
-  </section>
-
-  <section id="compose" class="cards-section">
-    <div class="cards-stage">
-      <img class="cards-ground" src="assets/pics/lp-record-groove-close-up-5248017196.jpg" width="1844" height="1676" loading="lazy" decoding="async" alt="">
-      <h2 class="cards-head">Hear the set before you play it</h2>
-      <div class="cards-track">
-        <article class="card">
-          <div class="card-pic ui" data-ui>
-            <div class="strip">
-              <div class="strip-head"><span class="keychip match">11A</span> Lane 2 · 128.0</div>
-              <div class="knobs"><span class="knob" style="--v:300deg"><i></i><em>High</em></span><span class="knob" style="--v:160deg"><i></i><em>Mid</em></span><span class="knob" style="--v:60deg"><i></i><em>Low</em></span></div>
-              <div class="knobs"><span class="knob" style="--v:180deg"><i></i><em>HPF</em></span><span class="knob" style="--v:220deg"><i></i><em>LPF</em></span><span class="knob" style="--v:250deg"><i></i><em>Vol</em></span></div>
-              <div class="toggles"><span>Mute</span><span>Solo</span><span class="on">Sync</span></div>
-            </div>
-          </div>
-          <div class="card-panel" style="--tone:#0d1430">
-            <h3>Lanes</h3>
-            <p>One lane per track: volume, three-band EQ with kills, high- and low-pass, mute, solo and vinyl-style sync.</p>
-          </div>
-        </article>
-        <article class="card">
-          <div class="card-pic ui" data-ui>
-            <div class="grid-ruler"><span>1</span><span>9</span><span>17</span><span>25</span><span>33</span><span>41</span></div>
-            <div class="lane"><div class="lane-track tall"><div class="clip" style="left:0;width:52%"><i class="fade fade-out"></i></div><b class="marker" style="left:33%">downbeat</b></div></div>
-            <div class="lane"><div class="lane-track tall"><div class="clip" style="left:33%;width:50%"><i class="fade fade-in"></i><i class="fade fade-out"></i></div><b class="marker" style="left:66%">8 bars</b></div></div>
-            <div class="lane"><div class="lane-track tall"><div class="clip" style="left:66%;width:34%"><i class="fade fade-in"></i></div></div></div>
-          </div>
-          <div class="card-panel" style="--tone:#13203a">
-            <h3>Auto-arrange</h3>
-            <p>Finds each track’s beat grid and downbeat and brings it in on an 8-bar phrase of the one before, with a 4 to 32-bar blend.</p>
-          </div>
-        </article>
-        <article class="card">
-          <div class="card-pic ui" data-ui>
-            <div class="transport">
-              <div class="transport-row"><span class="tbtn">Play</span><span class="tbtn rec">Record live</span><span class="tbtn">Bounce WAV</span><span class="tbtn">Export MP3</span></div>
-              <div class="vu"><span style="--l:82%"></span><span style="--l:74%"></span></div>
-              <div class="transport-row small"><span>00:12:48.000</span><span>128.00 BPM</span><span>320 kbps · ID3</span></div>
-            </div>
-          </div>
-          <div class="card-panel" style="--tone:#1a2238">
-            <h3>Record and render</h3>
-            <p>Record live keeps your fader moves. Bounce renders offline, faster than real time. Export MP3 is 320 kbps with the encoder built in.</p>
-          </div>
-        </article>
-        <article class="card">
-          <div class="card-pic ui" data-ui>
-            <div class="files">
-              <div class="file on"><span>friday-set.t2m</span><span>4 lanes · 128 BPM · unsaved</span></div>
-              <div class="file"><span>warm-up.t2m</span><span>3 lanes · 122 BPM</span></div>
-              <div class="file"><span>closing-hour.t2m</span><span>6 lanes · 140 BPM</span></div>
-              <div class="file-foot"><span>Ctrl+S to save</span><span>Ctrl+Shift+S save as</span></div>
-            </div>
-          </div>
-          <div class="card-panel" style="--tone:#182a40">
-            <h3>Projects</h3>
-            <p>A .t2m file holds the master BPM, every lane’s mixer and every clip, and reopens after Rekordbox renumbers its ids.</p>
-          </div>
-        </article>
+      <div class="ui lanes" data-ui>
+        <div class="ui-bar"><span class="ui-title">Compose · set.t2m · 128 BPM master</span></div>
+        <div class="lane"><div class="lane-strip"><span class="keychip match">11A</span> Lane 1 <em>vol · eq · hpf · sync</em></div><div class="lane-track"><div class="clip" style="left:0;width:52%"><i class="fade fade-out"></i></div></div></div>
+        <div class="lane"><div class="lane-strip"><span class="keychip match">11A</span> Lane 2 <em>vol · eq · lpf · sync</em></div><div class="lane-track"><div class="clip" style="left:36%;width:48%"><i class="fade fade-in"></i><i class="fade fade-out"></i></div></div></div>
+        <div class="lane"><div class="lane-strip"><span class="keychip">12A</span> Lane 3 <em>vol · eq · sync</em></div><div class="lane-track"><div class="clip" style="left:70%;width:30%"><i class="fade fade-in"></i></div></div></div>
+        <div class="playhead"></div>
+        <div class="ui-foot"><span>16-bar blends · snap on · auto-crossfade</span><span>Export MP3</span></div>
       </div>
     </div>
   </section>
 
-  <section id="runs" class="lineup">
-    <h2 class="lineup-day">Runs on</h2>
-    <div class="lineup-row"><span>Windows 10 and later</span><span>.msi installer</span><span>64-bit</span><span>free</span></div>
-    <div class="lineup-row"><span>Debian, Ubuntu</span><span>.deb package</span><span>amd64</span><span>free</span></div>
-    <div class="lineup-row"><span>Fedora</span><span>.rpm package</span><span>x86_64</span><span>free</span></div>
-    <div class="lineup-row"><span>Arch</span><span>pacman package</span><span>x86_64</span><span>free</span></div>
-    <div class="lineup-row"><span>Any other Linux</span><span>AppImage, audio stack bundled</span><span>x86_64</span><span>free</span></div>
-    <div class="lineup-row"><span>macOS</span><span>universal build</span><span>coming</span><span>free</span></div>
-    <h2 class="lineup-day">Reads and writes</h2>
-    <div class="lineup-row"><span>Rekordbox 6 or 7</span><span>collection export, XML</span><span>read only</span><span>never modified</span></div>
-    <div class="lineup-row"><span>Your audio files</span><span>MP3, FLAC, WAV, AIFF, M4A</span><span>decoded here</span><span>never modified</span></div>
-    <div class="lineup-row"><span>library.db</span><span>its own SQLite database</span><span>beside the XML</span><span>yours to delete</span></div>
-    <div class="lineup-row"><span>Playlists</span><span>M3U8, M3U, TXT</span><span>Rekordbox imports it</span><span>where you choose</span></div>
-    <div class="lineup-row"><span>Projects and renders</span><span>.t2m, WAV, MP3 at 320 kbps</span><span>Compose</span><span>where you choose</span></div>
-    <div class="lineup-row"><span>The network</span><span>nothing</span><span>no server, no telemetry</span><span>offline</span></div>
-    <h2 class="lineup-day">Costs</h2>
-    <div class="lineup-row"><span>The desktop app</span><span>pay what you want</span><span>$5, $15 or $30</span><span>or nothing</span></div>
-    <div class="lineup-row"><span>Keys</span><span>from Rekordbox’s own analysis</span><span>one key, not two</span><span>analyse there first</span></div>
-    <div class="lineup-row"><span>Serato, Traktor, Engine DJ</span><span>not yet</span><span>parsers away</span><span>ask for one</span></div>
-  </section>
-
-  <section id="get" class="reply">
-    <div class="reply-aside">
-      <p class="reply-note">Free, with nothing held back. If it earns you a better set, tip what it’s worth: <a class="tier" data-amount="5" href="#get">$5</a>, <a class="tier" data-amount="15" href="#get">$15</a> or <a class="tier" data-amount="30" href="#get">$30</a> on PayPal. If money’s tight, don’t.</p>
-      <p class="reply-tip" id="tip-msg" role="status" aria-live="polite"></p>
-    </div>
-    <div class="reply-card">
-      <h2>Get the download link</h2>
-      <p>Windows and Linux. During beta a name and an email, so you hear when something is fixed. One click to leave.</p>
-      <form id="signup-form" novalidate>
-        <label for="name">Your name</label>
-        <input id="name" name="name" type="text" autocomplete="name" required>
-        <label for="email">Email address</label>
-        <input id="email" name="email" type="email" inputmode="email" autocomplete="email" required>
-        <button class="bar" type="submit" id="signup-submit">Send me the link</button>
-      </form>
-      <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
-      <div id="download-ready" class="ready" hidden>
-        <p>Here it is, and on its way to your inbox.</p>
-        <a class="bar" id="dl-link" href="https://downloads.track2mix.com" rel="noopener">Download Track2Mix</a>
+  <section id="does" class="index">
+    <div class="wrap">
+      <h2>Everything it does.</h2>
+      <div class="index-grid">
+        <div>
+          <h3>Library</h3>
+          <ul class="plain tight">
+            <li>Import Rekordbox XML</li><li>Open any library.db</li><li>Energy score, 0 to 10</li><li>Camelot wheel filter</li><li>Genre and sub-genre chips with live counts</li><li>BPM and energy histograms</li><li>Compatibility panel</li><li>Half and double time</li><li>Preview player, 500-track queue</li><li>Path map for moved drives</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Playlist</h3>
+          <ul class="plain tight">
+            <li>Harmonic flow ordering</li><li>Energy ramp</li><li>BPM order</li><li>Transition badges: Perfect, Relative, one step, Boost, Drop, Clash</li><li>A 0 to 100 score per transition</li><li>Set curve of energy and BPM</li><li>Suggest next</li><li>Play set</li><li>Export M3U8, M3U, TXT</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Compose</h3>
+          <ul class="plain tight">
+            <li>A lane per track</li><li>Three-band EQ with kills</li><li>High- and low-pass, mute, solo</li><li>Sync to the master BPM</li><li>Snap, trim, fade</li><li>Auto-crossfade</li><li>Auto-arrange</li><li>Record live</li><li>Bounce WAV, export MP3</li><li>.t2m projects</li>
+          </ul>
+        </div>
       </div>
-      <p class="reply-small">Or go straight to <a href="https://downloads.track2mix.com">all downloads and install steps</a>.</p>
     </div>
   </section>
 
-  <section id="faq" class="questions">
-    <div class="q-row q-row-head"><h2>Questions</h2><div></div></div>
-    <div class="q-row"><h3>Does it touch my Rekordbox collection?</h3><p>No. It reads the XML you export and writes only the playlists you export, its own database, Compose projects and the audio you render. Your collection file and your audio files are never modified.</p></div>
-    <div class="q-row"><h3>How long does analysis take?</h3><p>Minutes, not an evening, on every core you have: three 30-second stretches per track instead of whole files. The import screen says how many entries resolved to files on disk before anything is decoded.</p></div>
-    <div class="q-row"><h3>Why Rekordbox’s keys and not its own?</h3><p>Because you already trust them and they are what shows on your CDJs. A second, disagreeing key detector would add confusion, not value. A track unanalysed in Rekordbox has no key here either.</p></div>
-    <div class="q-row"><h3>Serato, Traktor, Engine DJ?</h3><p>Not yet. The engine is library-agnostic, so other sources are a matter of parsers. Say which one you want when you sign up and it moves up the list.</p></div>
-    <div class="q-row"><h3>Does Compose replace my DJ software?</h3><p>No. It is for hearing whether a sequence works: lay the tracks out, let Auto-arrange line them up, adjust the EQ and fades, render the result. Sync is vinyl-style, so pitch follows tempo; there is no key-lock yet.</p></div>
-    <div class="q-row"><h3>Free, so what’s the catch?</h3><p>None on the money. The full app downloads free and you tip only if it earns it. A fixed price on an unproven tool would filter out exactly the DJs whose feedback matters most. What is free today stays free.</p></div>
+  <section id="runs" class="spec">
+    <div class="wrap">
+      <h2>Runs on, reads, writes.</h2>
+      <table class="spec-table">
+        <tbody>
+          <tr><th scope="row">Windows 10 and later</th><td>.msi installer, 64-bit</td><td>free</td></tr>
+          <tr><th scope="row">Debian, Ubuntu</th><td>.deb, amd64</td><td>free</td></tr>
+          <tr><th scope="row">Fedora</th><td>.rpm, x86_64</td><td>coming</td></tr>
+          <tr><th scope="row">Arch</th><td>pacman package, x86_64</td><td>free</td></tr>
+          <tr><th scope="row">Any other Linux</th><td>AppImage with the audio stack bundled</td><td>coming</td></tr>
+          <tr><th scope="row">macOS</th><td>universal build</td><td>coming</td></tr>
+          <tr class="gap"><th scope="row">Reads</th><td>a Rekordbox 6 or 7 collection export (XML); MP3, FLAC, WAV, AIFF, M4A</td><td>never modified</td></tr>
+          <tr><th scope="row">Writes</th><td>its own library.db beside the XML; M3U8, M3U, TXT playlists; .t2m projects; WAV and MP3 renders</td><td>where you choose</td></tr>
+          <tr><th scope="row">Sends</th><td>nothing; there is no server and no telemetry</td><td>offline</td></tr>
+          <tr><th scope="row">Keys</th><td>from Rekordbox’s own analysis; no second key detector</td><td>analyse there first</td></tr>
+          <tr><th scope="row">Serato, Traktor, Engine DJ</th><td>not yet; the engine is library-agnostic, so they are parsers away</td><td>ask for one</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="get" class="get">
+    <div class="wrap get-grid">
+      <div class="get-copy">
+        <h2>Download it free. Pay what it’s worth, or nothing.</h2>
+        <p>No paywall, no trial timer, no locked features. If it earns you a better set, tip what it’s worth: <a class="tier" data-amount="5" href="#get">$5</a>, <a class="tier" data-amount="15" href="#get">$15</a> or <a class="tier" data-amount="30" href="#get">$30</a> on PayPal. If money’s tight, don’t.</p>
+        <p class="tip-note" id="tip-msg" role="status" aria-live="polite"></p>
+        <p>During beta a name and an email, so you hear when something is fixed or broken. One click to leave. Or go straight to <a href="https://downloads.track2mix.com">all downloads and install steps</a>.</p>
+      </div>
+      <div class="panel">
+        <h3>Get the download link</h3>
+        <form id="signup-form" novalidate>
+          <label for="name">Your name</label>
+          <input id="name" name="name" type="text" autocomplete="name" required>
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="email" required>
+          <button class="button button-wide" type="submit" id="signup-submit">Send me the link</button>
+        </form>
+        <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
+        <div id="download-ready" class="ready" hidden>
+          <p>Here it is, and on its way to your inbox.</p>
+          <a class="button button-wide" id="dl-link" href="https://downloads.track2mix.com" rel="noopener">Download Track2Mix</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="questions" class="questions">
+    <div class="wrap">
+      <h2>Questions.</h2>
+      <dl class="qa">
+        <div><dt>Does it touch my Rekordbox collection?</dt><dd>No. It reads the XML you export and writes only the playlists you export, its own database, Compose projects and the audio you render. Your collection file and your audio files are never modified.</dd></div>
+        <div><dt>How long does analysis take?</dt><dd>Minutes, not an evening, on every core you have: three 30-second stretches per track instead of whole files. The import screen says how many entries resolved to files on disk before anything is decoded.</dd></div>
+        <div><dt>Why Rekordbox’s keys and not its own?</dt><dd>Because you already trust them and they are what shows on your CDJs. A second, disagreeing key detector would add confusion, not value. A track unanalysed in Rekordbox has no key here either.</dd></div>
+        <div><dt>Serato, Traktor, Engine DJ?</dt><dd>Not yet. The engine is library-agnostic, so other sources are a matter of parsers. Say which one you want when you sign up and it moves up the list.</dd></div>
+        <div><dt>Does Compose replace my DJ software?</dt><dd>No. It is for hearing whether a sequence works: lay the tracks out, let Auto-arrange line them up, adjust the EQ and fades, render the result. Sync is vinyl-style, so pitch follows tempo; there is no key-lock yet.</dd></div>
+        <div><dt>Free, so what’s the catch?</dt><dd>None on the money. The full app downloads free and you tip only if it earns it. A fixed price on an unproven tool would filter out exactly the DJs whose feedback matters most. What is free today stays free.</dd></div>
+      </dl>
+    </div>
   </section>
 
 </main>
 
 <footer class="end">
-  <img class="end-pic" src="assets/pics/hero-needle-groove.jpg" width="3840" height="1536" loading="lazy" decoding="async" alt="The platter and needle of the turntable from the top of the page, in the dark">
-  <div class="end-top">
-    <nav class="end-links" aria-label="Footer">
-      <a href="#how">How it works</a>
-      <a href="#does">Everything it does</a>
-      <a href="#runs">Runs on</a>
-      <a href="#faq">Questions</a>
-    </nav>
-    <div class="end-contact">
-      <a href="https://downloads.track2mix.com">downloads.track2mix.com</a>
-      <a href="https://github.com/astralisone/track2mix">github.com/astralisone/track2mix</a>
-      <a href="privacy/">Privacy</a>
+  <div class="wrap end-grid">
+    <svg class="end-rings" viewBox="-120 -120 240 240" aria-hidden="true"><circle r="110"/><circle r="74"/><circle r="38"/><circle class="dot" r="4"/></svg>
+    <div class="end-copy">
+      <p class="end-name">Track2Mix</p>
+      <p class="end-line">DJ library intelligence for Rekordbox. Free, pay what you want. By Astralis One llc.</p>
     </div>
-  </div>
-  <div class="end-bottom">
-    <svg class="end-name" viewBox="0 0 1000 150" role="img" aria-label="Track2Mix" preserveAspectRatio="none"><text x="0" y="128" textLength="1000" lengthAdjust="spacingAndGlyphs">Track2Mix</text></svg>
-    <p class="end-legal">Track2Mix by Astralis One llc. Pay what you want. Pictures and footage: <a href="https://commons.wikimedia.org/wiki/File:Groove_and_needle_in_close_embrace_from_beginning_to_end.jpg">“Groove and needle in close embrace from beginning to end”</a> by Franz van Duns, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:LP_Record_Groove_Close-Up_(5248017196).jpg">“LP Record Groove Close-Up”</a> by Piano Piano!, <a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Technics_SL-1200_Original_1972.jpg">“Technics SL-1200 Original 1972”</a> by BMRR, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Beachfront_B-Roll-_Record_Background_(Free_to_Use_Stock_Footage).webm">“Record Background”</a> by Beachfront B-Roll, <a href="https://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>; all via Wikimedia Commons, shown darkened.</p>
+    <nav class="end-links" aria-label="Footer">
+      <a href="#rings">How it narrows</a>
+      <a href="#compose">Compose</a>
+      <a href="#runs">Runs on</a>
+      <a href="#questions">Questions</a>
+      <a href="https://downloads.track2mix.com">Downloads</a>
+      <a href="privacy/">Privacy</a>
+      <a href="https://github.com/astralisone/track2mix">GitHub</a>
+    </nav>
   </div>
 </footer>
 

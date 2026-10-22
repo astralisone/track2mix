@@ -62,26 +62,30 @@ majority who arrive via the site, not as access control. Hardening it properly
 would mean serving the binary from R2 behind a signed, expiring URL that
 `/api/contact` issues — worth doing only if the leakage turns out to matter.
 
-## The look: the dark room
+## The look: the event display
 
-Both pages follow one art direction, dealt by the `design-taste-frontend` skill
-in `.agents/skills/` (direction "dark-room", seed 1132536334, brand palette and
-type kept; the sheet is reprinted with `node .agents/skills/design-taste-frontend/scripts/draw.mjs --show`).
-One dark ground, and in it lit things: the app's own interface fragments
-(`data-ui` blocks in `index.html`, styled under `[data-ui]` in `styles.css`), and
-four openly licensed pictures in `assets/pics/` with their credits in
-`assets/pics/credits.json` and in the footer. House rules the skill enforces:
-no eyebrow labels, no monospace outside the app fragments and code, no
-gradients, no glows, no icon cards, two-line headlines everywhere. Check a change
-with:
+Both pages follow one direction, dealt by the `impeccable` skill in
+`.agents/skills/impeccable` (direction "collider event display", seed reference
+`seed:a09cda23d8f0c77a`; the contract is `.impeccable/surfaces/site-index-html.md`,
+the product record is `PRODUCT.md` at the repo root and the written-up system
+is `DESIGN.md`). The idea: the track you are on is a collision at the centre,
+the five tracks that mix with it fly outward through three rings (key, tempo,
+energy), and the rejected ones stop at the ring that rejected them. The hero
+is an inline SVG (`figure.display` in `index.html`); hovering, tapping or
+focusing a track isolates it, and the tracks draw outward once on load unless
+the visitor prefers reduced motion. Brand kept: navy ground, DM Sans, gold for
+the one action, iris for keys, cyan for relative keys. No photographs. House
+rules the skill enforces: no eyebrow labels, no gradient text, no glass, no
+step numbering unless it is a real sequence, functional text at 11px or
+larger, one authored motion moment. Check a change with:
 
 ```bash
-node .agents/skills/design-taste-frontend/scripts/lint.mjs site/index.html site/styles.css site/main.js
-node .agents/skills/design-taste-frontend/scripts/inspect.mjs site/index.html --allow palette-purple,mono
+.agents/skills/impeccable/scripts/impeccable detect site/index.html site/styles.css site/main.js site/downloads/index.html
 ```
 
-`--allow palette-purple,mono` is deliberate: iris is the app's own key colour and
-JetBrains Mono its own figures face, and both appear only inside the fragments.
+The detector still reports `cramped-padding` on the sections: it does not see
+the shared `section { padding: ... }` rule, and the rendered pages have the
+inset. Everything else should be clean.
 
 ## No tablet marketing here
 

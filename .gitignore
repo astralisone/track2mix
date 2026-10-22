@@ -45,3 +45,7 @@ src-tauri/gen/android/keystore.properties
 
 # tasteskill working files (screenshots, inspector reports)
 .taste-skill/
+
+# impeccable working files
+.impeccable/
+.impeccable-seed.log

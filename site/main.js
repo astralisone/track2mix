@@ -1,22 +1,13 @@
-/* Track2Mix site — the download form, the tip links, the live Camelot wheel, the hover
- * descriptions in "Everything it does", and the entrances.
- *
- * One constant needs filling in before launch: PAYMENTS, documented in site/README.md.
- */
+/* Track2Mix site: the download form, the tip links, and the event display. */
 
 /* ------------------------------------------------------------------ config */
 
 /** The site's own Worker (worker/contact.js), which stores the contact and returns the link. */
 const CONTACT_ENDPOINT = "/api/contact";
 
-/**
- * Payment methods for the tip links. paypalMe is the paypal.me handle; koFi and githubSponsors are
- * optional and unused by the page unless set.
- */
+/** paypalMe is the paypal.me handle of the account that receives tips. */
 const PAYMENTS = {
   paypalMe: "astralisboss",
-  koFi: "",
-  githubSponsors: "",
 };
 
 const TIP_CURRENCY = "USD";
@@ -57,7 +48,7 @@ if (form) {
 
     const name = nameInput.value.trim();
     if (name.length < 2) {
-      setMsg(formMsg, "error", "Please enter your name.");
+      setMsg(formMsg, "error", "Enter your name to get the link.");
       nameInput.focus();
       return;
     }
@@ -105,7 +96,7 @@ if (form) {
         console.warn("Track2Mix site: contact saved with warnings:", payload.warnings);
       }
     } catch (error) {
-      setMsg(formMsg, "error", `Couldn't sign you up: ${error.message}. Please try again.`);
+      setMsg(formMsg, "error", `Couldn't sign you up: ${error.message}. Try again in a moment.`);
       console.error("Track2Mix site: contact POST failed.", error);
     } finally {
       submit.disabled = false;
@@ -121,7 +112,7 @@ const tiers = Array.from(document.querySelectorAll("a.tier[data-amount]"));
 
 if (PAYMENTS.paypalMe) {
   // A business account's PayPal.Me lands on its profile and drops the amount, so the payer taps Pay
-  // and types it; the note below keeps that from looking like a broken link.
+  // and types it; the note keeps that from looking like a broken link.
   for (const tier of tiers) {
     tier.href = paypalUrlFor(tier.dataset.amount);
     tier.target = "_blank";
@@ -134,160 +125,79 @@ if (PAYMENTS.paypalMe) {
     tier.setAttribute("aria-disabled", "true");
   }
   setMsg(tipMsg, "error", "The tip links aren't connected yet. The app is still free to download.");
-  console.error("Track2Mix site: PAYMENTS.paypalMe is empty (see site/README.md).");
 }
 
-/* ------------------------------------------------- the live Camelot wheel */
+/* --------------------------------------------------------- event display */
 
 /**
- * Tap a key: the four slots that mix with it light up and the shortlist beside the wheel re-ranks
- * from the sample library. Without script the wheel shows 8A, which is what the static rows say.
+ * The signature interaction: a track under the pointer, focused, or tapped isolates itself and
+ * dims the rest; leaving restores the whole event. Keyboard: Tab to a track, Enter or Space to
+ * hold it, Escape to release. The draw-in on load is CSS; this only adds the ticks and the state.
  */
-const wheel = document.getElementById("wheel");
-const wheelLabel = document.getElementById("wheel-label");
-const shortlistRows = Array.from(document.querySelectorAll(".shortlist .tbl-row"));
-const shortlistFoot = document.getElementById("shortlist-foot");
+const display = document.getElementById("display");
 
-function keyParts(key) {
-  const m = /^(\d{1,2})([AB])$/.exec(key);
-  return m ? { n: Number(m[1]), l: m[2] } : null;
-}
-function keyName(n, l) {
-  return `${((n + 11) % 12) + 1}${l}`;
-}
-function compatible(key) {
-  const k = keyParts(key);
-  if (!k) return [];
-  return [key, keyName(k.n + 1, k.l), keyName(k.n - 1, k.l), keyName(k.n, k.l === "A" ? "B" : "A")];
-}
+if (display) {
+  const svg = display.querySelector("svg");
+  const hits = Array.from(svg.querySelectorAll(".hit"));
+  const ticks = svg.querySelector(".ticks");
 
-// Sample rows for the panel, in the order the app would rank them for any anchor.
-const SAMPLE = [
-  { title: "Anchor · the track you’re on", artist: "Your library", bpm: 174, rel: "same", e: 78, anchor: true },
-  { title: "Same key, harder", artist: "—", bpm: 174, rel: "same", e: 81 },
-  { title: "Relative major", artist: "—", bpm: 173, rel: "rel", e: 72 },
-  { title: "One step up the wheel", artist: "—", bpm: 176, rel: "up", e: 88 },
-  { title: "Energy drop", artist: "—", bpm: 172, rel: "down", e: 41 },
-  { title: "One step down", artist: "—", bpm: 175, rel: "down", e: 63 },
-  { title: "Half time", artist: "—", bpm: 87, rel: "same", e: 35 },
-];
-
-function setAnchor(key) {
-  const k = keyParts(key);
-  if (!k || !wheel) return;
-  const ok = new Set(compatible(key));
-  for (const g of wheel.querySelectorAll("g[data-key]")) {
-    const seg = g.querySelector(".seg");
-    const label = g.querySelector(".wl");
-    const isAnchor = g.dataset.key === key;
-    seg.classList.toggle("seg-anchor", isAnchor);
-    seg.classList.toggle("seg-ok", !isAnchor && ok.has(g.dataset.key));
-    label.classList.toggle("wl-hot", ok.has(g.dataset.key));
-    g.setAttribute("aria-pressed", String(isAnchor));
-  }
-  const rel = {
-    same: key,
-    rel: keyName(k.n, k.l === "A" ? "B" : "A"),
-    up: keyName(k.n + 1, k.l),
-    down: keyName(k.n - 1, k.l),
-  };
-  // Relative major reads differently when the anchor is already major.
-  SAMPLE[2].title = k.l === "A" ? "Relative major" : "Relative minor";
-  shortlistRows.forEach((row, i) => {
-    const s = SAMPLE[i];
-    if (!s) return;
-    const chip = row.querySelector(".keychip");
-    chip.textContent = rel[s.rel];
-    chip.classList.toggle("match", s.rel === "same");
-    row.querySelector(".cell-title").textContent = s.title;
-  });
-  if (wheelLabel) wheelLabel.textContent = `Anchor ${key} · four of twenty-four slots mix`;
-  if (shortlistFoot) shortlistFoot.textContent = `${shortlistRows.length} of 8,412 tracks · ±3 BPM · harmonic with ${key}`;
-}
-
-if (wheel) {
-  for (const g of wheel.querySelectorAll("g[data-key]")) {
-    g.setAttribute("role", "button");
-    g.setAttribute("tabindex", "0");
-    g.setAttribute("aria-label", `Anchor ${g.dataset.key}`);
-    g.addEventListener("click", () => setAnchor(g.dataset.key));
-    g.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        setAnchor(g.dataset.key);
-      }
-    });
-  }
-  setAnchor("8A");
-}
-
-/* ----------------------------------------- everything it does: hover copy */
-
-const namesDesc = document.getElementById("names-desc");
-const nameButtons = Array.from(document.querySelectorAll(".names-list button[data-d]"));
-let onButton = null;
-
-function showDesc(button) {
-  if (!namesDesc) return;
-  if (onButton) onButton.classList.remove("is-on");
-  onButton = button;
-  button.classList.add("is-on");
-  namesDesc.textContent = button.dataset.d;
-}
-
-for (const button of nameButtons) {
-  button.addEventListener("pointerenter", () => showDesc(button));
-  button.addEventListener("focus", () => showDesc(button));
-  button.addEventListener("click", () => showDesc(button));
-}
-
-/* ------------------------------------------------------ cards: fallback */
-
-// Without scroll-driven animations the cards stand in a row that scrolls sideways.
-if (!CSS.supports("animation-timeline: view()")) {
-  document.documentElement.classList.add("cards-static");
-}
-
-/* ------------------------------------------------------------- entrances */
-
-/**
- * Each section's parts rise into place as they enter, driven by the scroll (styles.css, "reveal").
- * The classes are added here so nothing is ever held back without scripting.
- */
-if (!prefersReducedMotion && CSS.supports("animation-timeline: view()")) {
-  const groups = [
-    ".band-head, .band .panel, .band-caption",
-    ".names-head, .names-col, .names-desc",
-    ".lineup-day, .lineup-row",
-    ".reply-aside, .reply-card",
-    ".q-row",
-  ];
-  for (const selector of groups) {
-    let i = 0;
-    for (const el of document.querySelectorAll(selector)) {
-      el.classList.add("reveal");
-      if (el.classList.contains("lineup-row")) el.classList.add("reveal-row");
-      el.style.setProperty("--i", String(Math.min(i, 6)));
-      i += 1;
+  // Fine ticks around the outer ring, like a detector's segmentation.
+  if (ticks) {
+    const parts = [];
+    for (let i = 0; i < 72; i += 1) {
+      const a = (i / 72) * Math.PI * 2;
+      const long = i % 6 === 0;
+      const r1 = long ? 426 : 433;
+      const x1 = Math.cos(a) * r1, y1 = Math.sin(a) * r1;
+      const x2 = Math.cos(a) * 440, y2 = Math.sin(a) * 440;
+      parts.push(`<line class="ring-tick" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`);
     }
+    ticks.innerHTML = parts.join("");
   }
-}
 
-/* ------------------------------------------------------- the moving picture */
+  // The calorimeter barrel: a ring of segments just outside the outer ring, where the energy
+  // stacks of the surviving tracks start.
+  const barrel = svg.querySelector(".barrel");
+  if (barrel) {
+    const segs = [];
+    const n = 60, r1 = 444, r2 = 451, gap = 0.012;
+    for (let i = 0; i < n; i += 1) {
+      const a0 = (i / n) * Math.PI * 2 + gap, a1 = ((i + 1) / n) * Math.PI * 2 - gap;
+      const p = (r, a) => `${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`;
+      segs.push(`<path d="M${p(r1, a0)} A${r1} ${r1} 0 0 1 ${p(r1, a1)} L${p(r2, a1)} A${r2} ${r2} 0 0 0 ${p(r2, a0)} Z"/>`);
+    }
+    barrel.innerHTML = segs.join("");
+  }
 
-const loop = document.querySelector(".verb-video");
-if (loop) {
-  if (prefersReducedMotion) {
-    loop.removeAttribute("autoplay");
-    loop.pause();
-  } else {
-    // Play only while on screen; a loop nobody can see is wasted work.
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) loop.play().catch(() => {});
-        else loop.pause();
-      }
+  let held = null;
+
+  function isolate(hit) {
+    svg.classList.toggle("isolating", !!hit);
+    for (const h of hits) h.classList.toggle("is-on", h === hit);
+  }
+
+  for (const hit of hits) {
+    hit.addEventListener("pointerenter", () => { if (!held) isolate(hit); });
+    hit.addEventListener("pointerleave", () => { if (!held) isolate(null); });
+    hit.addEventListener("focus", () => isolate(hit));
+    hit.addEventListener("blur", () => { if (held !== hit) isolate(null); });
+    hit.addEventListener("click", () => {
+      held = held === hit ? null : hit;
+      isolate(held || hit);
+      if (!held) isolate(null);
     });
-    io.observe(loop);
+    hit.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); hit.click(); }
+      if (event.key === "Escape") { held = null; isolate(null); hit.blur(); }
+    });
+  }
+
+  // The tracks draw outward from the collision once, on load.
+  if (!prefersReducedMotion) {
+    for (const path of svg.querySelectorAll(".track")) {
+      const length = path.getTotalLength();
+      path.style.setProperty("--len", length.toFixed(1));
+    }
+    svg.classList.add("draw");
   }
 }
