@@ -169,26 +169,25 @@ wrangler secret put LIST_AUTH_HEADER
 Put your PayPal.me handle into `PAYMENTS` at the top of `site/main.js` and push.
 Until at least one handle is set, the tip jar renders disabled and says so.
 
-## 5. Store links for the tablet apps
+## 5. Store link for the tablet app
 
-The iPad and Android tablet apps are sold through the App Store and Google
-Play, not downloaded from the site. Once each listing is live, paste its URL
-into `STORES` at the top of `site/main.js`:
+The Android tablet app is sold through Google Play, not downloaded from the
+site. Once the listing is live, paste its URL into `STORES` at the top of
+`site/main.js`:
 
 ```js
 const STORES = {
-  appStore: "https://apps.apple.com/app/id<...>",
   googlePlay: "https://play.google.com/store/apps/details?id=com.track2mix.app",
 };
 ```
 
-Until a URL is set, that platform's badge renders as **Coming soon** without a
-link and the "tell me when it's out" form offers that platform; it posts to the
-same `/api/contact` endpoint with `interest: "ipad" | "android"`, which writes a
-`store_interest` event (see [CONTACTS.md](CONTACTS.md)). With both URLs set the
-form removes itself. The displayed price comes from `TABLET_PRICE` in the same
-file; change it there when the store price changes. Building and submitting the
-apps is covered in [MOBILE.md](MOBILE.md).
+Until the URL is set, the badge renders as **Coming soon** without a link and
+the "tell me when it's out" form posts to the same `/api/contact` endpoint
+with `interest: "android"`, which writes a `store_interest` event (see
+[CONTACTS.md](CONTACTS.md)). With the URL set the form removes itself. The
+displayed price comes from `TABLET_PRICE` in the same file; change it there
+when the store price changes. Building and submitting the app is covered in
+[MOBILE.md](MOBILE.md).
 
 ## 6. Check it end to end
 
@@ -197,7 +196,7 @@ apps is covered in [MOBILE.md](MOBILE.md).
       `wrangler d1 execute contacts --remote --command "SELECT * FROM contacts"`.
 - [ ] Confirm the same address reached your mailing list.
 - [ ] Click a tip tier and confirm PayPal opens prefilled at the right amount.
-- [ ] On the iPad & Android section, confirm each badge either opens its store
+- [ ] On the Android tablets section, confirm the badge either opens the Play
       listing or says "Coming soon", and that the notify form saves a row with
       `event = 'store_interest'`.
 - [x] Open `https://downloads.track2mix.com` and confirm the cards show the

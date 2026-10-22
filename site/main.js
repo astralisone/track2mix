@@ -43,24 +43,22 @@ const PAYMENTS = {
 const TIP_CURRENCY = "USD";
 
 /**
- * Store listings for the tablet apps. The desktop builds are pay-what-you-want
- * and are downloaded from this site; the iPad and Android tablet apps are sold
- * through the stores, so the tablet section links there and nowhere else.
+ * Store listing for the tablet app. The desktop builds are pay-what-you-want
+ * and are downloaded from this site; the Android tablet app is sold through
+ * Google Play, so the tablet section links there and nowhere else.
  *
- *   appStore   the App Store listing, e.g. "https://apps.apple.com/app/id1234567890"
  *   googlePlay the Play listing, e.g. "https://play.google.com/store/apps/details?id=com.track2mix.app"
  *
- * An empty value renders that badge as "coming soon" and shows the notify form
- * for that platform instead of a dead link.
+ * An empty value renders the badge as "coming soon" and shows the notify form
+ * instead of a dead link.
  */
 const STORES = {
-  appStore: "",
   googlePlay: "",
 };
 
 /**
- * The tablet app's list price. Stores localise the actual charge per country
- * (Apple's price tiers, Play's per-country pricing), so the site shows it as
+ * The tablet app's list price. Play localises the actual charge per country,
+ * so the site shows it as
  * "from" and the store shows the exact figure at checkout.
  */
 const TABLET_PRICE = { amount: "19.99", currency: "USD", display: "$19.99" };
@@ -313,7 +311,7 @@ function wireStore(id, url, label) {
   el.removeAttribute("href");
   el.setAttribute("aria-disabled", "true");
   if (status) status.textContent = "Coming soon";
-  console.warn(`Track2Mix site: STORES.${id === "store-appstore" ? "appStore" : "googlePlay"} is not set in main.js — ${label} badge renders as coming soon.`);
+  console.warn(`Track2Mix site: STORES.googlePlay is not set in main.js — ${label} badge renders as coming soon.`);
   return false;
 }
 
@@ -321,7 +319,6 @@ for (const el of document.querySelectorAll("[data-tablet-price]")) {
   el.textContent = TABLET_PRICE.display;
 }
 
-const haveAppStore = wireStore("store-appstore", STORES.appStore, "the App Store");
 const havePlay = wireStore("store-play", STORES.googlePlay, "Google Play");
 
 /* ------------------------------------------- tablet apps: notify form */
@@ -332,9 +329,9 @@ const tabletSubmit = document.getElementById("tablet-submit");
 const tabletMsg = document.getElementById("tablet-msg");
 
 if (tabletForm) {
-  // Only offer "tell me when it's out" for platforms that aren't out yet.
+  // Only offer "tell me when it's out" while the listing isn't out yet.
   const platformInputs = Array.from(tabletForm.querySelectorAll('input[name="interest"]'));
-  const live = { ipad: haveAppStore, android: havePlay };
+  const live = { android: havePlay };
   let offered = 0;
   for (const inp of platformInputs) {
     const wrapper = inp.closest("label") || inp;
@@ -345,7 +342,7 @@ if (tabletForm) {
     }
   }
   if (offered === 0) {
-    // Both listings are live, so there's nothing to be notified about.
+    // The listing is live, so there's nothing to be notified about.
     tabletForm.remove();
     const intro = document.getElementById("tablet-notify-intro");
     if (intro) intro.remove();
@@ -363,7 +360,7 @@ if (tabletForm) {
         return;
       }
       if (!chosen) {
-        setMsg(tabletMsg, "error", "Pick iPad or Android so I know which listing to tell you about.");
+        setMsg(tabletMsg, "error", "Something went wrong with the form — reload the page and try again.");
         return;
       }
       tabletSubmit.disabled = true;
@@ -385,8 +382,7 @@ if (tabletForm) {
         if (!response.ok) {
           throw new Error(payload?.error || `${response.status} ${response.statusText}`);
         }
-        const which = chosen.value === "ipad" ? "the App Store" : "Google Play";
-        setMsg(tabletMsg, "ok", `Done — you'll get one email when Track2Mix is live on ${which}.`);
+        setMsg(tabletMsg, "ok", "Done — you'll get one email when Track2Mix is live on Google Play.");
         tabletForm.reset();
         if (first) first.checked = true;
         if (Array.isArray(payload?.warnings) && payload.warnings.length) {
